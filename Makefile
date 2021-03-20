@@ -24,6 +24,9 @@ DEBUG = 1
 # optimization
 OPT = -Og
 
+# make flags
+MAKEFLAGS = -j
+
 
 #######################################
 # paths
