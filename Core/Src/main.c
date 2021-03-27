@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "fatfs.h"
 #include "lwip.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -117,6 +118,7 @@ int main(void)
   MX_SPI5_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
