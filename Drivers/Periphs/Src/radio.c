@@ -1,12 +1,16 @@
 #include "radio.h"
 
-#define FIFO_NAME ethernet_rx //This fifo is for recieving data from ethernet(could be commands)
-#include "fifo.h"
+#define CMD_SIZE 64
 
-struct netif init_Struct;
-ip4_addr_t ipaddr;
-ip4_addr_t netmask;
-ip4_addr_t gw;
+static struct netif radio_Struct;
+static ip4_addr_t ipaddr;
+static ip4_addr_t netmask;
+static ip4_addr_t gw;
+osSemaphoreId radio_RXSemaphore;
+static struct link_str radio_arg;
+osThreadAttr_t attributes;
+static struct pbuf* radio_RXBuffer;
+static struct pbuf* radio_TXBuffer;
 
 void radio_Init(void){
   // IP addresses initialization with DHCP (IPv4) 
@@ -14,36 +18,43 @@ void radio_Init(void){
   netmask.addr = 0;
   gw.addr = 0;
   // add the network interface (IPv4/IPv6) with RTOS 
-  netif_add(&init_Struct, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+  netif_add(&radio_Struct, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
   // Registers the default network interface 
-  netif_set_default(&init_Struct);
-  if (netif_is_link_up(&gnetif)){
-    netif_set_up(&gnetif); // When the netif is fully configured this function must be called
+  netif_set_default(&radio_Struct);
+  if (netif_is_link_up(&radio_Struct)){
+    netif_set_up(&radio_Struct); // When the netif is fully configured this function must be called
   }
   else{
-    netif_set_down(&gnetif); // When the netif link is down this function must be called
+    netif_set_down(&radio_Struct); // When the netif link is down this function must be called
   }
   // Set the link callback function, this function is called on change of link status
-  netif_set_link_callback(&gnetif, ethernetif_update_config);
+  netif_set_link_callback(&radio_Struct, ethernetif_update_config);
   // create semaphore used for informing ethernetif of frame reception
-  Netif_LinkSemaphore = osSemaphoreNew(1, 1, NULL); 
-  link_arg.netif = &gnetif;
-  link_arg.semaphore = Netif_LinkSemaphore;
+  radio_RXSemaphore = osSemaphoreNew(1, 1, NULL); 
+  radio_arg.netif = &radio_Struct;
+  radio_arg.semaphore = radio_RXSemaphore;
   // Create the Ethernet link handler thread
-  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
   attributes.name = "Radio_Thread";
-  attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
+  attributes.stack_size = 1024;
   attributes.priority = osPriorityBelowNormal;
-  osThreadNew(ethernetif_set_link, &link_arg, &attributes);
+  memset(&attributes, 0x0, sizeof(osThreadAttr_t));
+  osThreadNew(ethernetif_set_link, &radio_arg, &attributes);
   // Start DHCP negotiation for a network interface (IPv4)
-  dhcp_start(&gnetif);
+  dhcp_start(&radio_Struct);
+  radio_RXBuffer = pbuf_alloc(PBUF_RAW_TX, 64, PBUF_RAM);
+  radio_TXBuffer = pbuf_alloc(PBUF_LINK, 64, PBUF_RAM);
 }
 
 ErrorStatus radio_RX(void* data){
-  ethernetif_input(data);
+  err_t error = radio_Struct.input(radio_RXBuffer, &radio_Struct);
+  if (error != ERR_OK){} //DO SOMETHING IF ERROR OCCURRED
+  pbuf_get_contiguous(radio_RXBuffer, data, CMD_SIZE, CMD_SIZE, 0);
   return SUCCESS;
 }
 
 ErrorStatus radio_TX(CANMSG_t data){
+  err_t error = pbuf_take(radio_TXBuffer, &data, sizeof(CANMSG_t));
+  if (error != ERR_OK){} //DO SOMETHING IF ERROR OCCURRED
+  radio_Struct.linkoutput(&radio_Struct, radio_TXBuffer);
   return SUCCESS;
 }

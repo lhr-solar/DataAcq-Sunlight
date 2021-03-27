@@ -3,6 +3,9 @@
 
 #include "ethernetif.h"
 #include "tcpip.h"
+#include "pbuf.h"
+#include "netif.h"
+#include "dhcp.h"
 #include "stm32f4xx.h"
 #include <string.h>
 //Data types sent across Ethernet will be similar to CAN data structure so it is easier to understand
