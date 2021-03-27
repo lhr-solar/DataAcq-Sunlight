@@ -49,16 +49,18 @@ typedef struct {
 
 //THESE ARE IN HERE FOR NOW BUT SHOULD BE IN CANbus.h !!!!!!!!!!!!!!!!!!!!!!!!
 
-//initialize ethernet ports
+//Initialize Ethernet port and buffers for transmitting and receiving data
 void radio_Init(void);
 //Allow us to receieve data from ethernet (could be commands)
 /*
- * @param data:
+ * @param data: pointer to memory address that will receive data. Once data format is finalized
+ *              the void should change to something else so we know the size of the data.
  * @return ErrorStatus: Success or Error
  */
 ErrorStatus radio_RX(void* data);
 /*
- * @param data: 
+ * @param data: Data to be sent across ethernet. Using same format as CAN messages since they
+ *              are familiar
  * @return ErrorStatus: Success or Error
  */
 ErrorStatus radio_TX(CANMSG_t data);
