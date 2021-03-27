@@ -2,6 +2,8 @@
     "files.associations": {
         "ethernet.h": "c",
         "ethernetif.h": "c",
-        "netif.h": "c"
+        "netif.h": "c",
+        "config.h": "c",
+        "tcpip.h": "c"
     }
 }
