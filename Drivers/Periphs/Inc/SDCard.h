@@ -27,7 +27,7 @@ void myprintf(const char *fmt, ...);
 void SDCard_OpenFileSystem(FATFS FatFs);
 
 /**
- * Prints the SD card's total drive space and avaiable space.
+ * Prints the SD card's total drive space and available space.
 **/
 void SDCard_GetStatistics();
 
