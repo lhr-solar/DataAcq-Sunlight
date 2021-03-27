@@ -32,6 +32,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define SD_CS_GPIO_Port 18
+#define SD_CS_Pin 2
+#define SD_SPI_HANDLE hspi5
 
 /* USER CODE END Includes */
 
