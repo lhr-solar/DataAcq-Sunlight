@@ -18,7 +18,6 @@ void SDCard_Init(UART_HandleTypeDef *uartBus);
 
 /**
  * Prints desired message via UART
- * @return SUCCESS if no errors, ERROR if some error occured
 **/
 void myprintf(const char *fmt, ...);
 
