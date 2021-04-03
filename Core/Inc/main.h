@@ -32,10 +32,14 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define SD_CS_GPIO_Port GPIOF  //SD card chip select GPIO Port
 =======
 #define SD_CS_GPIO_Port 18  //SD card chip select GPIO Port
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+=======
+#define SD_CS_GPIO_Port GPIOF  //SD card chip select GPIO Port
+>>>>>>> Fixed compiler warnings.
 #define SD_CS_Pin 2 //SD card chip select pin 
 #define SD_SPI_HANDLE hspi5 //SD card SPI handler
 
