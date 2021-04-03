@@ -6,7 +6,21 @@
 #include "SDcard.h"
 #include "main.h"
 
+<<<<<<< HEAD
 static FATFS FatFs;
+=======
+<<<<<<< HEAD
+static FRESULT fresult;   //Result after operations
+=======
+FRESULT fresult;   //Result after operations
+
+UART_HandleTypeDef *huart;  //pointer to UART handler
+
+void SDCard_Init(UART_HandleTypeDef *uartBus){
+    huart = uartBus;
+}
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
 
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
@@ -22,7 +36,15 @@ FRESULT SDCard_Init() {
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     #ifdef DEBUGGINGMODE
     if (fresult != FR_OK) {
+<<<<<<< HEAD
   	    printf("f_mount error (%i)\r\n", (int)fresult);
+<<<<<<< HEAD
+=======
+=======
+  	    myprintf("f_mount error (%i)\r\n", fresult);
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+        return ERROR;
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
     }
     #endif
     return fresult;
@@ -37,14 +59,70 @@ FRESULT SDCard_GetStatistics() {
     DWORD free_sectors;
     DWORD total_sectors;
     FATFS *getFreeFs;
+<<<<<<< HEAD
     #endif
+=======
+
+    fresult = f_getfree("", &free_clusters, &getFreeFs);
+    if(fresult != FR_OK){
+<<<<<<< HEAD
+        printf("f_getfree error (%i)\r\n", (int)fresult);
+=======
+        myprintf("f_getfree error (%i)\r\n", fresult);
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+        return ERROR;
+    }
+
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
     //Formula comes from ChaN's documentation
     total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
     free_sectors = free_clusters * getFreeFs->csize;
 
+<<<<<<< HEAD
     #ifdef DEBUGGINGMODE
     printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
     #endif
+=======
+<<<<<<< HEAD
+    printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
+=======
+    myprintf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+    return SUCCESS;
+}
+
+ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
+    //open file for reading
+    fresult = f_open(&fil, fileName, FA_READ);
+    if (fresult != FR_OK) {
+<<<<<<< HEAD
+  	    printf("f_open error (%i)\r\n", (int)fresult);
+        return ERROR;
+    }
+    
+    printf("File opened for reading!\r\n");
+=======
+  	    myprintf("f_open error (%i)\r\n");
+        return ERROR;
+    }
+    
+    myprintf("File opened for reading!\r\n");
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+    
+    //We can either use f_read OR f_gets to get data out of files
+    //f_gets is a wrapper on f_read that does some string formatting for us
+    BYTE readBuf[30];   //30 byte buffer
+    TCHAR* rres = f_gets((TCHAR*)readBuf, 30, &fil);
+    if(rres != 0) {
+  	    printf("Read string from 'test.txt' contents: %s\r\n", (char*)readBuf);
+    } else {
+<<<<<<< HEAD
+  	    printf("f_gets error (%i)\r\n", fresult);
+=======
+  	    myprintf("f_gets error (%i)\r\n", fresult);
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+    }
+>>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
 
     return fresult;
 }
