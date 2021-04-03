@@ -28,7 +28,6 @@ FRESULT SDCard_Init() {
     return fresult;
 }
 
-/**
  * @brief Reads how much memory is left in SD card-> Should be used for debugging purposes
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
@@ -38,13 +37,6 @@ FRESULT SDCard_GetStatistics() {
     DWORD free_sectors;
     DWORD total_sectors;
     FATFS *getFreeFs;
-    FRESULT fresult;
-
-    fresult = f_getfree("", &free_clusters, &getFreeFs);
-    #ifdef DEBUGGINGMODE
-    if(fresult != FR_OK){
-        printf("f_getfree error (%i)\r\n", (int)fresult);
-    }
     #endif
     //Formula comes from ChaN's documentation
     total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
