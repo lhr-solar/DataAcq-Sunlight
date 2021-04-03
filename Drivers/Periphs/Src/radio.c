@@ -14,7 +14,7 @@ static struct pbuf* radio_TXBuffer;
 
 void radio_Init(void){
   // IP addresses initialization with DHCP (IPv4) 
-  ipaddr.addr = 0;
+  ipaddr.addr = 0; //THIS MUST BE CHANGED WHEN WE FIND OUT WHAT GOES HERE
   netmask.addr = 0;
   gw.addr = 0;
   // add the network interface (IPv4/IPv6) with RTOS 
@@ -48,13 +48,14 @@ void radio_Init(void){
 ErrorStatus radio_RX(void* data){
   err_t error = radio_Struct.input(radio_RXBuffer, &radio_Struct);
   if (error != ERR_OK){} //DO SOMETHING IF ERROR OCCURRED
-  pbuf_get_contiguous(radio_RXBuffer, data, CMD_SIZE, CMD_SIZE, 0);
+  int x = pbuf_get_contiguous(radio_RXBuffer, data, CMD_SIZE, CMD_SIZE, 0);
+  if (!x) return ERROR;
   return SUCCESS;
 }
 
 ErrorStatus radio_TX(CANMSG_t data){
   err_t error = pbuf_take(radio_TXBuffer, &data, sizeof(CANMSG_t));
-  if (error != ERR_OK){} //DO SOMETHING IF ERROR OCCURRED
+  if (error != ERR_OK){ return ERROR} //DO SOMETHING ELSE IF ERROR OCCURRED (LIKE MAKING BUFFER LARGER)
   radio_Struct.linkoutput(&radio_Struct, radio_TXBuffer);
   return SUCCESS;
 }
