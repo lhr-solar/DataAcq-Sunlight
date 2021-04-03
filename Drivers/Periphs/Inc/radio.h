@@ -19,6 +19,7 @@ void radio_Init(void);
  * @return ErrorStatus: Success or Error
  */
 ErrorStatus radio_RX(void* data);
+
 /*
  * @param data: Data to be sent across ethernet. Using same format as CAN messages since they
  *              are familiar
