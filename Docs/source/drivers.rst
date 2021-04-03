@@ -18,4 +18,4 @@ Usage
 
 Additional Considerations
     SD Card functions that print information do so over ``UART``.
-    
+    If ``SDCard_CloseFileSystem()`` isn't called, then errors might occur.
