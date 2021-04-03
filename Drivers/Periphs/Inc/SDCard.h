@@ -35,7 +35,6 @@ typedef struct {
 =======
 /**
  * Prints desired message via UART
- * @return SUCCESS if no errors, ERROR if some error occured
 **/
 void myprintf(const char *fmt, ...);
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
