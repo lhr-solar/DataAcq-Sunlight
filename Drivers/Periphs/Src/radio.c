@@ -55,7 +55,7 @@ ErrorStatus radio_RX(void* data){
 
 ErrorStatus radio_TX(CANMSG_t data){
   err_t error = pbuf_take(radio_TXBuffer, &data, sizeof(CANMSG_t));
-  if (error != ERR_OK){ return ERROR} //DO SOMETHING ELSE IF ERROR OCCURRED (LIKE MAKING BUFFER LARGER)
+  if (error != ERR_OK){ return ERROR;} //DO SOMETHING ELSE IF ERROR OCCURRED (LIKE MAKING BUFFER LARGER)
   radio_Struct.linkoutput(&radio_Struct, radio_TXBuffer);
   return SUCCESS;
 }
