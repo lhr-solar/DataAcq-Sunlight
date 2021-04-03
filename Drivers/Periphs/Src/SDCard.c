@@ -6,7 +6,7 @@
 #include "SDCard.h"
 #include "main.h"
 
-FRESULT fres;   //Result after operations
+FRESULT fresult;   //Result after operations
 
 UART_HandleTypeDef *huart;  //pointer to UART handler
 
@@ -25,25 +25,26 @@ void myprintf(const char *fmt, ...){
     HAL_UART_Transmit(huart, (uint8_t*)buffer, len, -1);
 }
 
-void SDCard_OpenFileSystem(FATFS FatFs){
+ErrorStatus SDCard_OpenFileSystem(FATFS FatFs){
     //mount the drive
-    fres = f_mount(&FatFs, "", 1); //1=mount now
-    if (fres != FR_OK) {
-  	myprintf("f_mount error (%i)\r\n", fres);
-  	while(1);
+    fresult = f_mount(&FatFs, "", 1); //1=mount now
+    if (fresult != FR_OK) {
+  	    myprintf("f_mount error (%i)\r\n", fresult);
+        return ERROR;
     }
+    return SUCCESS;
 }
 
-void SDCard_GetStatistics(){
+ErrorStatus SDCard_GetStatistics(){
     DWORD free_clusters;
     DWORD free_sectors;
     DWORD total_sectors;
     FATFS *getFreeFs;
 
-    fres = f_getfree("", &free_clusters, &getFreeFs);
-    if(fres != FR_OK){
-        myprintf("f_getfree error (%i)\r\n", fres);
-        while(1);
+    fresult = f_getfree("", &free_clusters, &getFreeFs);
+    if(fresult != FR_OK){
+        myprintf("f_getfree error (%i)\r\n", fresult);
+        return ERROR;
     }
 
     //Formula comes from ChaN's documentation
@@ -51,16 +52,18 @@ void SDCard_GetStatistics(){
     free_sectors = free_clusters * getFreeFs->csize;
 
     myprintf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
+    return SUCCESS;
 }
 
-void SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
+ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
     //open file for reading
-    fres = f_open(&fil, fileName, FA_READ);
-    if (fres != FR_OK) {
+    fresult = f_open(&fil, fileName, FA_READ);
+    if (fresult != FR_OK) {
   	    myprintf("f_open error (%i)\r\n");
-  	while(1);
+        return ERROR;
     }
-        myprintf("File opened for reading!\r\n");
+    
+    myprintf("File opened for reading!\r\n");
     
     //We can either use f_read OR f_gets to get data out of files
     //f_gets is a wrapper on f_read that does some string formatting for us
@@ -69,33 +72,37 @@ void SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
     if(rres != 0) {
   	    myprintf("Read string from 'test.txt' contents: %s\r\n", readBuf);
     } else {
-  	    myprintf("f_gets error (%i)\r\n", fres);
+  	    myprintf("f_gets error (%i)\r\n", fresult);
     }
 
     f_close(&fil);
+    return SUCCESS;
 }
 
-void SDCard_Write(FIL fil, char fileName[], char message[], uint32_t bytes){
+ErrorStatus SDCard_Write(FIL fil, char fileName[], char message[], uint32_t bytes){
     BYTE readBuf[bytes];
-    fres = f_open(&fil, fileName, FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
-    if(fres == FR_OK) {
+    fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
+    if(fresult == FR_OK) {
   	    myprintf("I was able to open 'write.txt' for writing\r\n");
     } else {
-  	    myprintf("f_open error (%i)\r\n", fres);
+  	    myprintf("f_open error (%i)\r\n", fresult);
+        return ERROR;
     }
 
     //Copy in a string
     strncpy((char*)readBuf, message, strlen(message));
     UINT bytesWrote;
-    fres = f_write(&fil, readBuf, strlen(message), &bytesWrote);
-    if(fres == FR_OK) {
-  	myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
+    fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
+    if(fresult == FR_OK) {
+  	    myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
     } else {
-  	myprintf("f_write error (%i)\r\n");
+  	    myprintf("f_write error (%i)\r\n");
+        return ERROR;
     }
 
     //close your file!
     f_close(&fil);
+    return SUCCESS;
 }
 
 void SDCard_CloseFileSystem(){
