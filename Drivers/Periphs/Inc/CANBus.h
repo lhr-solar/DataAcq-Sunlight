@@ -3,7 +3,11 @@
 
 #ifndef __CANBUS_H
 #define __CANBUS_H
-
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include "main.h"
+#include "stm32f4xx_hal_can.h"
 
 typedef enum {
     TRIP = 0x02,
@@ -35,10 +39,10 @@ typedef struct {
 
 /**
  * @brief   Initializes the CAN system
- * @param   None
+ * @param   hcan1 pointer to initialized CAN struct
  * @return  None
  */
-void CANbus_Init(void);
+void CANbus_Init(CAN_HandleTypeDef *hcan1);
 
 /**
  * @brief   Transmits data onto the CANbus
