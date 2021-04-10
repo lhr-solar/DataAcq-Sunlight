@@ -53,7 +53,7 @@ void CANBus_Send(CANId_t id, CANPayload_t payload){
 void CANBus_Read(uint8_t id, uint8_t *data){
     if(RxFlag){
         //read RxHeader object
-        id = pRxHeader.StdId;
+        id = pRxHeader.StdId; //YOU SHOULD INITIALIZE THIS SOMEWHERE
         data = RxData;
     }
     RxFlag = 0;
