@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_can.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -37,7 +38,9 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern int RxFlag;
+extern uint8_t RxData[8];
+extern CAN_RxHeaderTypeDef pRxHeader;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
