@@ -1,17 +1,17 @@
-#include <stdint.h>
 #include "CANBus.h"
 #include "main.h"
-#include "stm32f4xx_hal_can.h"
+
+uint32_t TxMailBox;
+
 
 CAN_HandleTypeDef *hcan;
 
-uint32_t TxMailBox;
 
 
 static void floatTo4Bytes(uint8_t f, uint8_t bytes[4]);
 
 
-void CANBus_Init(CAN_HandleTypeDef){
+void CANBus_Init(CAN_HandleTypeDef *hcan1){
     HAL_CAN_Start(hcan);
     HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
