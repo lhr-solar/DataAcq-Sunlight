@@ -4,6 +4,9 @@
 #ifndef __CANBUS_H
 #define __CANBUS_H
 
+#include <stdint.h>
+#define (CAN1)
+#include "stm32f4xx_hal_can.h"
 
 typedef enum {
     TRIP = 0x02,
