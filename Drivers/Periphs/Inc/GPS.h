@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "main.h"
+#include <string.h>
 
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
