@@ -38,9 +38,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-int RxFlag;
-uint8_t RxData[8];
-CAN_RxHeaderTypeDef pRxHeader;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

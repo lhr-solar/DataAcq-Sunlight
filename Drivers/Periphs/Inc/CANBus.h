@@ -9,6 +9,10 @@
 #include "main.h"
 #include "stm32f4xx_hal_can.h"
 
+int RxFlag;
+uint8_t RxData[8];
+CAN_RxHeaderTypeDef pRxHeader;
+
 typedef enum {
     TRIP = 0x02,
     ALL_CLEAR = 0x101,

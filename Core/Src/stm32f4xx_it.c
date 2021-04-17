@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "CANBus.h"
 #include "stm32f4xx_it.h"
 #include "stm32f4xx_hal_can.h"
 /* Private includes ----------------------------------------------------------*/
