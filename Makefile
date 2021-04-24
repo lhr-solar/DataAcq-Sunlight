@@ -46,7 +46,7 @@ Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/stm32f4xx_hal_timebase_tim.c \
 LWIP/Target/ethernetif.c \
 LWIP/App/lwip.c \
-Drivers/Periphs/Src/radio.c \
+Drivers/Periphs/Src/Radio.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_eth.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c \
