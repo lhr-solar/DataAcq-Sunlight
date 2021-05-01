@@ -9,11 +9,13 @@ Purpose
     will be used to create a race strategy.
 
 Usage
-    First ``radio_Init()`` must be called. In this init function a semaphore is created that is used
-    by the ``ethernetif`` file to collect data and store in ``pbuf``. A thread is also created to 
-    do this. Then ``radio_RX`` will receive as many bytes as stored on this buffer. If there are no
-    bytes, then it will return an ``ERROR``. ``radio_TX`` sends data across the ethernet and will 
-    return an error if the buffer is not large enough to send the data. 
+    First ``radio_Init()`` must be called. This function creates a socket that will be used for the pit
+    crew to connect to our radio. An error will be thrown if the socket was not initialized properly.
+    If more functions are created, the socket must be connected at the start of every function and closed 
+    at the end. ``radio_RX()`` is called to receive any information send from the pit crew. Although this will
+    most likely be ``char`` commands, the pointer is ``void`` at the moment until changes are finalized. The 
+    ``radio_TX()`` function accepts a ``CANPayload_t`` data type to be sent to the pit crew.
+
 
 Additional Considerations
     The data sent across ethernet will follow the same structure as CAN messages. This is to keep

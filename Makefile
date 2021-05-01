@@ -218,7 +218,6 @@ AS_INCLUDES =  \
 # C includes
 C_INCLUDES =  \
 -IApplications/Inc \
--IConfig \
 -ICore/Inc \
 -ILWIP/App \
 -ILWIP/Target \
