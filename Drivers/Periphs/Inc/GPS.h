@@ -25,10 +25,13 @@ typedef struct{
     char magneticVariation_EastWest;
 } GPSData_t;
 
-GPSData_t GPSData;
+//Initialize GPS Module and struct
+/*
+ * @param: struct that will be used to collect data
+ */
+void GPS_Init(GPSData_t *Data);
 
-void GPS_Init(void);
-
-void GPS_Rx(void);
+//Update Measurments from GPS Module
+void GPS_UpdateMeasurements(void);
 
 #endif
