@@ -37,15 +37,15 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-CAN_HandleTypeDef hcan1;
+extern CAN_HandleTypeDef hcan1;
 
-I2C_HandleTypeDef hi2c1;
-I2C_HandleTypeDef hi2c2;
+extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c2;
 
-SPI_HandleTypeDef hspi5;
+extern SPI_HandleTypeDef hspi5;
 
-UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart3;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
