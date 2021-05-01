@@ -1,10 +1,11 @@
 #ifndef SDCARD_H
-#define _SDCARD_H
+#define SDCARD_H
 
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h> //for va_list var arg functions
 #include "fatfs.h"
+
 
 //All printing done by this module is via UART
 
