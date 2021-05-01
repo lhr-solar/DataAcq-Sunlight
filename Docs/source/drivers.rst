@@ -6,7 +6,7 @@ Real-Time Clock (RTC)
 =====================
 
 Purpose
-    The RTC drivers keep track of date and time.
+    The RTC drivers keep track of date and time. The RTC uses ``I2C2``.
 
 Usage
     First the ``RTC_Init(IMUData_t* Data)`` must be called. It will initialize the peripheral to collect data using the "12-hour mode" 
@@ -15,3 +15,4 @@ Usage
 
 Additional Considerations
     The RTC can also be programmed to run alarms. 
+    

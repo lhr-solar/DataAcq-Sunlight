@@ -17,7 +17,7 @@ void RTC_UpdateMeasurements(){
     uint8_t data[7];
     uint8_t reg_addr = SECONDS;
     HAL_I2C_Master_Transmit_IT(&hi2c2, DEVICE_ADDRESS, &reg_addr, 1); //send register address to read from
-    HAL_I2C_Master_Receive_IT(&hi2c1, DEVICE_ADDRESS, data, 7);
+    HAL_I2C_Master_Receive_IT(&hi2c2, DEVICE_ADDRESS, data, 7);
     RTCData->sec = data[0];
     RTCData->min = data[1];
     RTCData->hr = data[2];
