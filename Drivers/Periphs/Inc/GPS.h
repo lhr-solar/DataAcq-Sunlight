@@ -25,6 +25,8 @@ typedef struct{
     char magneticVariation_EastWest;
 } GPSData_t;
 
+GPSData_t GPSData;
+
 void GPS_Init(void);
 
 void GPS_Rx(void);
