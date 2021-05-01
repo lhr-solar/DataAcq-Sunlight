@@ -28,10 +28,14 @@ typedef struct{
 //Initialize GPS Module and struct
 /*
  * @param: struct that will be used to collect data
+ * @return: ERROR or SUCCESS
  */
-void GPS_Init(GPSData_t *Data);
+ErrorStatus GPS_Init(GPSData_t *Data);
 
 //Update Measurments from GPS Module
-void GPS_UpdateMeasurements(void);
+/*
+ * @return: ERROR or SUCCESS 
+ */
+ErrorStatus GPS_UpdateMeasurements(void);
 
 #endif

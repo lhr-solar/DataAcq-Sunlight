@@ -2,22 +2,26 @@
 
 char data[75];
 GPSData_t* GPSData;
+HAL_StatusTypeDef error;
 
-void GPS_Init(GPSData_t *Data){
+ErrorStatus GPS_Init(GPSData_t *Data){
     //The first command starts the module with "Hot Start" using all previous data stored
     //The second command sends us only the information we want to recieve (nothing about satellites)
     //The third command says at what velocity to stop moving car (.2m/s at the moment)
     uint8_t initCommands[100] = {"$PMTK101*32\r\n$PMTK220,1000*2F\r\n$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n$PMTK386,0.2*3F\r\n"}; 
     //Non-Blocking transmit
-    HAL_UART_Transmit_IT(&huart1, initCommands, sizeof(initCommands));
+    error = HAL_UART_Transmit_IT(&huart1, initCommands, sizeof(initCommands));
+    if (error != HAL_OK) return ERROR;
     GPSData = Data;
+    return SUCCESS;
 }
 
-void GPS_UpdateMeasurements(void){
+ErrorStatus GPS_UpdateMeasurements(void){
     //Non-Blocking receive. The number of bytes received will need to be tested based on whether we are receiving
     //characters for some fields or numbers
     //ex. $GPRMC,064951.000,A,2307.1256,N,12016.4438,E,0.03,165.48,260406,3.05,W,A*2C (75 characters)
-    HAL_UART_Receive_IT(&huart1, data, 75);
+    error = HAL_UART_Receive_IT(&huart1, data, 75);
+    if (error != HAL_OK) return ERROR;
     data[6] = "\n"; //replace comma with newline
     if (strcmp(data, "$GPRMC")) return; //if we receive data that we do not care about
     (*GPSData).latitude_Deg[0] = data[20];
@@ -48,4 +52,5 @@ void GPS_UpdateMeasurements(void){
     (*GPSData).magneticVariation_Deg[2] = data[66];
     (*GPSData).magneticVariation_Deg[3] = data[67];
     (*GPSData).magneticVariation_EastWest = data[69];
+    return SUCCESS;
 }
