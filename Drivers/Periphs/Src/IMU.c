@@ -1,7 +1,5 @@
 #include "IMU.h"
 
-IMUData_t IMUData;
-
 void IMU_Init(){
     uint8_t config[2];
     config[0] = OPR_MODE; //register address
@@ -12,7 +10,7 @@ void IMU_Init(){
     HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Read in m/s^2, Celcius, and degrees
 }
 
-void IMU_Rx(){
+void IMU_UpdateMeasurements(){
     uint8_t reg_addr = 8;
     uint8_t data[18];
     HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, &reg_addr, 1); //send register address to read from
