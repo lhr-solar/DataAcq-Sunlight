@@ -1,7 +1,6 @@
 #include "GPS.h"
 
 char data[75];
-GPSData_t GPSData;
 
 void GPS_Init(void){
     //The first command starts the module with "Hot Start" using all previous data stored
@@ -12,7 +11,7 @@ void GPS_Init(void){
     HAL_UART_Transmit_IT(&huart1, initCommands, sizeof(initCommands));
 }
 
-void GPS_Rx(void){
+void GPS_UpdateMeasurements(void){
     //Non-Blocking receive. The number of bytes received will need to be tested based on whether we are receiving
     //characters for some fields or numbers
     //ex. $GPRMC,064951.000,A,2307.1256,N,12016.4438,E,0.03,165.48,260406,3.05,W,A*2C (75 characters)
