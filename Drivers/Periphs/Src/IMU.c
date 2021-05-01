@@ -1,23 +1,29 @@
 #include "IMU.h"
 
 IMUData_t* IMUData;
+HAL_StatusTypeDef error;
 
-void IMU_Init(IMUData_t* Data){
+ErrorStatus IMU_Init(IMUData_t* Data){
     uint8_t config[2];
     config[0] = OPR_MODE; //register address
     config[1] = 7; //data to be transmitted 
-    HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer 
+    error = HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer 
+    if (error != HAL_OK){return ERROR;}
     config[0] = UNIT_SEL;
     config[1] = 0;
-    HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Read in m/s^2, Celcius, and degrees
+    error = HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Read in m/s^2, Celcius, and degrees
+    if (error != HAL_OK){return ERROR;}
     IMUData = Data;
+    return SUCCESS;
 }
 
-void IMU_UpdateMeasurements(){
+ErrorStatus IMU_UpdateMeasurements(){
     uint8_t reg_addr = 8;
     uint16_t data[9];
-    HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, &reg_addr, 1); //send register address to read from
-    HAL_I2C_Master_Receive_IT(&hi2c1, DEV_ADDR, data, 18);
+    error = HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, &reg_addr, 1); //send register address to read from
+    if (error != HAL_OK){return ERROR;}
+    error = HAL_I2C_Master_Receive_IT(&hi2c1, DEV_ADDR, data, 18);
+    if (error != HAL_OK){return ERROR;}
     (*IMUData).accel_x = data[0];
     (*IMUData).accel_y = data[1];
     (*IMUData).accel_z = data[2];
@@ -27,4 +33,5 @@ void IMU_UpdateMeasurements(){
     (*IMUData).gyr_x = data[6];
     (*IMUData).gyr_y = data[7];
     (*IMUData).gyr_z = data[8];
+    return SUCCESS;
 }

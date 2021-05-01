@@ -48,10 +48,14 @@ typedef struct {
 //Initialize IMU to collect data
 /*
  * @param: Data struct used to collect IMU Data
+ * @return: SUCCESS or ERROR
  */
-void IMU_Init(IMUData_t* Data);
+ErrorStatus IMU_Init(IMUData_t* Data);
 
 //Update struct with new information
-void IMU_UpdateMeasurements(void);
+/*
+ * @return: SUCCESS or ERROR
+ */
+ErrorStatus IMU_UpdateMeasurements(void);
 
 #endif

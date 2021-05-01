@@ -12,7 +12,8 @@ Usage
     First the ``IMU_Init(IMUData_t* Data)`` must be called. It will initialize the peripheral to collect data using all 
     three measurment units. Later on, we can decide whether we actually need to collect data using everything (we can
     disable some to save power, such as the magnetometer). The struct passed in will collect all the data. Then the 
-    ``IMU_UpdateMeasurements()`` function is called to update all the data collected. 
+    ``IMU_UpdateMeasurements()`` function is called to update all the data collected. Both functions return whether or not
+    the I2C transmit and receive were successful or not.
 
 Additional Considerations
     The units can be initialized in many different ways. The way it is initialized now just collects the data.
