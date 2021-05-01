@@ -9,7 +9,12 @@
 #include "IMU.h"
 #include "GPS.h"
 
+<<<<<<< HEAD
 #define SDCARD_WRITE_BUFSIZE        64
+=======
+
+//All printing done by this module is via UART
+>>>>>>> Fixed header guard.
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
