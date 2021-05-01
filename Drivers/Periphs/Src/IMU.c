@@ -10,7 +10,7 @@ void IMU_Init(IMUData_t* Data){
     config[0] = UNIT_SEL;
     config[1] = 0;
     HAL_I2C_Master_Transmit_IT(&hi2c1, DEV_ADDR, config, 2); //Read in m/s^2, Celcius, and degrees
-    Data = IMUData;
+    IMUData = Data;
 }
 
 void IMU_UpdateMeasurements(){
