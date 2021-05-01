@@ -28,5 +28,5 @@ ErrorStatus Radio_RX(void* data);
  *              are familiar
  * @return ErrorStatus: Success or Error
  */
-ErrorStatus Radio_TX(CANMSG_t data);
+ErrorStatus Radio_TX(CANPayload_t data);
 #endif
