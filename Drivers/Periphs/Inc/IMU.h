@@ -45,10 +45,11 @@ typedef struct {
     //int16_t gyr_temp;
 } IMUData_t;
 
-IMUData_t IMUData;
-
 //Initialize IMU to collect data
-void IMU_Init(void);
+/*
+ * @param: Data struct used to collect IMU Data
+ */
+void IMU_Init(IMUData_t* Data);
 
 //Update struct with new information
 void IMU_UpdateMeasurements(void);

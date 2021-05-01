@@ -9,11 +9,10 @@ Purpose
     This data can be used to calculate measurements such as acceleration and yaw when the car is turning.
 
 Usage
-    First the ``IMU_Init()`` must be called. It will initialize the peripheral to collect data using all three
-    measurment units. Later on, we can decide whether we actually need to collect data using everything (we can
-    disable some to save power, such as the magnetometer). Then the ``IMU_UpdateMeasurements()`` function is 
-    called to update all the data collected. This data is stored in the struct ``IMUData``. Neither of these
-    function take or receive any data.
+    First the ``IMU_Init(IMUData_t* Data)`` must be called. It will initialize the peripheral to collect data using all 
+    three measurment units. Later on, we can decide whether we actually need to collect data using everything (we can
+    disable some to save power, such as the magnetometer). The struct passed in will collect all the data. Then the 
+    ``IMU_UpdateMeasurements()`` function is called to update all the data collected. 
 
 Additional Considerations
     The units can be initialized in many different ways. The way it is initialized now just collects the data.
