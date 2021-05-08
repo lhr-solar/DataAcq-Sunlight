@@ -226,7 +226,7 @@ void Error_Handler(void){}
 
 int _write(int fd, char *buffer, unsigned int len) {
     if(buffer != NULL) {
-        BSP_UART_Write(buffer, len);
+        HAL_UART_Transmit(&huart3, buffer, len, 1000);
     }
     return len;
 }
