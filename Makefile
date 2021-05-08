@@ -44,6 +44,9 @@ Core/Src/freertos.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/stm32f4xx_hal_timebase_tim.c \
+Core/Src/BroadcastingTask.c \
+Core/Src/DataLoggingTask.c \
+Core/Src/DataReadingTask.c \
 LWIP/Target/ethernetif.c \
 LWIP/App/lwip.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_eth.c \
