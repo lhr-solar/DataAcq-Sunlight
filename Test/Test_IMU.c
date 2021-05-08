@@ -1,6 +1,6 @@
 #include "IMU.h"
 #include <stdio.h>
-#include "cmsis.h"
+#include "cmsis_os.h"
 /* TEST PROCEDURE:
     1: Make proper connections between main board and IMU (Although the INT and RESET pins are connected, they are not
     used because we do not use low power mode)
@@ -201,27 +201,6 @@ static void MX_GPIO_Init(void){
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
-
-/**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-    if (htim->Instance == TIM1) HAL_IncTick();
-}
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void){}
-    __disable_irq();
-    while (1);
 }
 
 int _write(int fd, char *buffer, unsigned int len) {

@@ -14,7 +14,7 @@
 # target
 ######################################
 TARGET = Sunlight
-
+TOP_DIR = ../..
 
 ######################################
 # building variables
@@ -39,11 +39,6 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
-Core/Src/main.c \
-Core/Src/freertos.c \
-Core/Src/stm32f4xx_it.c \
-Core/Src/stm32f4xx_hal_msp.c \
-Core/Src/stm32f4xx_hal_timebase_tim.c \
 LWIP/Target/ethernetif.c \
 LWIP/App/lwip.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_eth.c \
@@ -167,10 +162,16 @@ Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c
 
+ifneq ($(TEST), none)
+TEST_FILE := Test_$(TEST).c
+C_SOURCES += $(wildcard $(TOP_DIR)/Test/$(TEST_FILE)) #This line adds the test file instead of main.c
+else
+C_SOURCES += $(wildcard $(TOP_DIR)/Core/Src/*.c)
+endif
+
 # ASM sources
 ASM_SOURCES =  \
 startup_stm32f429xx.s
-
 
 #######################################
 # binaries
@@ -281,7 +282,6 @@ LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BU
 
 # default action: build all
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
-
 
 #######################################
 # build the application
