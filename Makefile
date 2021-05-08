@@ -39,6 +39,11 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/freertos.c \
+Core/Src/stm32f4xx_hal_msp.c \
+Core/Src/stm32f4xx_hal_timebase_tim.c \
+Core/Src/stm32f4xx_it.c \
+Core/Src/system_stm32f4xx.c \
 LWIP/Target/ethernetif.c \
 LWIP/App/lwip.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_eth.c \
@@ -166,7 +171,7 @@ ifneq ($(TEST), none)
 TEST_FILE := Test_$(TEST).c
 C_SOURCES += $(wildcard $(TOP_DIR)/Test/$(TEST_FILE)) #This line adds the test file instead of main.c
 else
-C_SOURCES += $(wildcard $(TOP_DIR)/Core/Src/*.c)
+C_SOURCES += $(wildcard $(TOP_DIR)/Core/Src/main.c)
 endif
 
 # ASM sources

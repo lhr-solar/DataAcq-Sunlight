@@ -1,6 +1,7 @@
 #include "IMU.h"
 #include <stdio.h>
 #include "cmsis_os.h"
+#include "stm32f4xx_hal.h"
 /* TEST PROCEDURE:
     1: Make proper connections between main board and IMU (Although the INT and RESET pins are connected, they are not
     used because we do not use low power mode)
