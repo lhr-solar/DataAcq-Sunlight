@@ -22,6 +22,7 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
+#include "Tasks.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -59,6 +60,24 @@ const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
+};
+osThreadId_t DataLoggingTaskHandle;
+osThreadAttr_t DataLoggingTask_attributes = {
+  .name = "Data Logging Task",
+  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
+  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+};
+osThreadId_t DataReadingTaskHandle;
+osThreadAttr_t DataReadingTask_attributes = {
+  .name = "Data Reading Task",
+  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
+  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+};
+osThreadId_t BroadcastingTaskHandle;
+osThreadAttr_t BroadcastingTask_attributes = {
+  .name = "Broadcasting Task",
+  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
+  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
 };
 /* USER CODE BEGIN PV */
 
@@ -145,9 +164,10 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
+  DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
+  BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
