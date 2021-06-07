@@ -14,7 +14,6 @@
 # target
 ######################################
 TARGET = Sunlight
-TOP_DIR = ../..
 
 ######################################
 # building variables
@@ -68,7 +67,6 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
 $(wildcard Drivers/Periphs/Src/*.c) \
-Core/Src/system_stm32f4xx.c \
 Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
 Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
 Middlewares/Third_Party/FreeRTOS/Source/list.c \
@@ -167,11 +165,11 @@ Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c
 
-ifneq ($(TEST), none)
+ifdef TEST
 TEST_FILE := Test_$(TEST).c
-C_SOURCES += $(wildcard $(TOP_DIR)/Test/$(TEST_FILE)) #This line adds the test file instead of main.c
+C_SOURCES += Test/$(TEST_FILE) #This line adds the test file instead of main.c
 else
-C_SOURCES += $(wildcard $(TOP_DIR)/Core/Src/main.c)
+C_SOURCES += Core/Src/main.c
 endif
 
 # ASM sources
