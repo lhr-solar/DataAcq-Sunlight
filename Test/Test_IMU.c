@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "cmsis_os.h"
 #include "stm32f4xx_hal.h"
+#include "globals.h"
 /* TEST PROCEDURE:
     1: Make proper connections between main board and IMU (Although the INT and RESET pins are connected, they are not
     used because we do not use low power mode)
@@ -43,10 +44,10 @@ int main(void){
     MX_USART3_UART_Init();
     //beginning Test code
     IMUData_t Data;
-    IMU_Init(&Data);
+    IMU_Init();
     while (1){
-        ErrorStatus err = IMU_UpdateMeasurements();
-        if (err = ERROR){
+        ErrorStatus err = IMU_GetMeasurements(&Data);
+        if (err == ERROR){
             printf("I2C transmitting or receiving failed.\n");
             printf("Consider checking I2C init function or changing device address to backup\n");
         }
@@ -202,11 +203,4 @@ static void MX_GPIO_Init(void){
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
-
-int _write(int fd, char *buffer, unsigned int len) {
-    if(buffer != NULL) {
-        HAL_UART_Transmit(&huart3, buffer, len, 1000);
-    }
-    return len;
 }
