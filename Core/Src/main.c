@@ -535,8 +535,7 @@ void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
-  CAN_HandleTypeDef *hcan2; 
-  CANBus_Init(hcan2);
+  CANBus_Init(); 
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)

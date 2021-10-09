@@ -2,9 +2,9 @@
 #include "stm32f4xx_hal_can.h" 
 #include <stdio.h> 
 
-uint32_t TxMailbox;
-static CAN_HandleTypeDef *hcan1;							//header can used throughout the file. 
-CAN_TxHeaderTypeDef pHeader;    							//header for message transmissions
+uint32_t TxMailbox;											
+static CAN_HandleTypeDef *hcan1;							//header CAN used throughout the file. 
+CAN_TxHeaderTypeDef pHeader;    							//header for message transmissions used throughout the file. 
 uint32_t receive_number = 0; 
 
 static void floatTo4Bytes(float val, uint8_t bytes_array[4]);
@@ -43,11 +43,14 @@ CAN_HandleTypeDef* initializeHCAN() {
   return &hcan; 
 }
 
-void CANBus_Read(uint8_t id, uint8_t *data) {
-	printf("hello"); 
-	// use hal can add tx message to request a message, and then i guess keep on polling 
-	// start polling with HAL_CAN_IsTxMessagePending() i think until we get a message? while loop or something
-	// put that stuff in the mailbox or whatever. find out how that works. 
+void CANBus_Read() {
+	printf("hello");															//testing for UART
+	uint32_t RxFifoLevel = 0; 
+	while (RxFifoLevel == 0) { 													//while there are no messages 
+		uint32_t RxFifoLevel = HAL_CAN_GetRxFifoFillLevel(hcan1, CAN_RX_FIFO0); // get the fifo level and make sure we can add it in 
+	}
+	//finally, read the message (call it). 
+
 }
 
 void CANBus_Send(CANId_t id, CANPayload_t payload){
