@@ -3,32 +3,51 @@
 #include <stdio.h> 
 
 uint32_t TxMailbox;
-CAN_HandleTypeDef *hcan1;
-CAN_TxHeaderTypeDef pHeader;    //header for message transmissions
+static CAN_HandleTypeDef *hcan1;							//header can used throughout the file. 
+CAN_TxHeaderTypeDef pHeader;    							//header for message transmissions
 uint32_t receive_number = 0; 
 
 static void floatTo4Bytes(float val, uint8_t bytes_array[4]);
 
-void CANBus_Init(CAN_HandleTypeDef *hcan){
-	HAL_CAN_Init(hcan); 
-    HAL_CAN_Start(hcan);
-    HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
-	hcan1 = hcan; //make global variable so it can be used elsewhere
-	pHeader.DLC=5; //give message size of 1 byte
-	pHeader.IDE=CAN_ID_STD; //set identifier to standard
-	pHeader.RTR=CAN_RTR_DATA; //set data type to remote transmission request?
-	RxFlag = 1; //just initializing here for now. 
+void CANBus_Init() {
+	hcan1 = initializeHCAN(); 								//initialize hcan1 fields first 
+	HAL_CAN_MspInit(hcan1); 								//initialization functions 
+	HAL_CAN_Init(hcan1); 									
+	/*														going to forego filtering, want to receive all messages*/ 
+    HAL_CAN_Start(hcan1);
+    HAL_CAN_ActivateNotification(hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+	pHeader.DLC=5; 											//give message size of 1 byte
+	pHeader.IDE=CAN_ID_STD; 								//set identifier to standard
+	pHeader.RTR=CAN_RTR_DATA; 								//set data type to remote transmission request?
+}
+
+CAN_HandleTypeDef* initializeHCAN() { 
+  CAN_HandleTypeDef hcan; 
+  hcan.Instance = CAN1;
+  hcan.Init.Prescaler = 45;
+  hcan.Init.Mode = CAN_MODE_LOOPBACK;
+  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan.Init.TimeSeg1 = CAN_BS1_3TQ;
+  hcan.Init.TimeSeg2 = CAN_BS2_4TQ;
+  hcan.Init.TimeTriggeredMode = DISABLE;
+  hcan.Init.AutoBusOff = DISABLE;
+  hcan.Init.AutoWakeUp = DISABLE;
+  hcan.Init.AutoRetransmission = DISABLE;
+  hcan.Init.ReceiveFifoLocked = DISABLE;
+  hcan.Init.TransmitFifoPriority = DISABLE;
+  hcan.state = HAL_CAN_STATE_READY; 
+  if (HAL_CAN_Init(&hcan) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  return &hcan; 
 }
 
 void CANBus_Read(uint8_t id, uint8_t *data) {
 	printf("hello"); 
-	CAN_RxHeaderTypeDef pHeader; 
-	receive_number = HAL_CAN_GetRxFifoFillLevel(hcan1, receive_number); 
-    HAL_CAN_GetRxMessage(hcan1, receive_number, &pHeader, data);
-	receive_number++; 
-	for (int i = 0; i < 8; i++) { 
-		printf("%d", data[i]); 
-	}
+	// use hal can add tx message to request a message, and then i guess keep on polling 
+	// start polling with HAL_CAN_IsTxMessagePending() i think until we get a message? while loop or something
+	// put that stuff in the mailbox or whatever. find out how that works. 
 }
 
 void CANBus_Send(CANId_t id, CANPayload_t payload){

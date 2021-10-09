@@ -551,7 +551,7 @@ void StartDefaultTask(void *argument)
     CANBus_Read(id, data); 
     
     HAL_Delay(1000); 
-
+    
     CANBus_Send(id, data); 
   }
   /* USER CODE END 5 */
