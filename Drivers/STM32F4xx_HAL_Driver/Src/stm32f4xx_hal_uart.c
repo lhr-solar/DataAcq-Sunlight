@@ -471,7 +471,7 @@ HAL_StatusTypeDef HAL_LIN_Init(UART_HandleTypeDef *huart, uint32_t BreakDetectLe
   {
     return HAL_ERROR;
   }
-
+  
   /* Check the LIN UART instance */
   assert_param(IS_UART_LIN_INSTANCE(huart->Instance));
 

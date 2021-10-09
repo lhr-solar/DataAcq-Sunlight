@@ -23,6 +23,7 @@
 #include "fatfs.h"
 #include "lwip.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -100,7 +101,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+    
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -236,7 +237,7 @@ static void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 45;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.Mode = CAN_MODE_LOOPBACK;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_3TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
@@ -534,11 +535,24 @@ void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
+  CAN_HandleTypeDef *hcan2; 
+  CANBus_Init(hcan2);
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET); 
+    HAL_Delay(1000); 
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET); 
+    HAL_Delay(1000); 
+
+    int data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    uint8_t id = 0x002; 
+    CANBus_Read(id, data); 
+    
+    HAL_Delay(1000); 
+
+    CANBus_Send(id, data); 
   }
   /* USER CODE END 5 */
 }

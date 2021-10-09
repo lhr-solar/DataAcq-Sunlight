@@ -267,6 +267,7 @@ endif
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
+SF = st-flash
 
 #######################################
 # LDFLAGS
@@ -318,6 +319,12 @@ $(BUILD_DIR):
 clean:
 	-rm -fR $(BUILD_DIR)
   
+#######################################
+# flash code to the board (using stlink)
+#######################################
+flash:
+	$(SF) write $(BUILD_DIR)/$(TARGET).bin 0x8000000
+
 #######################################
 # dependencies
 #######################################

@@ -265,7 +265,7 @@ typedef struct
   __IO uint32_t              FA1R;                /*!< CAN filter activation register,      Address offset: 0x21C         */
   uint32_t                   RESERVED5[8];        /*!< Reserved, 0x220-0x23F                                              */ 
   CAN_FilterRegister_TypeDef sFilterRegister[28]; /*!< CAN Filter Register,                 Address offset: 0x240-0x31C   */
-} CAN_TypeDef;
+} CAN_TypeDef; 
 
 /** 
   * @brief CRC calculation unit 

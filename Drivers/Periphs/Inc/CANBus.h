@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "main.h"
+//#include "main.h"
 #include "stm32f4xx_hal_can.h"
 
 int RxFlag;
@@ -53,6 +53,6 @@ void CANbus_Init(CAN_HandleTypeDef *hcan1);
  * @param   id : CAN id of the message
  * @param   payload : the data that will be sent.
  */
-int CANbus_Send(CANId_t id, CANPayload_t payload);
+void CANbus_Send(CANId_t id, CANPayload_t payload);
 
 #endif
