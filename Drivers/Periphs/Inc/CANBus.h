@@ -46,7 +46,7 @@ typedef struct {
  * @param   hcan1 pointer to initialized CAN struct
  * @return  None
  */
-void CANbus_Init(CAN_HandleTypeDef *hcan1);
+void CANbus_Init();
 
 /**
  * @brief   Transmits data onto the CANbus

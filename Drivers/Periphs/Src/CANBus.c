@@ -3,8 +3,11 @@
 #include <stdio.h> 
 
 uint32_t TxMailbox;											
-static CAN_HandleTypeDef *hcan1;								//header CAN used throughout the file. 
+static CAN_HandleTypeDef *hcan1;							//header CAN used throughout the file. 
 CAN_TxHeaderTypeDef pHeader;    							//header for message transmissions used throughout the file. 
+CAN_RxHeaderTypeDef pHeaderRx; 								//header for message receiving used throughout the file 
+uint8_t aData[8];											//data array  
+CANPayload_t payload; 
 uint32_t receive_number = 0; 
 
 static void floatTo4Bytes(float val, uint8_t bytes_array[4]);
@@ -46,45 +49,25 @@ void CANBus_Read() {
 	printf("hello");															//testing for UART
 	uint32_t RxFifoLevel = 0; 
 	while (RxFifoLevel == 0) { 													//while there are no messages 
-		RxFifoLevel = HAL_CAN_GetRxFifoFillLevel(hcan1, CAN_RX_FIFO0); // get the fifo level and make sure we can add it in 
+		RxFifoLevel = HAL_CAN_GetRxFifoFillLevel(hcan1, CAN_RX_FIFO0); 			// get the fifo level and make sure we can add it in 
 	}
 	//finally, read the message (call it). 
-
-	
+	while (HAL_CAN_GetRxMessage(hcan1, RxFifoLevel, pHeaderRx, aData) != HAL_OK) {
+		printf("hal error"); 													//keep printing error until hal ok and we received message 
+	} 
+	//at this point we have aData filled in. 
+	for (int i = 0; i < 8; i++) { 
+		printf("%d", aData[i]); 												//more uart testing 
+	}
 }
 
-void CANBus_Send(CANId_t id, CANPayload_t payload){
-    uint8_t txdata[5];
+void CANBus_Send(CANId_t id, CANPayload_t payload){ 
 	pHeader.StdId=id; //define a standard identifier, used for message identification by filters (switch this for the other microcontroller)
-    switch (id) {
-		case TRIP:
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, &payload.data.b, &TxMailbox);  //function to add message for transmition
-
-		case ALL_CLEAR:
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, &payload.data.b, &TxMailbox);  //function to add message for transmition
-
-		case CONTACTOR_STATE:
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, &payload.data.b, &TxMailbox);  //function to add message for transmition
-
-		case CURRENT_DATA:
-			floatTo4Bytes(payload.data.f, &txdata[0]);
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, txdata, &TxMailbox);  //function to add message for transmition
-
-		case VOLT_DATA:
-		case TEMP_DATA:
-			txdata[0] = payload.idx;
-			floatTo4Bytes(payload.data.f, &txdata[1]);
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, txdata, &TxMailbox);  //function to add message for transmition
-
-		case SOC_DATA:
-			floatTo4Bytes(payload.data.f, &txdata[0]);
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, txdata, &TxMailbox);  //function to add message for transmition
-
-		case WDOG_TRIGGERED:
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, &payload.data.b, &TxMailbox);  //function to add message for transmition
-
-		case CAN_ERROR:
-            HAL_CAN_AddTxMessage(hcan1, &pHeader, &payload.data.b, &TxMailbox);  //function to add message for transmition
+	pHeader.TransmitGlobalTime=ENABLE; 
+	uint32_t mailbox = 0; 
+    while (HAL_CAN_GetTxMailboxesFreeLevel(hcan1) == 0) {} //wait until one mailbox is open 
+	if (HAL_CAN_AddTxMessage(hcan1, pHeader, payload.idx, &mailbox) != HAL_OK) { 
+		printf("hal error"); 
 	}
 }
 
