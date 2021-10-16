@@ -22,6 +22,7 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
+#include "CANBus.h"
 
 
 /* Private includes ----------------------------------------------------------*/
@@ -44,7 +45,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-CAN_HandleTypeDef hcan1;
+//CAN_HandleTypeDef hcan1;
 
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
@@ -235,6 +236,7 @@ static void MX_CAN1_Init(void)
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
+  /*
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 45;
   hcan1.Init.Mode = CAN_MODE_LOOPBACK;
@@ -251,6 +253,7 @@ static void MX_CAN1_Init(void)
   {
     Error_Handler();
   }
+  */
   /* USER CODE BEGIN CAN1_Init 2 */
 
   /* USER CODE END CAN1_Init 2 */
@@ -535,7 +538,11 @@ void StartDefaultTask(void *argument)
 {
   /* init code for LWIP */
   MX_LWIP_Init();
-  CANBus_Init(); 
+  CANbus_Init(); 
+  uint8_t data[8] = {1, 2, 3, 4, 5, 6, 7, 8}; 
+  CANData_t data_type;
+  data_type.b = 8; 
+  CANPayload_t payload;  
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
@@ -543,15 +550,14 @@ void StartDefaultTask(void *argument)
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_SET); 
     HAL_Delay(1000); 
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_7, GPIO_PIN_RESET); 
-    HAL_Delay(1000); 
-
-    int data[] = {1, 2, 3, 4, 5, 6, 7, 8};
-    uint8_t id = 0x002; 
-    CANBus_Read(id, data); 
+    HAL_Delay(1000);
     
-    HAL_Delay(1000); 
+    for (int i = 0; i < 8; i++) { 
+      payload.idx = i; 
+      payload.data.b = data[i]; 
+      CANbus_Send(TRIP, payload); 
+    }
     
-    CANBus_Send(id, data); 
   }
   /* USER CODE END 5 */
 }

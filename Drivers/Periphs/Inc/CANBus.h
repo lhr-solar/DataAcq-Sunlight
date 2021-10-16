@@ -55,4 +55,10 @@ void CANbus_Init();
  */
 void CANbus_Send(CANId_t id, CANPayload_t payload);
 
+extern CAN_HandleTypeDef *hcan1;									//header CAN used throughout the file. 
+extern CAN_TxHeaderTypeDef *pHeader;    								//header for message transmissions used throughout the file. 
+extern CAN_RxHeaderTypeDef *pHeaderRx; 								//header for message receiving used throughout the file 
+extern uint8_t aData[8];											//data array  
+extern CANPayload_t payload; 
+
 #endif

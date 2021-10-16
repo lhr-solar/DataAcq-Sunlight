@@ -59,7 +59,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern ETH_HandleTypeDef heth;
-extern CAN_HandleTypeDef hcan1;
+//extern CAN_HandleTypeDef hcan1;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 
@@ -188,9 +188,12 @@ void CAN1_RX0_IRQHandler(void)
   /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
 
   /* USER CODE END CAN1_RX0_IRQn 0 */
+  
+  /*
   HAL_CAN_IRQHandler(&hcan1);
   HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &pRxHeader, RxData);
   RxFlag = 1;
+  */ 
 
   /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
 
