@@ -3,14 +3,14 @@
 #include <stdio.h> 
 
 uint32_t TxMailbox;											
-static CAN_HandleTypeDef *hcan1;							//header CAN used throughout the file. 
+static CAN_HandleTypeDef *hcan1;								//header CAN used throughout the file. 
 CAN_TxHeaderTypeDef pHeader;    							//header for message transmissions used throughout the file. 
 uint32_t receive_number = 0; 
 
 static void floatTo4Bytes(float val, uint8_t bytes_array[4]);
 
 void CANBus_Init() {
-	hcan1 = initializeHCAN(); 								//initialize hcan1 fields first 
+	initializeHCAN(hcan1); 								//initialize hcan1 fields first 
 	HAL_CAN_MspInit(hcan1); 								//initialization functions 
 	HAL_CAN_Init(hcan1); 									
 	/*														going to forego filtering, want to receive all messages*/ 
@@ -21,36 +21,36 @@ void CANBus_Init() {
 	pHeader.RTR=CAN_RTR_DATA; 								//set data type to remote transmission request?
 }
 
-CAN_HandleTypeDef* initializeHCAN() { 
-  CAN_HandleTypeDef hcan; 
-  hcan.Instance = CAN1;
-  hcan.Init.Prescaler = 45;
-  hcan.Init.Mode = CAN_MODE_LOOPBACK;
-  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan.Init.TimeSeg1 = CAN_BS1_3TQ;
-  hcan.Init.TimeSeg2 = CAN_BS2_4TQ;
-  hcan.Init.TimeTriggeredMode = DISABLE;
-  hcan.Init.AutoBusOff = DISABLE;
-  hcan.Init.AutoWakeUp = DISABLE;
-  hcan.Init.AutoRetransmission = DISABLE;
-  hcan.Init.ReceiveFifoLocked = DISABLE;
-  hcan.Init.TransmitFifoPriority = DISABLE;
-  hcan.state = HAL_CAN_STATE_READY; 
-  if (HAL_CAN_Init(&hcan) != HAL_OK)
+void initializeHCAN(CAN_HandleTypeDef *hcan_copy) { 
+  //CAN_HandleTypeDef hcan; 
+  hcan_copy->Instance = CAN1;
+  hcan_copy->Init.Prescaler = 45;
+  hcan_copy->Init.Mode = CAN_MODE_LOOPBACK;
+  hcan_copy->Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan_copy->Init.TimeSeg1 = CAN_BS1_3TQ;
+  hcan_copy->Init.TimeSeg2 = CAN_BS2_4TQ;
+  hcan_copy->Init.TimeTriggeredMode = DISABLE;
+  hcan_copy->Init.AutoBusOff = DISABLE;
+  hcan_copy->Init.AutoWakeUp = DISABLE;
+  hcan_copy->Init.AutoRetransmission = DISABLE;
+  hcan_copy->Init.ReceiveFifoLocked = DISABLE;
+  hcan_copy->Init.TransmitFifoPriority = DISABLE;
+  hcan_copy->state = HAL_CAN_STATE_READY; 
+  if (HAL_CAN_Init(hcan_copy) != HAL_OK)
   {
     Error_Handler();
   }
-  return &hcan; 
 }
 
 void CANBus_Read() {
 	printf("hello");															//testing for UART
 	uint32_t RxFifoLevel = 0; 
 	while (RxFifoLevel == 0) { 													//while there are no messages 
-		uint32_t RxFifoLevel = HAL_CAN_GetRxFifoFillLevel(hcan1, CAN_RX_FIFO0); // get the fifo level and make sure we can add it in 
+		RxFifoLevel = HAL_CAN_GetRxFifoFillLevel(hcan1, CAN_RX_FIFO0); // get the fifo level and make sure we can add it in 
 	}
 	//finally, read the message (call it). 
 
+	
 }
 
 void CANBus_Send(CANId_t id, CANPayload_t payload){
@@ -99,7 +99,7 @@ static void floatTo4Bytes(float val, uint8_t bytes_array[4]) {
 	// Overite bytes of union with float variable
 	u.float_variable = val;
 	// Assign bytes to input array
-	memcpy(bytes_array, u.temp_array, 4); //THIS CODE IS USELESS BECAUSE TEMP ARRAY HASNT BEEN INITIALIZED!!!! what is the point of this??? 
+	memcpy(bytes_array, u.temp_array, 4); //useless code? temp array hasnt been initialized 
 	temp = bytes_array[3];
 	bytes_array[3] = bytes_array[0];
 	bytes_array[0] = temp;
