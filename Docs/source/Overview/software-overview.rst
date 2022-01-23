@@ -19,9 +19,9 @@ Drivers
 
 The drivers interface with the external hardware and is above the HAL. The Sunlight Drivers interface with
 
-- `IMU BNO055: <https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bno055-ds000.pdf>`_
-- `RTC PCF8523T: <https://www.nxp.com/docs/en/data-sheet/PCF8523.pdf>`_
-- `GPS MTK3339: <https://www.adafruit.com/product/790>`_
+- `IMU BNO055 <https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bno055-ds000.pdf>`_
+- `RTC PCF8523T <https://www.nxp.com/docs/en/data-sheet/PCF8523.pdf>`_
+- `GPS MTK3339 <https://www.adafruit.com/product/790>`_
 - Ethernet
 - SD Card
 - :term:`CAN <CAN Bus>`
