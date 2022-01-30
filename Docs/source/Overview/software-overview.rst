@@ -12,7 +12,8 @@ Hardware Abstraction Layer (HAL)
 ================================
 
 The `HAL <https://www.st.com/resource/en/user_manual/dm00105879-description-of-stm32f4-hal-and-ll-drivers-stmicroelectronics.pdf>`_ 
-is provided by STM and allows for easy use of peripheral drivers within the STM.
+is provided by STM and allows for easy use of peripheral drivers within the STM. The HAL layer was generated using
+the `STMCube Code Generator <https://www.st.com/en/development-tools/stm32cubemx.html>`_.
 
 Drivers
 =======
@@ -26,6 +27,11 @@ The drivers interface with the external hardware and is above the HAL. The Sunli
 - SD Card
 - :term:`CAN <CAN Bus>`
 
+RTOS
+====
+
+The :term:`RTOS` uses a scheduler to run multiple threads. Running these threads creates “pseudo-concurrency”.
+We use `freeRTOS <https://www.freertos.org/>`_
 
 Tasks
 =====
