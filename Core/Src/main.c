@@ -141,9 +141,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-
+  printf("initializing os");
   /* Init scheduler */
   osKernelInitialize();
+  printf("...\n\r");
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -595,6 +596,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+    printf("error handler\n\r");
+    osDelay(1);
   }
   /* USER CODE END Error_Handler_Debug */
 }
