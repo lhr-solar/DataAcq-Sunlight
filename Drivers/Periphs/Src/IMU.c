@@ -51,10 +51,10 @@ static void IMU_WaitForPower() {
     // The CHIP_ID register (0x00) is set to a fixed value of 0xA0
     config[0] = 0;
     while(config[0] != 0xA0) {
-        printf("Waiting for IMU to initialize...\n");
+        //printf("Waiting for IMU to initialize...\n\r");
         HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
     }
-    printf("IMU is now responding! Continuing...\n");
+    printf("IMU is now responding! Continuing...\n\r");
 }
 
 ErrorStatus IMU_Init(){
@@ -70,10 +70,11 @@ ErrorStatus IMU_Init(){
 
     // Pull the reset pin low, then high to reset the IMU
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    for(volatile int i = 0; i < 10; i++);   // Give it a moment of time
+    for(volatile int i = 0; i < 10; i++);   // Give it a moment of time, WAS i<10
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
 
     IMU_WaitForPower();
+    printf("check 2 ");
 
     // Verify our current mode
     HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
@@ -83,7 +84,7 @@ ErrorStatus IMU_Init(){
         config[1] = 0;
         SEND(config, 2);
         // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
-        HAL_Delay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point
+        HAL_Delay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 50
     }
 
     // The register map in this chip is split into multiple pages. Select page 0.
@@ -97,7 +98,7 @@ ErrorStatus IMU_Init(){
     SEND(config, 2);
 
     // Wait for the reset to complete
-    HAL_Delay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point
+    HAL_Delay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
 
     // Select the power mode
     config[0] = PWR_MODE;
@@ -123,7 +124,7 @@ ErrorStatus IMU_Init(){
     if (error != HAL_OK){return ERROR;}
 
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
-    HAL_Delay(20);
+    HAL_Delay(20); //WAS 20
     
     return SUCCESS;
 }

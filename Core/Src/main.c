@@ -35,6 +35,9 @@ SPI_HandleTypeDef hspi5;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
+
+ETH_HandleTypeDef heth; //
+TIM_HandleTypeDef htim1; ///
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -578,6 +581,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+    printf("error");
+    HAL_Delay(10);
   }
   /* USER CODE END Error_Handler_Debug */
 }

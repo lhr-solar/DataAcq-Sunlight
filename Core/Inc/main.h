@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_can.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -46,6 +47,9 @@ extern SPI_HandleTypeDef hspi5;
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
+
+extern ETH_HandleTypeDef heth; //
+extern TIM_HandleTypeDef htim1;//
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

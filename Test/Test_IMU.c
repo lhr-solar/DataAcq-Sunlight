@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "cmsis_os.h"
 #include "stm32f4xx_hal.h"
+#include "main.h"
 /* TEST PROCEDURE:
     1: Make proper connections between main board and IMU (Although the INT and RESET pins are connected, they are not
     used because we do not use low power mode)
@@ -17,6 +18,20 @@
 */
 I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart3;
+
+CAN_HandleTypeDef hcan1;
+
+//I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
+
+SPI_HandleTypeDef hspi5;
+
+UART_HandleTypeDef huart1;
+//UART_HandleTypeDef huart3;
+
+ETH_HandleTypeDef heth; //
+TIM_HandleTypeDef htim1; ///
+
 
 //These defines are not in IMU.h because they are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
@@ -35,18 +50,21 @@ static void MX_USART3_UART_Init(void);
 
 int main(void){
     //code taken from main.c in Core folder
+
     HAL_Init();
     SystemClock_Config();
+    
 
     MX_GPIO_Init();
     MX_I2C1_Init();
     MX_USART3_UART_Init();
     //beginning Test code
     IMUData_t Data;
-    IMU_Init(&Data);
+    IMU_Init();
+    printf("test 3");
     while (1){
-        ErrorStatus err = IMU_UpdateMeasurements();
-        if (err = ERROR){
+        ErrorStatus err = IMU_GetMeasurements(&Data);
+        if ((err) == ERROR){
             printf("I2C transmitting or receiving failed.\n");
             printf("Consider checking I2C init function or changing device address to backup\n");
         }
@@ -90,12 +108,15 @@ void SystemClock_Config(void){
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
     {
         Error_Handler();
+        
     }
+//}  
     /** Activate the Over-Drive mode
   */
     if (HAL_PWREx_EnableOverDrive() != HAL_OK)
     {
         Error_Handler();
+       
     }
     /** Initializes the CPU, AHB and APB buses clocks
   */
@@ -108,6 +129,7 @@ void SystemClock_Config(void){
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
     {
         Error_Handler();
+       
     }
 }
 
@@ -125,12 +147,18 @@ static void MX_I2C1_Init(void){
         Error_Handler();
     /** Configure Analogue filter
   */
-    if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+    if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK){
         Error_Handler();
     /** Configure Digital filter
   */
+
+    }
     if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+    {
         Error_Handler();
+       
+
+    }
 }
 
 static void MX_USART3_UART_Init(void){
@@ -142,8 +170,10 @@ static void MX_USART3_UART_Init(void){
     huart3.Init.Mode = UART_MODE_TX_RX;
     huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
     huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-    if (HAL_UART_Init(&huart3) != HAL_OK)
+    if (HAL_UART_Init(&huart3) != HAL_OK){
         Error_Handler();
+        
+    }
 }
 
 static void MX_GPIO_Init(void){
@@ -204,9 +234,22 @@ static void MX_GPIO_Init(void){
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
-int _write(int fd, char *buffer, unsigned int len) {
-    if(buffer != NULL) {
-        HAL_UART_Transmit(&huart3, buffer, len, 1000);
-    }
-    return len;
+//int _write(int fd, char *buffer, unsigned int len) {
+  //  if(buffer != NULL) {
+    //    HAL_UART_Transmit(&huart3,(uint8_t*)buffer, len, 1000);
+    //}
+    //return len;
+//}
+
+
+void Error_Handler(void) //TAKEN FROM main.c
+{
+  
+  __disable_irq();
+  while (1)
+  {
+    printf("error");
+    HAL_Delay(10);
+  }
+  
 }
