@@ -137,16 +137,12 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_FATFS_Init();
-  if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK) != HAL_OK) {
-    Error_Handler();
-  }
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-  printf("initializing os");
+
   /* Init scheduler */
   osKernelInitialize();
-  printf("...\n");
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
