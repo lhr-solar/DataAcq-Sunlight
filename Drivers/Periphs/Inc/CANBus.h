@@ -5,11 +5,28 @@
 
 /**
  * Initialize and configure a singular CANBus
- * Currently set up for CAN2
+ * Currently set up for CAN1
+ * 
+ * Recieved CAN messages are placed in an external software FIFO.
+ * "queue.h" has information on FIFO operations
  */
+
 
 #include "stm32f4xx.h"
 #include <stdbool.h>
+#include "FreeRTOS.h"
+#include "queue.h"
+
+/**
+ * Filter and HAL RX_FIFO configurations
+ * Set FILTER_MASK_ID_LOW/HIGH to 0 to recieve all can messages
+ */
+#define CAN_RX_FIFO_NUMBER      CAN_RX_FIFO0
+#define FILTER_BANK             0          /* 0 - 13 for CAN1, 14 - 27 for CAN2 */
+#define FILTER_ID_LOW           0x0000
+#define FILTER_ID_HIGH          0x0000
+#define FILTER_MASK_ID_LOW      0x0000
+#define FILTER_MASK_ID_HIGH     0x0000
 
 /**
  * CAN Message structure copied from BPS
@@ -52,24 +69,18 @@ typedef struct {
     CANPayload_t payload;
 } CANMSG_t;
 
-/**
- * Filter and HAL RX_FIFO configurations
- * Set FILTER_MASK_ID_LOW/HIGH to 0 to recieve all can messages
- */
-#define CAN_RX_FIFO_NUMBER      CAN_RX_FIFO0
-#define FILTER_BANK             14          /* 0 - 13 for CAN1, 14 - 27 for CAN2 */
-#define FILTER_ID_LOW           0x0000
-#define FILTER_ID_HIGH          0x0000
-#define FILTER_MASK_ID_LOW      0x0000
-#define FILTER_MASK_ID_HIGH     0x0000
-
 /** CAN Config
  * @brief Initialize CAN, configure CAN filters/interrupts, and start CAN
  * 
+ * @param hcan pointer to CAN handle
  * @param mode CAN_MODE_NORMAL or CAN_MODE_LOOPBACK for operation mode
+ * @param queue (QueueHandle_t) initialized FreeRTOS queue for recieved messages
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_Config(CAN_HandleTypeDef *hcan, uint32_t mode);
+HAL_StatusTypeDef CAN_Config(
+        CAN_HandleTypeDef *hcan,
+        uint32_t mode,
+        QueueHandle_t *queue);
 
 /** CAN Transmit Message
  * @brief Transmit message over CAN
@@ -85,21 +96,5 @@ HAL_StatusTypeDef CAN_TransmitMessage(
         uint8_t *TxData,
         uint8_t len);
 
-/** CAN Retrieve Message
- * @brief Retrieve a message from the CAN Rx software FIFO
- * 
- * @param canmessage CANMSG_t to put message contents in
- * @return HAL_StatusTypeDef - HAL_OK if message was retrieved successfully
- * @return HAL_StatusTypeDef - HAL_ERROR if no messages are present
- */
-HAL_StatusTypeDef CAN_RetrieveMessage(CANMSG_t *canmessage);
-
-/** CAN Is Rx Fifo Empty
- * @brief Check if CAN Rx software FIFO is empty
- * 
- * @return true - FIFO is empty
- * @return false - FIFO is not empty
- */
-bool CAN_IsRxFifoEmpty();
 
 #endif /* CAN_BUS_H */

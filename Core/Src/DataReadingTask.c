@@ -4,7 +4,7 @@
 
 void DataReadingTask(void* argument){
     while (1) {
-        printf("data reading task\n\r");
-        osDelay(10);
+        printf("data reading task\n");
+        osDelay(1000);
     }
 }

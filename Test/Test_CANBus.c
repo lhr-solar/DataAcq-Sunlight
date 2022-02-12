@@ -22,8 +22,9 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
-#include "Tasks.h"
 #include "CANBus.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -62,21 +63,15 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-osThreadId_t DataLoggingTaskHandle;
-osThreadAttr_t DataLoggingTask_attributes = {
-  .name = "Data Logging Task",
+osThreadId_t RecieveTaskHandle;
+osThreadAttr_t RecieveTask_attributes = {
+  .name = "Recieve Task",
   .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
   .stack_size = 1024 //arbitrary value might need to make it larger or smaller
 };
-osThreadId_t DataReadingTaskHandle;
-osThreadAttr_t DataReadingTask_attributes = {
-  .name = "Data Reading Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
-osThreadId_t BroadcastingTaskHandle;
-osThreadAttr_t BroadcastingTask_attributes = {
-  .name = "Broadcasting Task",
+osThreadId_t TransmitTaskHandle;
+osThreadAttr_t TransmitTask_attributes = {
+  .name = "Transmit Task",
   .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
   .stack_size = 1024 //arbitrary value might need to make it larger or smaller
 };
@@ -100,6 +95,38 @@ void StartDefaultTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// Test Threads
+volatile uint8_t RecieveInitialized = 0;
+void TransmitTask(void* argument){
+    uint8_t tx[4] = {0xF0, 0xDE, 0xBC, 0x0A};
+    while (RecieveInitialized == 0);
+    while (1) {
+        CAN_TransmitMessage(CURRENT_DATA, tx, 4);
+        printf("broadcasting task\n");
+        osDelay(1000);
+    }
+}
+
+#define CAN_RX_QUEUE_SIZE 32
+void RecieveTask(void* argument){
+    QueueHandle_t canrxqueue = xQueueCreate(CAN_RX_QUEUE_SIZE, sizeof(CANMSG_t));
+    if (canrxqueue == NULL) {
+        Error_Handler();
+    }
+    if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK, &canrxqueue) != HAL_OK) {
+        Error_Handler();
+    }
+    RecieveInitialized = 1;
+
+    CANMSG_t message;
+    while (1) {
+        if (xQueueReceive(canrxqueue, &message, (TickType_t)1) == pdTRUE) {
+            printf("CAN message (word): %.8lX\n", message.payload.data.w);
+        }
+        osDelay(200);
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -137,9 +164,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_FATFS_Init();
-  if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK) != HAL_OK) {
-    Error_Handler();
-  }
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -168,9 +192,8 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
   /* USER CODE BEGIN RTOS_THREADS */
-  DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
-  DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
-  BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
+  RecieveTaskHandle = osThreadNew(RecieveTask, NULL, &RecieveTask_attributes);
+  TransmitTaskHandle = osThreadNew(TransmitTask, NULL, &TransmitTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -185,9 +208,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }

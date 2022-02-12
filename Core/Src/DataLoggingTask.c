@@ -4,7 +4,7 @@
 
 void DataLoggingTask(void* argument){
     while (1) {
-        printf("data logging task\n\r");
-        osDelay(10);
+        printf("data logging task\n");
+        osDelay(1000);
     }
 }

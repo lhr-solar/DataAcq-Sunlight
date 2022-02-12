@@ -4,7 +4,7 @@
 
 void BroadcastingTask(void* argument){
     while (1) {
-        printf("broadcasting task\n\r");
-        osDelay(10);
+        printf("broadcasting task\n");
+        osDelay(1000);
     }
 }
