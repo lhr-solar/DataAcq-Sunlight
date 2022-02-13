@@ -144,7 +144,8 @@ HAL_StatusTypeDef CAN_Config(
 }
 
 /** CAN Fetch Message
- * @brief Fetch a CAN message from the queue
+ * @brief Fetch a CAN message from the queue;
+ *        will immediately return if queue is empty (non-blocking).
  * @note This is a wrapper for xQueueReceive and should not be called from an ISR
  * 
  * @param message Fetched message will be put here
