@@ -21,7 +21,7 @@
  * Filter and HAL RX_FIFO configurations
  * Set FILTER_MASK_ID_LOW/HIGH to 0 to recieve all can messages
  */
-#define CAN_RX_FIFO_NUMBER      CAN_RX_FIFO0
+#define CAN_RX_FIFO_NUMBER      CAN_RX_FIFO0    /* CAN_RX_FIFO0 or CAN_RX_FIFO1 */
 #define FILTER_BANK             0          /* 0 - 13 for CAN1, 14 - 27 for CAN2 */
 #define FILTER_ID_LOW           0x0000
 #define FILTER_ID_HIGH          0x0000

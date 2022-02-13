@@ -136,9 +136,13 @@ HAL_StatusTypeDef CAN_Config(
     if (configstatus != HAL_OK) return configstatus;
 
     // Enable interrupt for pending rx message
-    configstatus = HAL_CAN_ActivateNotification(HAL_CAN_1, 
-        (CAN_RX_FIFO_NUMBER == CAN_RX_FIFO0) ? 
-            CAN_IT_RX_FIFO0_MSG_PENDING : CAN_IT_RX_FIFO1_MSG_PENDING);
+    #if CAN_RX_FIFO_NUMBER == CAN_RX_FIFO0
+    configstatus =
+        HAL_CAN_ActivateNotification(HAL_CAN_1, CAN_IT_RX_FIFO0_MSG_PENDING);
+    #else   // CAN_RX_FIFO1
+    configstatus =
+        HAL_CAN_ActivateNotification(HAL_CAN_1, CAN_IT_RX_FIFO1_MSG_PENDING);
+    #endif
 
     return configstatus;
 }
@@ -183,7 +187,13 @@ HAL_StatusTypeDef CAN_TransmitMessage(
     return HAL_CAN_AddTxMessage(HAL_CAN_1, &txheader, TxData, &TxMailbox);
 }
 
+/**
+ * CAN RxFifo Callbacks 
+ * Only one should be used.
+ * Set the Rx Fifo by changing the CAN_RX_FIFO_NUMBER in CANBus.h
+ */
 
+#if CAN_RX_FIFO_NUMBER == CAN_RX_FIFO0
 /**
  * @brief Function executed by interrupt when there is a pending message
  *        on RxFifo0
@@ -193,6 +203,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
     CAN_Recieve(&RxHeader, RxData);
 }
 
+#else   // CAN_RX_FIFO1
 /**
  * @brief Function executed by interrupt when there is a pending message
  *        on RxFifo1
@@ -201,3 +212,4 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &RxHeader, RxData);
     CAN_Recieve(&RxHeader, RxData);
 }
+#endif
