@@ -557,8 +557,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-    printf("error handler\n\r");
-    osDelay(1);
+    // TODO: Create a proper Error Handler
   }
   /* USER CODE END Error_Handler_Debug */
 }

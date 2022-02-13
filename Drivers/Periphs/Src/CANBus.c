@@ -143,6 +143,19 @@ HAL_StatusTypeDef CAN_Config(
     return configstatus;
 }
 
+/** CAN Fetch Message
+ * @brief Fetch a CAN message from the queue
+ * @note This is a wrapper for xQueueReceive and should not be called from an ISR
+ * 
+ * @param message Fetched message will be put here
+ * @return BaseType_t pdTRUE if CAN message was successfully fetched from queue,
+ *                    pdFALSE if queue is empty
+ */
+BaseType_t CAN_FetchMessage(CANMSG_t *message) {
+    return xQueueReceive(*RxQueue, message, (TickType_t)0);
+}
+
+
 /** CAN Transmit Message
  * @brief Transmit message over CAN
  * @note This is really basic and does not check for a full transmit Mailbox
