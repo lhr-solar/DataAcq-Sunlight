@@ -5,6 +5,7 @@
 
 HAL_StatusTypeDef error;
 
+
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
 
@@ -39,6 +40,8 @@ HAL_StatusTypeDef error;
 #define GYR_DATA_Y_MSB 0x17
 #define GYR_DATA_Z_LSB 0x18
 #define GYR_DATA_Z_MSB 0x19
+
+#define ACC_OFFSET_X_LSB 0x55
 
 //These defines are not in IMU.h because they are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
@@ -82,7 +85,7 @@ static void IMU_WaitForPower() {
 }
 
 
-    
+
     
 ErrorStatus IMU_Init(){
     // Unfortunately, there is a lot of black magic in this initialization.
@@ -185,22 +188,33 @@ ErrorStatus IMU_Init(){
     //     printf("Hal Mem Read Works!\n\r");
     // }
     
-
+    
     return SUCCESS;
 }
 
+
+
 ErrorStatus IMU_GetMeasurements(IMUData_t *Data){
-    //uint8_t reg_addr = ACC_DATA_X_LSB; 
     
     error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_DATA_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 18, HAL_MAX_DELAY);
-    //
-    //this function is not complete, we need to read from all 3: gyro, magnetic, velocity. check on logic analyzer 
-    //to see if the corresponding addresses for these are sending data
-    //also confirm if I2C initialized correctly 
-    // 2/9
     if (error != HAL_OK){return ERROR;}
     
     return SUCCESS;
 }
+
+//create protoype further up
+ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
+    uint8_t config[4];
+    config[0] = OPR_MODE; //register address
+    config[1] = 0; // set to some configuration mode
+    error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
+
+    error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
+    if (error != HAL_OK){return ERROR;}
+    
+    return SUCCESS;
+}
+
+
 
 
