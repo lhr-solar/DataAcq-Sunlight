@@ -1,8 +1,8 @@
-#include "IMU.h"
 #include <stdio.h>
 #include "cmsis_os.h"
 #include "stm32f4xx_hal.h"
 #include "main.h"
+#include "IMU.h"
 /* TEST PROCEDURE:
     1: Make proper connections between main board and IMU (Although the INT and RESET pins are connected, they are not
     used because we do not use low power mode)
@@ -21,16 +21,11 @@ UART_HandleTypeDef huart3;
 
 CAN_HandleTypeDef hcan1;
 
-//I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi5;
 
 UART_HandleTypeDef huart1;
-//UART_HandleTypeDef huart3;
-
-ETH_HandleTypeDef heth; //
-TIM_HandleTypeDef htim1; ///
 
 
 //These defines are not in IMU.h because they are only necessary for debugging
@@ -92,7 +87,7 @@ int main(void)
 
 void IMUTest(void* argument){
     //code taken from main.c in Core folder
-    
+    osDelay(2000);
     IMU_Init();
     IMUData_t Data;
     

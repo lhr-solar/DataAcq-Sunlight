@@ -52,7 +52,9 @@ HAL_StatusTypeDef error;
 
 // Because I don't like writing this out every time
 #define SEND(data, size) \
-    HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY)
+    osDelay(50); \
+    HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY); \
+    osDelay(50)
 
 // Just used to wait for the IMU to power on.
 static void IMU_WaitForPower() {
@@ -111,15 +113,6 @@ ErrorStatus IMU_Init(){
         osDelay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 50
     }
 
-    // The register map in this chip is split into multiple pages. Select page 0.
-    config[0] = PAGE_ID;
-    config[1] = 0;
-    error |= SEND(config, 2);
-    if(error)
-    {
-        printf("ERROR1 \n\r");
-    }
-
     // Reset the chip. We kind of did this above, but we're doing it again to be sure
     config[0] = SYS_TRIGGER;
     config[1] = 0x20;
@@ -128,10 +121,18 @@ ErrorStatus IMU_Init(){
     {
         printf("ERROR2 \n\r");
     }
-    
 
     // Wait for the reset to complete
     osDelay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
+
+    // The register map in this chip is split into multiple pages. Select page 0.
+    config[0] = PAGE_ID;
+    config[1] = 0;
+    error |= SEND(config, 2);
+    if(error)
+    {
+        printf("ERROR1 \n\r");
+    }
 
     ////////////////////////////////////////////////////////////maybe move POST here
     //uint8_t st_reg[2];
@@ -167,28 +168,22 @@ ErrorStatus IMU_Init(){
     
 
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
-    osDelay(20); //WAS 20
+    osDelay(2000); //WAS 20
 
-    uint8_t calib_reg[1] = {0x54}; 
-    while(calib_reg[0] != 0x30) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
+    uint8_t calib_reg = 0x00; 
+    while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
     {
-        printf("Calibrating..\n\r");
-        printf("%d\n\r", calib_reg[0]);
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, calib_reg, 1, HAL_MAX_DELAY);
-        //CALIB_STAT before, now CHIP_ID
-        
+        HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
+        printf("Calibrating...[%.4X]\n\r", calib_reg);
     }
 
     //HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, calib_reg, 1, HAL_MAX_DELAY);
-    if(calib_reg[0]==0x30)
-    {
-        printf("Done Calibrating!\n\r");
-    }
+    printf("Done Calibrating!\n\r");
 
-    if(calib_reg[0]==0xA0)
-    {
-        printf("Hal Mem Read Works!\n\r");
-    }
+    // if(calib_reg[0]==0xA0)
+    // {
+    //     printf("Hal Mem Read Works!\n\r");
+    // }
     
 
     return SUCCESS;
