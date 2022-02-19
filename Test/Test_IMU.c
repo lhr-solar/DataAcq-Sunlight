@@ -37,7 +37,7 @@ TIM_HandleTypeDef htim1; ///
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
 //If the below register returns a 1 anywhere, that means that it will only send values if the accelerometer
 //reads a change in data
-#define INT_STA 0x36 //We are not using low power mode, this should return all 0's (no interrupts)
+#define INT_STA 0x37 //We are not using low power mode, this should return all 0's (no interrupts)
 #define SYS_TRIGGER 0x3F //Setting this register to 0x01 starts a self test of the IMU
 //400 ms after the test starts, the below register will either remain 0(success) or return 3(failure)
 #define SYS_ERROR 0x3A 
@@ -51,8 +51,8 @@ static void MX_USART3_UART_Init(void);
 int main(void){
     //code taken from main.c in Core folder
 
-    HAL_Init();
-    SystemClock_Config();
+    HAL_Init(); //issue?
+    SystemClock_Config(); //issue?
     
 
     MX_GPIO_Init();
@@ -62,21 +62,24 @@ int main(void){
     IMUData_t Data;
     IMU_Init();
     printf("test 3");
+    
     while (1){
         ErrorStatus err = IMU_GetMeasurements(&Data);
         if ((err) == ERROR){
-            printf("I2C transmitting or receiving failed.\n");
-            printf("Consider checking I2C init function or changing device address to backup\n");
+            printf("I2C transmitting or receiving failed.\n\r");
+            printf("Consider checking I2C init function or changing device address to backup\n\r");
         }
-        printf("ACCEL_DATA_X: %d\n", Data.accel_x); //The _write function below was taken from BPS retarget.c
-        printf("ACCEL_DATA_Y: %d\n", Data.accel_y); 
-        printf("ACCEL_DATA_Z: %d\n", Data.accel_z); 
-        printf("MAG_DATA_X: %d\n", Data.mag_x); 
-        printf("MAG_DATA_Y: %d\n", Data.mag_y); 
-        printf("MAG_DATA_Z: %d\n", Data.mag_z); 
-        printf("GYR_DATA_X: %d\n", Data.gyr_x); 
-        printf("GYR_DATA_Y: %d\n", Data.gyr_y); 
-        printf("GYR_DATA_Z: %d\n", Data.gyr_z); 
+        printf("ACCEL_DATA_X: %d\n\r", Data.accel_x); //The _write function below was taken from BPS retarget.c
+        printf("ACCEL_DATA_Y: %d\n\r", Data.accel_y); 
+        printf("ACCEL_DATA_Z: %d\n\r", Data.accel_z); 
+        printf("MAG_DATA_X: %d\n\r", Data.mag_x); 
+        printf("MAG_DATA_Y: %d\n\r", Data.mag_y); 
+        printf("MAG_DATA_Z: %d\n\r", Data.mag_z); 
+        printf("GYR_DATA_X: %d\n\r", Data.gyr_x); 
+        printf("GYR_DATA_Y: %d\n\r", Data.gyr_y); 
+        printf("GYR_DATA_Z: %d\n\r", Data.gyr_z); 
+
+      
         osDelay(2000); //This delays by tick count. Included to prevent too many I2C transmit/receive calls
     }
 }
