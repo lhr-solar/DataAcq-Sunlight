@@ -1,6 +1,7 @@
 #include "IMU.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include "cmsis_os.h"
 
 HAL_StatusTypeDef error;
 
@@ -61,26 +62,20 @@ static void IMU_WaitForPower() {
     // The CHIP_ID register (0x00) is set to a fixed value of 0xA0
     config[0] = 0;
     while(config[0] != 0xA0) {
-        printf("Waiting for IMU to initialize...\n\r");
         HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
     }
-    printf("IMU is now responding! Continuing...\n\r");
-    printf("Checking Power on Self Test POST to see if sensors/ microcontr funct./ respond right. \n\r");
 
     ////////////////////////////////////////////////////////////////////////////
     uint8_t st_reg[1];
     while(st_reg[0]!=0x0F) //checks to see if after POST whether or not sensors and microcon funct/ respond right. 
     //If not, the issue starts earlier (here). It could still be an issue with transmitting data (i2c)
     {
-        printf("Doing POST... \n\r");
         printf("%d\n\r", st_reg[0]);
         HAL_I2C_Mem_Read(&hi2c1, ADDR, ST_RESULT, I2C_MEMADD_SIZE_8BIT, st_reg, 1, HAL_MAX_DELAY);
 
         
     }
     printf("POST complete! All 4 things good! \n\r");
-     //HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY)
-     //how to write directly to SYS_TRIGGER for self-test?
 }
 
 
@@ -118,51 +113,63 @@ ErrorStatus IMU_Init(){
     // The register map in this chip is split into multiple pages. Select page 0.
     config[0] = PAGE_ID;
     config[1] = 0;
-    SEND(config, 2);
+    error |= SEND(config, 2);
+    if(error)
+    {
+        printf("ERROR1 \n\r");
+    }
 
     // Reset the chip. We kind of did this above, but we're doing it again to be sure
     config[0] = SYS_TRIGGER;
     config[1] = 0x20;
-    SEND(config, 2);
+    error |=SEND(config, 2);
+    if(error)
+    {
+        printf("ERROR2 \n\r");
+    }
+    
 
     // Wait for the reset to complete
     osDelay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
 
     ////////////////////////////////////////////////////////////maybe move POST here
-    uint8_t st_reg[2];
-    st_reg[0]=SYS_TRIGGER;
-    st_reg[1]=0x01; //trigger self test
-    SEND(st_reg, 2);
+    //uint8_t st_reg[2];
+    //st_reg[0]=SYS_TRIGGER;
+    //st_reg[1]=0x01; //trigger self test
+    //error |=SEND(st_reg, 2);
     //////////////then read ST_Result
 
     // Select the power mode
     config[0] = PWR_MODE;
     config[1] = 0;
-    SEND(config, 2);
+    error |=SEND(config, 2);
+    printf("Power mode selected\n\r");
+    
 
     // Set the clock source
     config[0] = SYS_TRIGGER;
     config[1] = 0x00;
-    SEND(config, 2);
+    error |=SEND(config, 2);
+    
 
     config[0] = UNIT_SEL;
     config[1] = 0;
-    error = SEND(config, 2); //Read in m/s^2, Celcius, and degrees
-    if (error != HAL_OK){return ERROR;}
+    error |= SEND(config, 2); //Read in m/s^2, Celcius, and degrees
+    
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
     config[0] = OPR_MODE; //register address
     config[1] = 0xC; // The configuration mode (NDOF)   // TODO: think about lower-power modes
     // TODO: experiencing difficulties with the IT version, but these might need to be blocking anyways, or at least need a check
-    error = SEND(config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer 
-    if (error != HAL_OK){return ERROR;}
+    error |= SEND(config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer 
+    
 
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
     osDelay(20); //WAS 20
 
-    uint8_t calib_reg[1] = 0x54;
-    while(calib_reg[0]!=0x30) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
+    uint8_t calib_reg[1] = {0x54}; 
+    while(calib_reg[0] != 0x30) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
     {
         printf("Calibrating..\n\r");
         printf("%d\n\r", calib_reg[0]);
