@@ -15,6 +15,7 @@
 ######################################
 TARGET = Sunlight
 
+
 ######################################
 # building variables
 ######################################
@@ -38,11 +39,11 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/main.c \
 Core/Src/freertos.c \
+Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/stm32f4xx_hal_timebase_tim.c \
-Core/Src/stm32f4xx_it.c \
-Core/Src/system_stm32f4xx.c \
 Core/Src/BroadcastingTask.c \
 Core/Src/DataLoggingTask.c \
 Core/Src/DataReadingTask.c \
@@ -69,7 +70,7 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c \
-$(wildcard Drivers/Periphs/Src/*.c) \
+Core/Src/system_stm32f4xx.c \
 Middlewares/Third_Party/FreeRTOS/Source/croutine.c \
 Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
 Middlewares/Third_Party/FreeRTOS/Source/list.c \
@@ -168,16 +169,10 @@ Middlewares/Third_Party/FatFs/src/ff.c \
 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
 Middlewares/Third_Party/FatFs/src/option/syscall.c
 
-ifdef TEST
-TEST_FILE := Test_$(TEST).c
-C_SOURCES += Test/$(TEST_FILE) #This line adds the test file instead of main.c
-else
-C_SOURCES += Core/Src/main.c
-endif
-
 # ASM sources
 ASM_SOURCES =  \
 startup_stm32f429xx.s
+
 
 #######################################
 # binaries
@@ -221,7 +216,7 @@ AS_DEFS =
 # C defines
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
--DSTM32F429xx \
+-DSTM32F429xx
 
 
 # AS includes
@@ -235,7 +230,6 @@ C_INCLUDES =  \
 -ILWIP/Target \
 -IMiddlewares/Third_Party/LwIP/src/include \
 -IMiddlewares/Third_Party/LwIP/system \
--IDrivers/Periphs/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IMiddlewares/Third_Party/FreeRTOS/Source/include \
@@ -262,9 +256,9 @@ C_INCLUDES =  \
 
 
 # compile gcc flags
-ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -Werror -fdata-sections -ffunction-sections
+ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -Werror -fdata-sections -ffunction-sections
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
@@ -274,7 +268,6 @@ endif
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
-SF = st-flash
 
 #######################################
 # LDFLAGS
@@ -289,6 +282,7 @@ LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BU
 
 # default action: build all
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+
 
 #######################################
 # build the application
@@ -324,13 +318,7 @@ $(BUILD_DIR):
 #######################################
 clean:
 	-rm -fR $(BUILD_DIR)
-
-#######################################
-# flash code to the board (using stlink)
-#######################################
-flash:
-	$(SF) write $(BUILD_DIR)/$(TARGET).bin 0x8000000
-
+  
 #######################################
 # dependencies
 #######################################
