@@ -47,21 +47,54 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART3_UART_Init(void);
+void StartDefaultTask(void *argument);
+void IMUTest(void * argument);
 
-int main(void){
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+
+osThreadId_t IMUTestHandle;
+const osThreadAttr_t IMUTest_attributes = {
+  .name = "IMUTest",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+
+int main(void)
+{
+  HAL_Init();
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
+  MX_USART3_UART_Init();
+
+  /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  IMUTestHandle = osThreadNew(IMUTest, NULL, &IMUTest_attributes);
+
+  /* Start scheduler */
+  osKernelStart();
+
+  while (1);
+}
+
+void IMUTest(void* argument){
     //code taken from main.c in Core folder
-
-    HAL_Init(); //issue?
-    SystemClock_Config(); //issue?
     
-
-    MX_GPIO_Init();
-    MX_I2C1_Init();
-    MX_USART3_UART_Init();
-    //beginning Test code
-    IMUData_t Data;
     IMU_Init();
-    printf("test 3");
+    IMUData_t Data;
     
     while (1){
         ErrorStatus err = IMU_GetMeasurements(&Data);
@@ -244,6 +277,16 @@ static void MX_GPIO_Init(void){
     //return len;
 //}
 
+void StartDefaultTask(void *argument)
+{
+
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 void Error_Handler(void) //TAKEN FROM main.c
 {

@@ -63,6 +63,7 @@ static void IMU_WaitForPower() {
     config[0] = 0;
     while(config[0] != 0xA0) {
         HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
+        osDelay(50); //Allow time until next read should occur
     }
 
     ////////////////////////////////////////////////////////////////////////////
