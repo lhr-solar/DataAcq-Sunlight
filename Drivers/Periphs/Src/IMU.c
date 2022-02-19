@@ -39,8 +39,6 @@ HAL_StatusTypeDef error;
 #define GYR_DATA_Z_LSB 0x18
 #define GYR_DATA_Z_MSB 0x19
 
-#define CALIB_STAT 0x35 //This register returns 0xFF if fully 
-
 //These defines are not in IMU.h because they are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
 //If the below register returns a 1 anywhere, that means that it will only send values if the accelerometer
@@ -105,7 +103,6 @@ ErrorStatus IMU_Init(){
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
 
     IMU_WaitForPower();
-    printf("check 2 \n\r");
 
     // Verify our current mode
     HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
@@ -115,9 +112,7 @@ ErrorStatus IMU_Init(){
         config[1] = 0;
         SEND(config, 2);
         // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
-        printf("check 3 \n\r");
-        HAL_Delay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 50
-        printf("check 4 \n\r");
+        osDelay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 50
     }
 
     // The register map in this chip is split into multiple pages. Select page 0.
@@ -131,18 +126,14 @@ ErrorStatus IMU_Init(){
     SEND(config, 2);
 
     // Wait for the reset to complete
-    printf("check 5 \n\r");
-    //HAL_Delay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
+    osDelay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
 
-    for(volatile int x=0; x<10000000; x++);
     ////////////////////////////////////////////////////////////maybe move POST here
     uint8_t st_reg[2];
     st_reg[0]=SYS_TRIGGER;
     st_reg[1]=0x01; //trigger self test
     SEND(st_reg, 2);
     //////////////then read ST_Result
-
-    printf("check 6 \n\r");
 
     // Select the power mode
     config[0] = PWR_MODE;
@@ -168,10 +159,9 @@ ErrorStatus IMU_Init(){
     if (error != HAL_OK){return ERROR;}
 
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
-    //HAL_Delay(20); //WAS 20
-    for(volatile int y=0; y<10000000; y++);
+    osDelay(20); //WAS 20
 
-    uint8_t calib_reg[1];
+    uint8_t calib_reg[1] = 0x54;
     while(calib_reg[0]!=0x30) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
     {
         printf("Calibrating..\n\r");
