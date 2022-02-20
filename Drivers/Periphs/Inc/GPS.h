@@ -3,8 +3,12 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "main.h"
 #include <string.h>
+
+#define GPS_RX_QUEUE_SIZE 1
 
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
@@ -25,17 +29,24 @@ typedef struct{
     char magneticVariation_EastWest;
 } GPSData_t;
 
-//Initialize GPS Module and struct
-/*
- * @param: struct that will be used to collect data
- * @return: ERROR or SUCCESS
+/** GPSInit
+ * @brief Initialize GPS, configure GPS
+ * @return ERROR or SUCCESS if transmit worked
  */
-ErrorStatus GPS_Init(GPSData_t *Data);
+ErrorStatus GPS_Init(void);
 
-//Update Measurments from GPS Module
-/*
- * @return: ERROR or SUCCESS 
+/** GPS Update Measurements
+ * @brief Update All GPS measurements
+ * @return SUCCESS or ERROR if read worked
  */
 ErrorStatus GPS_UpdateMeasurements(void);
+
+/** GPS Read Data
+ * Wrapper function for XQueueReceive and should not be called from an ISR
+ * 
+ * @param Data
+ * @return pdTRUE if CAN message was successfully fetched from queue, pdFALSE if queue is empty
+ */
+BaseType_t GPS_ReadData(GPSData_t *Data);
 
 #endif
