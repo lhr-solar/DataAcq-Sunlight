@@ -106,6 +106,9 @@ ErrorStatus IMU_Init(){
 
     IMU_WaitForPower();
 
+    
+
+
     // Verify our current mode
     HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
     if((config[0] & 0xF) != 0) {
@@ -125,10 +128,13 @@ ErrorStatus IMU_Init(){
     {
         printf("ERROR2 \n\r");
     }
+    
+
 
     // Wait for the reset to complete
     osDelay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
 
+    
     // The register map in this chip is split into multiple pages. Select page 0.
     config[0] = PAGE_ID;
     config[1] = 0;
@@ -162,9 +168,10 @@ ErrorStatus IMU_Init(){
     config[1] = 0;
     error |= SEND(config, 2); //Read in m/s^2, Celcius, and degrees
 
+    
+    
     // hard code calibration values
     error |= Calibrate(&Calib_data);
-    
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
@@ -177,13 +184,15 @@ ErrorStatus IMU_Init(){
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
     osDelay(2000); //WAS 20
 
-    //uint8_t calib_reg = 0x00; 
-    //while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
-    //{
-    //    HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
-    //    printf("Calibrating...[%.4X]\n\r", calib_reg);
-    //}
-
+    
+    
+    uint8_t calib_reg = 0x00; 
+    while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
+    {
+        HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
+        printf("Calibrating...[%.4X]\n\r", calib_reg);
+    }
+    
     //HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, calib_reg, 1, HAL_MAX_DELAY);
     printf("Done Calibrating!\n\r");
 
@@ -225,19 +234,40 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
+    
+    int16_t index =0x55;
+    for (int32_t reg=0; reg < 18; reg ++) {
+        config[0] = index;
+        config[1] = 0x01;
+
+        error |=SEND(config, 2);
+
+        index ++;
+
+    }
+
+    index =0x67;
+    for (int32_t rad=0; rad < 2; rad ++) {
+        config[0] = index;
+        config[1] = 0xF4;
+
+
+        error |=SEND(config, 2);
+        index ++;
+        
+        config[0] = index;
+        config[1] = 0x01;
+        error |=SEND(config, 2);
+
+        index ++;
+
+        
+
+    }
+
+
+    
     /*
-    uint8_t data_send[2];
-    data_send[0] = 0x55;
-    data_send[1] = 0xFF;
-
-    error |=SEND(data_send, 2);
-
-    data_send[0] = 0x56;
-    data_send[1] = 0xFF;
-
-    error |=SEND(data_send, 2);
-    */
-   
     Data->accel_offset_x = -1;
     Data->accel_offset_y = 0;
     Data->accel_offset_z = 5;
@@ -249,7 +279,7 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
     Data->gyr_offset_z =0;
     Data->accel_radius = 800;
     Data->mag_radius = 468;
-    
+    */
     error |=SEND((uint8_t*)Data, 22);
 
     if(error)

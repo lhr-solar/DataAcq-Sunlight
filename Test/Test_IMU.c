@@ -104,6 +104,7 @@ void IMUTest(void* argument){
     
     while (1){
         ErrorStatus err = IMU_GetCalibData(&Calib_data);
+        //err = Calibrate(&Calib_data);
         if ((err) == ERROR){
             printf("I2C transmitting or receiving failed.\n\r");
             printf("Consider checking I2C init function or changing device address to backup\n\r");
