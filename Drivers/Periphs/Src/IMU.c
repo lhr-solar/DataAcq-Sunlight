@@ -236,13 +236,13 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
     int16_t index =0x55;
-    for (int32_t reg=0; reg < 18; reg ++) {
+    for (int32_t reg=0; reg < 18; reg +=1) {
         config[0] = index;
         config[1] = 0x01;
 
         error |=SEND(config, 2);
 
-        index ++;
+        index +=1;
 
     }
 
@@ -253,13 +253,13 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
 
 
         error |=SEND(config, 2);
-        index ++;
-        
+        index +=1;
+
         config[0] = index;
         config[1] = 0x01;
         error |=SEND(config, 2);
 
-        index ++;
+        index +=1;
 
         
 
