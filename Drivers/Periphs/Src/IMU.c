@@ -4,6 +4,7 @@
 #include "cmsis_os.h"
 
 HAL_StatusTypeDef error;
+IMUCalibData_t Calib_data;
 
 
 #define DEV_ADDR 0x28
@@ -160,6 +161,9 @@ ErrorStatus IMU_Init(){
     config[0] = UNIT_SEL;
     config[1] = 0;
     error |= SEND(config, 2); //Read in m/s^2, Celcius, and degrees
+
+    // hard code calibration values
+    error |= Calibrate(&Calib_data);
     
 
     // Now configure for our operation mode
@@ -173,12 +177,12 @@ ErrorStatus IMU_Init(){
     // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
     osDelay(2000); //WAS 20
 
-    uint8_t calib_reg = 0x00; 
-    while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
-    {
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
-        printf("Calibrating...[%.4X]\n\r", calib_reg);
-    }
+    //uint8_t calib_reg = 0x00; 
+    //while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
+    //{
+    //    HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
+    //    printf("Calibrating...[%.4X]\n\r", calib_reg);
+    //}
 
     //HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, calib_reg, 1, HAL_MAX_DELAY);
     printf("Done Calibrating!\n\r");
@@ -211,6 +215,49 @@ ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
 
     error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
     if (error != HAL_OK){return ERROR;}
+    
+    return SUCCESS;
+}
+
+ErrorStatus Calibrate(IMUCalibData_t *Data)
+{
+    uint8_t config[4];
+    config[0] = OPR_MODE; //register address
+    config[1] = 0; // set to some configuration mode
+    error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
+    /*
+    uint8_t data_send[2];
+    data_send[0] = 0x55;
+    data_send[1] = 0xFF;
+
+    error |=SEND(data_send, 2);
+
+    data_send[0] = 0x56;
+    data_send[1] = 0xFF;
+
+    error |=SEND(data_send, 2);
+    */
+   
+    Data->accel_offset_x = -1;
+    Data->accel_offset_y = 0;
+    Data->accel_offset_z = 5;
+    Data->mag_offset_x = 35;
+    Data->mag_offset_y = 277;
+    Data->mag_offset_z = 366;
+    Data->gyr_offset_x = 0;
+    Data->gyr_offset_y  =0;
+    Data->gyr_offset_z =0;
+    Data->accel_radius = 800;
+    Data->mag_radius = 468;
+    
+    error |=SEND((uint8_t*)Data, 22);
+
+    if(error)
+    {
+        printf("ERROR3 \n\r");
+    }
+
+    printf("Calibration done!!\n\r");
     
     return SUCCESS;
 }
