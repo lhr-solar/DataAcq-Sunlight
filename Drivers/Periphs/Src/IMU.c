@@ -54,7 +54,10 @@ IMUCalibData_t Calib_data;
 #define SYS_ERROR 0x3A 
 #define ST_RESULT 0x36 //This register will show a 0 for whichever device failed the test (pg. 50 of datasheet)
 
-// Because I don't like writing this out every time
+/*The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. The IMU requries some operation mode and a calibration for it to function.
+This initialization loads the IMU with hard coded calibration data so calibration is only needed once*/
+
+// Send data through I2C
 #define SEND(data, size) \
     osDelay(50); \
     HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY); \
@@ -71,18 +74,6 @@ static void IMU_WaitForPower() {
         HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
         osDelay(50); //Allow time until next read should occur
     }
-
-    ////////////////////////////////////////////////////////////////////////////
-    uint8_t st_reg[1];
-    while(st_reg[0]!=0x0F) //checks to see if after POST whether or not sensors and microcon funct/ respond right. 
-    //If not, the issue starts earlier (here). It could still be an issue with transmitting data (i2c)
-    {
-        printf("%d\n\r", st_reg[0]);
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, ST_RESULT, I2C_MEMADD_SIZE_8BIT, st_reg, 1, HAL_MAX_DELAY);
-
-        
-    }
-    printf("POST complete! All 4 things good! \n\r");
 }
 
 
@@ -105,9 +96,6 @@ ErrorStatus IMU_Init(){
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
 
     IMU_WaitForPower();
-
-    
-
 
     // Verify our current mode
     HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
@@ -144,19 +132,10 @@ ErrorStatus IMU_Init(){
         printf("ERROR1 \n\r");
     }
 
-    ////////////////////////////////////////////////////////////maybe move POST here
-    //uint8_t st_reg[2];
-    //st_reg[0]=SYS_TRIGGER;
-    //st_reg[1]=0x01; //trigger self test
-    //error |=SEND(st_reg, 2);
-    //////////////then read ST_Result
-
     // Select the power mode
     config[0] = PWR_MODE;
     config[1] = 0;
     error |=SEND(config, 2);
-    printf("Power mode selected\n\r");
-    
 
     // Set the clock source
     config[0] = SYS_TRIGGER;
@@ -195,33 +174,30 @@ ErrorStatus IMU_Init(){
     
     //HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, calib_reg, 1, HAL_MAX_DELAY);
     printf("Done Calibrating!\n\r");
-
-    // if(calib_reg[0]==0xA0)
-    // {
-    //     printf("Hal Mem Read Works!\n\r");
-    // }
-    
-    
+        
     return SUCCESS;
 }
 
 
 
 ErrorStatus IMU_GetMeasurements(IMUData_t *Data){
-    
+    // Read 18 contiguous data registers within the IMU starting at 0x08 and stores data within struct fields
     error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_DATA_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 18, HAL_MAX_DELAY);
     if (error != HAL_OK){return ERROR;}
     
     return SUCCESS;
 }
 
-//create protoype further up
+
 ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
+    // This function has to execute while the IMU is in configuration mode. Otherwise the registers cannot be read
+    
     uint8_t config[4];
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
-
+    
+   //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
     error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
     if (error != HAL_OK){return ERROR;}
     
@@ -230,6 +206,7 @@ ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
 
 ErrorStatus Calibrate(IMUCalibData_t *Data)
 {
+    // This function must be executed while the IMU is in configuration mode. Otherwise registers are not writable
     uint8_t config[4];
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
@@ -264,23 +241,6 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
         
 
     }
-
-
-    
-    /*
-    Data->accel_offset_x = -1;
-    Data->accel_offset_y = 0;
-    Data->accel_offset_z = 5;
-    Data->mag_offset_x = 35;
-    Data->mag_offset_y = 277;
-    Data->mag_offset_z = 366;
-    Data->gyr_offset_x = 0;
-    Data->gyr_offset_y  =0;
-    Data->gyr_offset_z =0;
-    Data->accel_radius = 800;
-    Data->mag_radius = 468;
-    */
-    error |=SEND((uint8_t*)Data, 22);
 
     if(error)
     {

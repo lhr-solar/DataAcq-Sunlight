@@ -31,19 +31,39 @@ typedef struct {
     int16_t mag_radius;
 } IMUCalibData_t;
 
-//Initialize IMU to collect data
-/*
- * @param: Data struct used to collect IMU Data
+
+/* 
+ * @brief Initialize IMU to collect data
+ * @param None
  * @return: SUCCESS or ERROR
  */
 ErrorStatus IMU_Init(void);
 
-//Update struct with new information
-/*
+
+/* 
+ * @brief Update struct with new information
+ * @param *Data : struct used to collect IMU Data
  * @return: SUCCESS or ERROR
  */
 ErrorStatus IMU_GetMeasurements(IMUData_t *Data);
+
+
+/*
+ * @brief Update struct with IMU Calibration register data. Used to hardcode calibration
+ * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
+ * @param *Data : struct used to collect IMU calibration data
+ * @return: SUCCESS or ERROR
+ */
 ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data);
+
+
+/*
+ * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
+ * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
+ * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
+ * @param *Data : struct holding IMU calibration data
+ * @return: SUCCESS or ERROR
+ */
 ErrorStatus Calibrate(IMUCalibData_t *Data);
 
 #endif
