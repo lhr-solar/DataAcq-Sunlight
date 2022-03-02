@@ -66,4 +66,6 @@ ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data);
  */
 ErrorStatus Calibrate(IMUCalibData_t *Data);
 
+ErrorStatus DebugIMU(void);
+
 #endif
