@@ -66,6 +66,33 @@ void MX_LWIP_Process(void);
 #endif
 #endif /*__ mx_lwip_H */
 
+#if !defined(in_port_t) && !defined(IN_PORT_T_DEFINED)
+typedef u16_t in_port_t;
+#endif
+
+#if !defined(sa_family_t) && !defined(SA_FAMILY_T_DEFINED)
+typedef u8_t sa_family_t;
+#endif
+
+#if LWIP_IPV4
+/* members are in network byte order */
+
+struct sockaddr_in {
+  u8_t            sin_len;
+  sa_family_t     sin_family;
+  in_port_t       sin_port;
+  struct in_addr  sin_addr;
+#define SIN_ZERO_LEN 8
+  char            sin_zero[SIN_ZERO_LEN];
+};
+#endif /* LWIP_IPV4 */
+
+#if !defined(in_addr_t) && !defined(IN_ADDR_T_DEFINED)
+typedef u32_t in_addr_t;
+#endif
+struct in_addr {
+  in_addr_t s_addr;
+};
 /**
   * @}
   */
