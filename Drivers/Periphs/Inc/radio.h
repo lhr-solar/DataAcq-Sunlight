@@ -6,9 +6,12 @@
 #include "socket.h"
 #include "stm32f4xx.h"
 #include "queue.h"
+#include "os.h"
 
 #define sizeEtherFifo 265 
-
+int Ethernet_Init(int lsocket);
+void sendMessage();
+void endConnection(int lsocket);
 typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 
