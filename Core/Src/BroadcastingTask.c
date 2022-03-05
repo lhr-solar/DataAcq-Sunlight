@@ -1,6 +1,6 @@
 #include "Tasks.h"
-#include "LWIP/App/lwip.h"
-#include "Drivers/Periphs/Inc/radio.h"
+//#include "Drivers/Periphs/Inc/radio.h"
+#include "radio.h"
 
 UART_HandleTypeDef huart3;
 

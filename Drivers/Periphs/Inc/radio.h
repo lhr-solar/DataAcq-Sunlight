@@ -1,15 +1,14 @@
 #ifndef RADIO_H
 #define RADIO_H
 
-#include "LWIP/App/lwip.h"
 #include "FreeRTOS.h"
-#include "socket.h"
+#include "sockets.h"
 #include "stm32f4xx.h"
 #include "queue.h"
-#include "os.h"
+#include <stdint.h>
 
-#define sizeEtherFifo 265 
-int Ethernet_Init(int lsocket);
+#define ETHERNET_SIZE 256
+int Ethernet_Init(int *lsocket);
 void sendMessage();
 void endConnection(int lsocket);
 typedef enum{
@@ -18,8 +17,7 @@ typedef enum{
     // one for gps one for imu one for rtc 
     IMU = 0x1,
     GPS = 0x2,
-    RTC = 0x3,
-    CAN = 0x4
+    CAN = 0x3
 } ethernetID;
 typedef union {
     // one need to use on of these - depends on the length of the data 
