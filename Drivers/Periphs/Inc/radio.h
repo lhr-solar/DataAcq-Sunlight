@@ -5,6 +5,7 @@
 #include "sockets.h"
 #include "stm32f4xx.h"
 #include "queue.h"
+<<<<<<< HEAD
 #include <stdint.h>
 #include <string.h>
 #include "CANBus.h"
@@ -14,6 +15,14 @@
 
 #define ETHERNET_QUEUESIZE 32
 
+=======
+#include "os.h"
+
+#define sizeEtherFifo 265 
+int Ethernet_Init(int lsocket);
+void sendMessage();
+void endConnection(int lsocket);
+>>>>>>> finished radio.c radio.h and broadcasting - need to test and debug
 typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 
