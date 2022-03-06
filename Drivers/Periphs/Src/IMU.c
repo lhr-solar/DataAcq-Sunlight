@@ -3,15 +3,12 @@
 #include <stdio.h>
 #include "cmsis_os.h"
 
-HAL_StatusTypeDef error;
-IMUCalibData_t Calib_data;
-
+static IMUCalibData_t IMU_CalibData;
 
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
 
 // Register definitions
-
 #define ACC_NM_SET     0x16
 #define ACC_CONFIG     0x08
 #define GYR_CONFIG     0x0A
@@ -50,13 +47,11 @@ IMUCalibData_t Calib_data;
 #define GYR_DATA_Z_MSB 0x19
 #define ACC_OFFSET_X_LSB 0x55
 
-
-
-
-
-
-/*The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. The IMU requries some operation mode and a calibration for it to function.
-This initialization loads the IMU with hard coded calibration data so calibration is only needed once*/
+/*
+The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. 
+The IMU requries some operation mode and a calibration for it to function.
+This initialization loads the IMU with hard coded calibration data so calibration is only needed once.
+*/
 
 // Send data through I2C
 #define SEND(data, size) \
@@ -77,10 +72,14 @@ static void IMU_WaitForPower() {
     }
 }
 
+/** 
+ * @brief Initialize IMU to collect data
+ * @param None
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_Init(){
 
-
-    
-ErrorStatus IMU_Init(){
+    HAL_StatusTypeDef error = HAL_OK;
     // Unfortunately, there is a lot of black magic in this initialization.
     // There's a log of writing default values to registers that should
     // already contain those values, but there appears to be something about
@@ -107,33 +106,22 @@ ErrorStatus IMU_Init(){
         config[0] = OPR_MODE;
         config[1] = 0;
         SEND(config, 2);
-        // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
-        osDelay(50);  // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 50
+        osDelay(50); // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
     }
 
     // Reset the chip. We kind of did this above, but we're doing it again to be sure
     config[0] = SYS_TRIGGER;
     config[1] = 0x20;
     error |=SEND(config, 2);
-    if(error)
-    {
-        printf("ERROR2 \n\r");
-    }
     
-
-
     // Wait for the reset to complete
-    osDelay(1000);    // TODO: replace with a freertos delay if we plan on multithreading by this point, WAS 1000
+    osDelay(1000);
 
     // EDIT: Already occurs after power on. 
     // The register map in this chip is split into multiple pages. Select page 0.
     config[0] = PAGE_ID;
     config[1] = 0;
     error |= SEND(config, 2);
-    if(error)
-    {
-        printf("ERROR1 \n\r");
-    }
 
     // Select the "normal" power mode. 
     // After reset, the IMU should already be in this normal mode
@@ -152,7 +140,7 @@ ErrorStatus IMU_Init(){
     error |= SEND(config, 2); 
 
     // hard code calibration values
-    error |= Calibrate(&Calib_data);
+    error |= IMU_Calibrate(&IMU_CalibData);
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
@@ -161,35 +149,36 @@ ErrorStatus IMU_Init(){
     // TODO: experiencing difficulties with the IT version, but these might need to be blocking anyways, or at least need a check
     error |= SEND(config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer with FMC (quicker calibration)
     
-    // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
-    osDelay(20); //WAS 20
+    osDelay(20); // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
 
     // TODO: move this into a function that checks if we've uncalibrated. 
     uint8_t calib_reg = 0x00; 
-    while((calib_reg >> 6) != 3) //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
-    {
+    while((calib_reg >> 6) != 3){ //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
         HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
-        printf("Calibrating...[%.4X]\n\r", calib_reg);
     }
-    
-    
-    printf("Done Calibrating!\n\r");
         
-    return SUCCESS;
+    return error;
 }
 
-
-
-ErrorStatus IMU_GetMeasurements(IMUData_t *Data){
+/**
+ * @brief Update struct with new information
+ * @param *Data : struct used to collect IMU Data
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data){
     // Read 18 contiguous data registers within the IMU starting at 0x08 and stores data within struct fields
-    error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_DATA_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 18, HAL_MAX_DELAY);
-    if (error != HAL_OK){return ERROR;}
-    
-    return SUCCESS;
+    return HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_DATA_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 18, HAL_MAX_DELAY);
 }
 
+/**
+ * @brief Update struct with IMU Calibration register data. Used to hardcode calibration
+ * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
+ * @param *Data : struct used to collect IMU calibration data
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
 
-ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
+    HAL_StatusTypeDef error = HAL_OK;
     // This function has to execute while the IMU is in configuration mode. Otherwise the registers cannot be read
     // TODO: check if we need to be in config mode to read these registers
     
@@ -199,14 +188,20 @@ ErrorStatus IMU_GetCalibData(IMUCalibData_t *Data){
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
    //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
-    error = HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
-    if (error != HAL_OK){return ERROR;}
-    
-    return SUCCESS;
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
+    return error;
 }
 
-ErrorStatus Calibrate(IMUCalibData_t *Data)
-{
+/**
+ * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
+ * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
+ * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
+ * @param *Data : struct holding IMU calibration data
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
+
+    HAL_StatusTypeDef error = HAL_OK;
     // This function must be executed while the IMU is in configuration mode. Otherwise registers are not writable
     uint8_t config[4];
     config[0] = OPR_MODE; //register address
@@ -217,45 +212,34 @@ ErrorStatus Calibrate(IMUCalibData_t *Data)
     for (int32_t reg=0; reg < 22; reg +=1) {
         config[0] = index;
         config[1] = 0x01;
-
         error |=SEND(config, 2);
-
         index +=1;
-
     }
 
     index =0x67;
     for (int32_t rad=0; rad < 2; rad ++) {
         config[0] = index;
         config[1] = 0xF4;
-
-
         error |=SEND(config, 2);
         index +=1;
 
         config[0] = index;
         config[1] = 0x01;
         error |=SEND(config, 2);
-
         index +=1;
-
-        
-
     }
-
-    if(error)
-    {
-        printf("ERROR3 \n\r");
-    }
-
     // TODO: think about switching to NDOF here
-    
-    return SUCCESS;
+    return error;
 }
 
-/* This function aims to provide an all in one debug function. Call to help pinpoint an issue with the IMU*/
-ErrorStatus DebugIMU(void)
-{
+/** 
+ * @brief This function aims to provide an all in one debug function. Call to help pinpoint an issue with the IMU
+ * @param None
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_Debug(void){
+
+    HAL_StatusTypeDef error = HAL_OK;
     uint8_t debug[2];
     // Call a Build in Self test. Results stored in ST_RESULT.
     HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_TRIGGER, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY); 
@@ -264,9 +248,8 @@ ErrorStatus DebugIMU(void)
     debug[0] = SYS_TRIGGER;
 
     error |=SEND(debug, 2);
-    if(error)
-    {
-        printf("ERROR2 \n\r");
+    if(error){
+        printf("ERROR \n\r");
     }
     // Read results
     HAL_I2C_Mem_Read(&hi2c1, ADDR, ST_RESULT, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
@@ -279,8 +262,8 @@ ErrorStatus DebugIMU(void)
     HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_STATUS, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
 
     // If SYS_STATUS returned a 1, check the error message in SYS_ERR register. interpet on pg 69 of ref manual
-    printf("SYS_STATUS: %X\n", debug);
-    if (debug == 1){
+    printf("SYS_STATUS: %X\n", debug[0]);
+    if (debug[0] == 1){
         HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_ERROR, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
         printf("SYS_ERROR: %X\n", debug[0]);
     }
@@ -303,9 +286,5 @@ ErrorStatus DebugIMU(void)
     printf("GYRO power mode: %X\n", debug[0]);
 
     // TODO: think of better debugging tools
-
+    return error;
 }
-
-
-
-
