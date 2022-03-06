@@ -6,11 +6,13 @@
 #include "stm32f4xx.h"
 #include "queue.h"
 #include <stdint.h>
+#include <string.h>
+#include "CANBus.h"
+#include "IMU.h"
+#include "GPS.h"
 
 #define ETHERNET_SIZE 256
-int Ethernet_Init(int *lsocket);
-void sendMessage();
-void endConnection(int lsocket);
+
 typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 
@@ -18,28 +20,52 @@ typedef enum{
     IMU = 0x1,
     GPS = 0x2,
     CAN = 0x3
-} ethernetID;
+} EthernetID_t;
 typedef union {
     // one need to use on of these - depends on the length of the data 
-	uint8_t b;
-	uint16_t h;
-	uint32_t w;
-	float f;
-} ethernetData;
+	CANMSG_t CANData;
+    IMUData_t IMUData;
+    GPSData_t GPSData;
+} EthernetData_t;
 typedef struct{
     // this contains the length of the data 
+    EthernetID_t id;
     uint8_t length;
-	ethernetData data; // based on the length you choose how big the ethernetData is 
-} ethernetPacket;
-typedef struct{
-    ethernetID id; // contains the ID of the ethernet - where the message is from 
-    ethernetPacket info; // contains the actual information of the data 
-}ethernet_Fifo;
+	EthernetData_t data; // based on the length you choose how big the ethernetData is 
+} EthernetMSG_t;
 
+//NOTE: This driver is created under the assumption only one socket will be open at a time
 
-// need to figure out what i should store in the 
-// includes CAN axel and gps 
+/** Ethernet Initialize
+ * @brief Initialize Ethernet, create queue to hold messages and allocate
+ *        socket when connection has been established
+ * 
+ * @param lsocket pointer to socket to allocated in ethernet
+ * @return ErrorStatus ERROR if socket could not be binded to local address
+ *                     ERROR if socket did not receive connection request
+ *                     SUCCESS if socket was created successfully
+ */
+ErrorStatus Ethernet_Init(int *lsocket);
 
+/** Ethernet CollectMessage
+ * @brief Put data in Ethernet Queue
+ * 
+ * @param msg Data to place in queue
+ * @return BaseType_t - pdTrue if placed, pdFalse if full
+ */
+BaseType_t Ethernet_CollectMessage(EthernetMSG_t* msg);
 
+/** Ethernet Send Message
+ * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
+ *        wait until there is data in the queue to send it across
+ */
+void Ethernet_SendMessage(void);
+
+/** Ethernet End Connection
+ * @brief Close ethernet connection
+ * 
+ * @param lsocket socket to close connection
+ */
+void Ethernet_EndConnection(int lsocket);
 
 #endif
