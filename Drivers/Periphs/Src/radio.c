@@ -1,7 +1,15 @@
-#include "radio.h"
 
-static QueueHandle_t *EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
+#include "radio.h"
+#include "sockets.h"
+#include "queue.h"
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include "lwip.h"
+
+static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static int clientfd;
+static int lsocket;
 
 /** Ethernet Initialize
  * @brief Initialize Ethernet, create queue to hold messages and allocate
@@ -12,13 +20,12 @@ static int clientfd;
  *                     ERROR if socket did not receive connection request
  *                     SUCCESS if socket was created successfully
  */
-ErrorStatus Ethernet_Init(int *lSocket){
-
-    // MX_LWIP_Init(); initialize all the things up here - first one is LWIP
+ErrorStatus Ethernet_Init() {
+    MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     struct sockaddr_in sLocalAddr;
-    *EthernetQ = xQueueCreate(ETHERNET_SIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
-    *lSocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
-    if (lSocket < 0)
+    EthernetQ = xQueueCreate(ETHERNET_SIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
+    lsocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    if (lsocket < 0)
         return 0;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
@@ -27,30 +34,22 @@ ErrorStatus Ethernet_Init(int *lSocket){
     sLocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     sLocalAddr.sin_port = htons(23);
 
-    if (lwip_bind(*lSocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0){
-        lwip_close(*lSocket);
+    if (lwip_bind(lsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0){
+        lwip_close(lsocket);
         return ERROR;
     }
-    if (lwip_listen(*lSocket, 20) != 0){
-        lwip_close(*lSocket);
+    if (lwip_listen(lsocket, 20) != 0){
+        lwip_close(lsocket);
         return ERROR;
     }
+
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
-    int nbytes;
-    char buffer[1024];
-    // this will establish a connection between the two sockets
-    // changed this part of clientfd - if something is wrong here its prob here
-    while (1){
-        clientfd = lwip_accept(*lSocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
-        if (clientfd > 0)
-            break;
+    while (1) {
+        clientfd = lwip_accept(lsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+        if (clientfd >= 0) break;
     }
-    while (1){
-        nbytes = lwip_recv(clientfd, buffer, sizeof(buffer), 0);
-        if (nbytes > 0)
-            break;
-    }
+
     return SUCCESS;
 }
 
@@ -58,20 +57,30 @@ ErrorStatus Ethernet_Init(int *lSocket){
  * @brief Put data in Ethernet Queue
  * 
  * @param msg Data to place in queue
- * @return BaseType_t - pdTrue if placed, pdFalse if full
+ * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
  */
-BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg){
-    return xQueueSend(*EthernetQ, msg, 0);
+BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
+    return xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
 }
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
+ * 
+ * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
  */
-void Ethernet_SendMessage(void){
-    EthernetMSG_t* temp = 0;
-    while (xQueueReceive(*EthernetQ, temp, (TickType_t)0) != pdPASS);
-    lwip_send(clientfd, temp, sizeof(temp), 0);
+BaseType_t Ethernet_SendMessage() {
+    EthernetMSG_t eth_rx;
+
+    // pull message from queue to send over ethernet
+    BaseType_t error = xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0);
+    if (error != pdTRUE) return error;
+
+    if (clientfd >= 0) {
+        lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+    }
+    else return pdFALSE;
+    return pdTRUE;
 }
 
 /** Ethernet End Connection

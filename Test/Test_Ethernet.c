@@ -7,6 +7,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include <stdio.h>
+#include <string.h>
 #include "radio.h"
 
 /******************************************************************************
@@ -51,17 +52,13 @@ void StartDefaultTask(void *argument);
 
 
 /* Test Threads --------------------------------------------------------------*/
-void TransmitTask(void* argument){
-    volatile uint8_t RecieveInitialized = 0;
-    int socket;
-    ErrorStatus testStatus;
-    testStatus=Ethernet_Init(&socket);
-    if(testStatus == SUCCESS){
-        printf("Connection established");
-    }
-    else{
-        printf("Connection not established");
-        Error_Handler();
+void TransmitTask(void* argument) {
+    printf("initializing ethernet...\n");
+    ErrorStatus testStatus = Ethernet_Init();
+
+    if (testStatus != SUCCESS) {
+      printf("Initialization Error\n");
+      Error_Handler();
     }
 
     EthernetMSG_t testmessage;
@@ -73,18 +70,21 @@ void TransmitTask(void* argument){
 
 
     EthernetMSG_t test2message;
-    memset(&test2message, 0, sizeof(testmessage));
+    memset(&test2message, 0, sizeof(test2message));
 
-    testmessage.length=sizeof(testmessage.data.GPSData);
-    testmessage.id=GPS;
-    testmessage.data.GPSData.NorthSouth='e';
-    
-    while (RecieveInitialized == 0);
+    test2message.length=sizeof(test2message.data.GPSData);
+    test2message.id=GPS;
+    test2message.data.GPSData.hr[0] = 'A';
+    test2message.data.GPSData.hr[1] = 'B';
+
     while (1) {
-        Ethernet_PutInQueue(&testmessage);
+        printf("putting data in queue\n");
+
         Ethernet_PutInQueue(&test2message);
         Ethernet_SendMessage();
-        printf("putting data in queue");
+        Ethernet_PutInQueue(&test2message);
+        Ethernet_SendMessage();
+        
         osDelay(1000);
     }
 }
