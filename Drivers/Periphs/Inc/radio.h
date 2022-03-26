@@ -93,6 +93,7 @@ ErrorStatus Ethernet_Init(int *lsocket);
  * @return BaseType_t - pdTrue if placed, pdFalse if full
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
@@ -107,6 +108,9 @@ BaseType_t Ethernet_SendMessage(void);
 void Ethernet_EndConnection(void);
 =======
 BaseType_t Ethernet_CollectMessage(EthernetMSG_t* msg);
+=======
+BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
+>>>>>>> made a new file for testing ethernet ; made changes to radio.c and radio.h
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
