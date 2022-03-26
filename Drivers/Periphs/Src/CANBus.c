@@ -11,7 +11,7 @@ static CAN_HandleTypeDef *HAL_CAN_1;
 static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
-static QueueHandle_t *RxQueue;
+static QueueHandle_t RxQueue;
 uint32_t DroppedMessages = 0;   // for debugging purposes
 
 
@@ -66,7 +66,7 @@ static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx
     }
 
     // Add message to FIFO
-    if (xQueueSendToBackFromISR(*RxQueue, &canmessage, NULL) == errQUEUE_FULL) {
+    if (xQueueSendToBackFromISR(RxQueue, &canmessage, NULL) == errQUEUE_FULL) {
         DroppedMessages++;
         return HAL_ERROR;
     }
@@ -108,10 +108,11 @@ static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
  */
 HAL_StatusTypeDef CAN_Config(
         CAN_HandleTypeDef *hcan,
-        uint32_t mode,
-        QueueHandle_t *queue) {
+        uint32_t mode) {
     HAL_CAN_1 = hcan;
-    RxQueue = queue;
+    RxQueue = xQueueCreate(CAN_RX_QUEUE_SIZE, sizeof(CANMSG_t));
+    if (RxQueue == NULL) return HAL_ERROR;
+
     HAL_StatusTypeDef configstatus = MX_CAN1_Init(mode);
     if (configstatus != HAL_OK) return configstatus;
 
@@ -157,7 +158,7 @@ HAL_StatusTypeDef CAN_Config(
  *                    pdFALSE if queue is empty
  */
 BaseType_t CAN_FetchMessage(CANMSG_t *message) {
-    return xQueueReceive(*RxQueue, message, (TickType_t)0);
+    return xQueueReceive(RxQueue, message, (TickType_t)0);
 }
 
 

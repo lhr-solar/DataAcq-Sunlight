@@ -67,13 +67,8 @@ void TransmitTask(void* argument){
     }
 }
 
-#define CAN_RX_QUEUE_SIZE 32
 void RecieveTask(void* argument){
-    QueueHandle_t canrxqueue = xQueueCreate(CAN_RX_QUEUE_SIZE, sizeof(CANMSG_t));
-    if (canrxqueue == NULL) {
-        Error_Handler();
-    }
-    if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK, &canrxqueue) != HAL_OK) {
+    if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK) != HAL_OK) {
         Error_Handler();
     }
     RecieveInitialized = 1;

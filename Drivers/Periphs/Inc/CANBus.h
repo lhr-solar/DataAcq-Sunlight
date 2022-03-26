@@ -17,6 +17,8 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+#define CAN_RX_QUEUE_SIZE 32
+
 /**
  * Filter and HAL RX_FIFO configurations
  * Set FILTER_MASK_ID_LOW/HIGH to 0 to recieve all can messages
@@ -79,8 +81,7 @@ typedef struct {
  */
 HAL_StatusTypeDef CAN_Config(
         CAN_HandleTypeDef *hcan,
-        uint32_t mode,
-        QueueHandle_t *queue);
+        uint32_t mode);
 
 
 /** CAN Fetch Message
