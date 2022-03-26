@@ -37,32 +37,37 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
-
+  //printf("check 1 \n\r"); //this prints
   osKernelInitialize();
+  //printf("check 1 \n\r"); //this prints
+  
+  GPSTestHandle = osThreadNew(GPSTest, NULL, &GPSTest_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes); //when this is uncommented, GPSTest never runs
+  //GPSTestHandle = osThreadNew(GPSTest, NULL, &GPSTest_attributes);
+  //printf("check 1 \n\r"); //this prints
 
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-  GPSTestHandle = osThreadNew(DataReadingTask, NULL, &GPSTest_attributes);
-
-  osKernelStart();
+  osKernelStart(); //things stop working after this point??
   while (1);
+  
 }
 
 void GPSTest(void* argument){
     GPSData_t Data;
+    printf("check 3 \n\r");
     if(GPS_Init() == ERROR) printf("ERROR\n\r");
     
     while(1){
         if (GPS_UpdateMeasurements() == ERROR) printf("ERROR\n\r");
         GPS_ReadData(&Data);
-        printf("Latitude Degrees: %.2s\n\r", Data.latitude_Deg);
-        printf("Latitude Min: %.6s\n\r", Data.latitude_Min);
+        printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
+        printf("Latitude Min: %.4s\n\r", Data.latitude_Min);
         printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
-        printf("Longitude Degrees: %.3s\n\r", Data.longitude_Deg);
-        printf("Longitude Min: %.6s\n\r", Data.longitude_Min);
-        printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
-        printf("Magnetic Variation Degrees: %.4s\n\r", Data.magneticVariation_Deg);
+        printf("Longitude Degrees: %.5s\n\r", Data.longitude_Deg);
+        printf("Longitude Min: %.2s\n\r", Data.longitude_Min);
+        printf("Speed in Knots: %.3s\n\r", Data.speedInKnots);
+        printf("Magnetic Variation Degrees: %.3s\n\r", Data.magneticVariation_Deg);
         printf("Magnetic Variation Direction: %c\n\r", Data.magneticVariation_EastWest);       
-        osDelay(500); 
+        osDelay(1000); 
     }
 
 }
@@ -206,7 +211,8 @@ static void MX_GPIO_Init(void){
 void StartDefaultTask(void *argument){
   for(;;)
   {
-    osDelay(1);
+    //printf("In default task\n\r");
+    osDelay(100); //was originally 1, increased delay because this thread kept overtaking the GPSTest thread
   }
 }
 
