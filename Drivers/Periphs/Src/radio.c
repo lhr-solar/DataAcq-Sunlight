@@ -54,13 +54,13 @@ ErrorStatus Ethernet_Init(int *lSocket){
     return SUCCESS;
 }
 
-/** Ethernet CollectMessage
+/** Ethernet PutInQueue
  * @brief Put data in Ethernet Queue
  * 
  * @param msg Data to place in queue
  * @return BaseType_t - pdTrue if placed, pdFalse if full
  */
-BaseType_t Ethernet_CollectMessage(EthernetMSG_t* msg){
+BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg){
     return xQueueSend(*EthernetQ, msg, 0);
 }
 

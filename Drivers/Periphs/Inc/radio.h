@@ -53,7 +53,7 @@ ErrorStatus Ethernet_Init(int *lsocket);
  * @param msg Data to place in queue
  * @return BaseType_t - pdTrue if placed, pdFalse if full
  */
-BaseType_t Ethernet_CollectMessage(EthernetMSG_t* msg);
+BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
