@@ -4,6 +4,12 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
+<<<<<<< HEAD
+=======
+#include "queue.h"
+#include <stdio.h>
+#include <string.h>
+>>>>>>> Ethernet working
 #include "radio.h"
 
 /******************************************************************************
@@ -50,7 +56,19 @@ void StartDefaultTask(void *argument);
 /* Test Threads --------------------------------------------------------------*/
 void TransmitTask(void* argument) {
     printf("initializing ethernet...\n");
+<<<<<<< HEAD
     ErrorStatus initstatus = Ethernet_Init();
+=======
+    ErrorStatus testStatus = Ethernet_Init();
+
+    if (testStatus != SUCCESS) {
+      printf("Initialization Error\n");
+      Error_Handler();
+    }
+
+    EthernetMSG_t testmessage;
+    memset(&testmessage, 0, sizeof(testmessage));
+>>>>>>> Ethernet working
 
 
     if (initstatus != SUCCESS) {
@@ -58,6 +76,7 @@ void TransmitTask(void* argument) {
       Error_Handler();
     }
 
+<<<<<<< HEAD
     BaseType_t status;
     EthernetMSG_t testmessage;
 
@@ -73,6 +92,24 @@ void TransmitTask(void* argument) {
         if (status != pdTRUE) printf("PutInQueue error\n");
         printf("Sending message now\n");
         if (Ethernet_SendMessage()) printf("Send message error");
+=======
+    EthernetMSG_t test2message;
+    memset(&test2message, 0, sizeof(test2message));
+
+    test2message.length=sizeof(test2message.data.GPSData);
+    test2message.id=GPS;
+    test2message.data.GPSData.hr[0] = 'A';
+    test2message.data.GPSData.hr[1] = 'B';
+
+    while (1) {
+        printf("putting data in queue\n");
+
+        Ethernet_PutInQueue(&test2message);
+        Ethernet_SendMessage();
+        Ethernet_PutInQueue(&test2message);
+        Ethernet_SendMessage();
+        
+>>>>>>> Ethernet working
         osDelay(1000);
     }
 

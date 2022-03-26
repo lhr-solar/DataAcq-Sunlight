@@ -1,3 +1,4 @@
+
 #include "radio.h"
 #include "sockets.h"
 #include "config.h"
@@ -41,14 +42,14 @@ ErrorStatus Ethernet_Init() {
 
     Ethernet_ConnectToServer();
 
-    return SUCCESS;
-}
-
-/** Ethernet PutInQueue
- * @brief Put data in Ethernet Queue
- * 
- * @param msg Data to place in queue
- * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
+<<<<<<< HEAD
+=======
+    if (lwip_bind(lsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0){
+        lwip_close(lsocket);
+        return ERROR;
+    }
+    if (lwip_listen(lsocket, 20) != 0){
+        lwip_close(lsocket);
  */
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
     return xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
@@ -58,6 +59,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
  * 
+<<<<<<< HEAD
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
 BaseType_t Ethernet_SendMessage() {
@@ -82,6 +84,21 @@ BaseType_t Ethernet_SendMessage() {
             Ethernet_ConnectToServer(); // reconnect to server if send failed
         }
     }
+=======
+ * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
+ */
+BaseType_t Ethernet_SendMessage() {
+    EthernetMSG_t eth_rx;
+
+    // pull message from queue to send over ethernet
+    BaseType_t error = xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0);
+    if (error != pdTRUE) return error;
+
+    if (clientfd >= 0) {
+        lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+    }
+    else return pdFALSE;
+>>>>>>> Ethernet working
     return pdTRUE;
 }
 

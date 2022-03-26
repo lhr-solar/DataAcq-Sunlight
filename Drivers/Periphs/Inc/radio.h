@@ -2,6 +2,7 @@
 #define RADIO_H
 
 #include "FreeRTOS.h"
+<<<<<<< HEAD
 #include "sockets.h"
 #include "stm32f4xx.h"
 #include "queue.h"
@@ -9,12 +10,15 @@
 <<<<<<< HEAD
 #include <stdint.h>
 #include <string.h>
+=======
+>>>>>>> Ethernet working
 #include "CANBus.h"
 <<<<<<< HEAD
 #include "lwip.h"
 #include "IMU.h"
 #include "GPS.h"
 
+<<<<<<< HEAD
 #define ETHERNET_QUEUESIZE 32
 
 =======
@@ -31,6 +35,9 @@ void endConnection(int lsocket);
 =======
 #include "IMU.h"
 #include "GPS.h"
+=======
+#define ETHERNET_SIZE 32
+>>>>>>> Ethernet working
 
 #define ETHERNET_SIZE 256
 
@@ -71,19 +78,26 @@ typedef struct{
  *        socket when connection has been established
  * 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
  * @param lsocket pointer to socket to allocated in ethernet
 >>>>>>> Added function to put data in queue, added comments for documentation, fixed function names
+=======
+>>>>>>> Ethernet working
  * @return ErrorStatus ERROR if socket could not be binded to local address
  *                     ERROR if socket did not receive connection request
  *                     SUCCESS if socket was created successfully
  */
+<<<<<<< HEAD
 <<<<<<< HEAD
 ErrorStatus Ethernet_Init(void);
 
 /** Ethernet Put in queue
 =======
 ErrorStatus Ethernet_Init(int *lsocket);
+=======
+ErrorStatus Ethernet_Init();
+>>>>>>> Ethernet working
 
 /** Ethernet CollectMessage
 >>>>>>> Added function to put data in queue, added comments for documentation, fixed function names
@@ -115,8 +129,10 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
+ * 
+ * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
  */
-void Ethernet_SendMessage(void);
+BaseType_t Ethernet_SendMessage();
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
