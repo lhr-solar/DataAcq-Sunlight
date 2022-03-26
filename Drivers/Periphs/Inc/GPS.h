@@ -16,16 +16,16 @@ typedef struct{
     char sec[2]; // ^^
     char ms[3]; // ^^
     char latitude_Deg[4]; //was 2
-    char latitude_Min[2]; //was 6
+    char latitude_Min[4]; //was 6
     char NorthSouth;
     char longitude_Deg[5]; //was 3
-    char longitude_Min[2]; //was 6
+    char longitude_Min[4]; //was 6
     char EastWest;
-    char speedInKnots[3]; //was 4, msy need to make 4 for decimal part
+    char speedInKnots[4]; //was 4, msy need to make 4 for decimal part. the third one is "."
     char day[2]; // Will not use these parameters unless we have to
     char month[2]; // ^^
     char year[4]; // ^^
-    char magneticVariation_Deg[3]; //was 4, may change back to 4 for decimal
+    char magneticVariation_Deg[4]; //was 4, may change back to 4 for decimal. the third is "."
     char magneticVariation_EastWest;
 } GPSData_t;
 
