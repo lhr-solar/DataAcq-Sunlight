@@ -142,7 +142,7 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  IMU_Init();
+  //IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK
 
   /* USER CODE END 2 */
 

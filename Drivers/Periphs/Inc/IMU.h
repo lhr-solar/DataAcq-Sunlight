@@ -2,7 +2,6 @@
 #define IMU_H
 
 #include "main.h"
-#include <stdlib.h>
 #include <stdint.h>
 
 typedef struct {

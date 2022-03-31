@@ -31,8 +31,7 @@ HAL_StatusTypeDef error;
 
 IMUCalibData_t Calib_data;
 
-
-//These defines are not in IMU.h because they are only necessary for debugging
+//These defines are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
 //If the below register returns a 1 anywhere, that means that it will only send values if the accelerometer
 //reads a change in data
@@ -42,8 +41,6 @@ IMUCalibData_t Calib_data;
 #define SYS_ERROR 0x3A 
 #define ST_RESULT 0x36 //This register will show a 0 for whichever device failed the test (pg. 50 of datasheet)
 #define OPR_MODE 0x3D
-
-
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -103,9 +100,7 @@ void IMUTest(void* argument){
 // Set of code to gather calibration data
     
     while (1){
-        ErrorStatus err = IMU_GetCalibData(&Calib_data);
-        //err = Calibrate(&Calib_data);
-        if ((err) == ERROR){
+        if (IMU_GetCalibData(&Calib_data)){ //if error
             printf("I2C transmitting or receiving failed.\n\r");
             printf("Consider checking I2C init function or changing device address to backup\n\r");
         }

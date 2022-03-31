@@ -2,11 +2,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "cmsis_os.h"
-
-static IMUCalibData_t IMU_CalibData;
+#include <stdlib.h>
 
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
+
+static IMUCalibData_t IMU_CalibData;
 
 // Register definitions
 #define ACC_NM_SET     0x16
@@ -46,6 +47,14 @@ static IMUCalibData_t IMU_CalibData;
 #define GYR_DATA_Z_LSB 0x18
 #define GYR_DATA_Z_MSB 0x19
 #define ACC_OFFSET_X_LSB 0x55
+#define ACC_RADIUS_LSB 0x67
+#define ACC_RADIUS_MSB 0x68
+#define MAG_RADIUS_LSB 0x69 
+#define MAG_RADIUS_MSB 0x6A
+
+//These defines are for calibrating the IMU without having to move it
+#define RADIUS_LSB_CALIB 0xF4
+#define RADIUS_MSB_CALIB 0x01
 
 /*
 The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. 
@@ -88,7 +97,7 @@ HAL_StatusTypeDef IMU_Init(){
     // My recommendation, don't cut out anything here without extensive
     // testing.
 
-    uint8_t config[4];
+    uint8_t config[2];
 
     //EDIT: Either this reset or the one below is unnecesary. 
     // Pull the reset pin low, then high to reset the IMU
@@ -100,7 +109,7 @@ HAL_StatusTypeDef IMU_Init(){
 
     //EDIT: I dont believe this is necessary, since the IMU has a power on reset feature which starts the IMU in config mode
     // Verify our current mode. 
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
     if((config[0] & 0xF) != 0) {
         // Need to enter configuration mode first
         config[0] = OPR_MODE;
@@ -152,10 +161,10 @@ HAL_StatusTypeDef IMU_Init(){
     osDelay(20); // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
 
     // TODO: move this into a function that checks if we've uncalibrated. 
-    uint8_t calib_reg = 0x00; 
-    while((calib_reg >> 6) != 3){ //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
-    }
+    uint8_t calib_reg; 
+    do{ //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
+        error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
+    } while((calib_reg >> 6) != 3);
         
     return error;
 }
@@ -188,7 +197,7 @@ HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
    //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
-    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 22, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, sizeof(IMUCalibData_t), HAL_MAX_DELAY);
     return error;
 }
 
@@ -203,31 +212,33 @@ HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
 
     HAL_StatusTypeDef error = HAL_OK;
     // This function must be executed while the IMU is in configuration mode. Otherwise registers are not writable
-    uint8_t config[4];
+    uint8_t config[2];
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
-    int16_t index =0x55;
+    config[1] = 0x01;
     for (int32_t reg=0; reg < 22; reg +=1) {
-        config[0] = index;
-        config[1] = 0x01;
+        config[0] = ACC_OFFSET_X_LSB + reg;
         error |=SEND(config, 2);
-        index +=1;
     }
 
-    index =0x67;
-    for (int32_t rad=0; rad < 2; rad ++) {
-        config[0] = index;
-        config[1] = 0xF4;
-        error |=SEND(config, 2);
-        index +=1;
+    config[0] = ACC_RADIUS_LSB;
+    config[1] = RADIUS_LSB_CALIB;
+    error |=SEND(config, 2);
 
-        config[0] = index;
-        config[1] = 0x01;
-        error |=SEND(config, 2);
-        index +=1;
-    }
+    config[0] = ACC_RADIUS_MSB;
+    config[1] = RADIUS_MSB_CALIB;
+    error |=SEND(config, 2);
+
+    config[0] = MAG_RADIUS_LSB;
+    config[1] = RADIUS_LSB_CALIB;
+    error |=SEND(config, 2);
+
+    config[0] = MAG_RADIUS_MSB;
+    config[1] = RADIUS_MSB_CALIB;
+    error |=SEND(config, 2);
+
     // TODO: think about switching to NDOF here
     return error;
 }
@@ -242,7 +253,7 @@ HAL_StatusTypeDef IMU_Debug(void){
     HAL_StatusTypeDef error = HAL_OK;
     uint8_t debug[2];
     // Call a Build in Self test. Results stored in ST_RESULT.
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_TRIGGER, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY); 
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_TRIGGER, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY); 
     // Friendly write into SYS_Trigger
     debug[1] = debug[0] | 0x01;
     debug[0] = SYS_TRIGGER;
@@ -252,19 +263,19 @@ HAL_StatusTypeDef IMU_Debug(void){
         printf("ERROR \n\r");
     }
     // Read results
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, ST_RESULT, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ST_RESULT, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
 
     // Interpret results on page 67 of reference manual
     printf("ST_RESULT: %X\n", debug[0]);
 
     // Check SYS_STATUS register. This will output various amounts of information. interpretation found on page 68 of ref manual
     
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_STATUS, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_STATUS, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
 
     // If SYS_STATUS returned a 1, check the error message in SYS_ERR register. interpet on pg 69 of ref manual
     printf("SYS_STATUS: %X\n", debug[0]);
     if (debug[0] == 1){
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_ERROR, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+        error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, SYS_ERROR, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
         printf("SYS_ERROR: %X\n", debug[0]);
     }
 
@@ -273,16 +284,16 @@ HAL_StatusTypeDef IMU_Debug(void){
     debug[1] = 1;
     error |= SEND(debug, 2);
 
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
     printf("ACC Config: %X\n", debug[0]);
 
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, MAG_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, MAG_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
     printf("MAG config: %X\n", debug[0]);
 
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, GYR_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, GYR_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
     printf("GYRO Config: %X\n", debug[0]);
 
-    HAL_I2C_Mem_Read(&hi2c1, ADDR, GYR_CONFIG1, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, GYR_CONFIG1, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
     printf("GYRO power mode: %X\n", debug[0]);
 
     // TODO: think of better debugging tools
