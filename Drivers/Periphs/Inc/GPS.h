@@ -8,7 +8,7 @@
 #include "main.h"
 #include <string.h>
 
-#define GPS_RX_QUEUE_SIZE 1
+#define GPS_RX_QUEUE_SIZE 3
 
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
