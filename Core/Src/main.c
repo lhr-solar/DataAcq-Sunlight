@@ -22,12 +22,24 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
+#include "IMU.h"
 #include "Tasks.h"
 #include "CANBus.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+CAN_HandleTypeDef hcan1;
 
+I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
+
+SPI_HandleTypeDef hspi5;
+
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart3;
+
+ETH_HandleTypeDef heth; //
+TIM_HandleTypeDef htim1; ///
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,13 +57,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-I2C_HandleTypeDef hi2c2;
-
-SPI_HandleTypeDef hspi5;
-
-UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -136,6 +141,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+
+  //IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK
 
   /* USER CODE END 2 */
 
@@ -515,6 +522,7 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
+
   /* Infinite loop */
   for(;;)
   {
