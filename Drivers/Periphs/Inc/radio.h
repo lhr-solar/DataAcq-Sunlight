@@ -49,7 +49,8 @@ ErrorStatus Ethernet_Init(void);
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking
  */
-static void Ethernet_ConnectToServer(void);
+//static void Ethernet_ConnectToServer(void);
+//can't include a static function in the header
 
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
