@@ -54,13 +54,13 @@ HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data);
 HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data);
 
 /**
- * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
+ * @brief Use pre-found data to upload calibration profile to IMU
  * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
  * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
- * @param *Data : struct holding IMU calibration data
+ * @param None
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
-HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data);
+HAL_StatusTypeDef IMU_Calibrate(); 
 
 /** 
  * @brief This function aims to provide an all in one debug function. Call to help pinpoint an issue with the IMU

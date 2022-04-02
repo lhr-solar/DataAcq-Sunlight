@@ -7,8 +7,6 @@
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
 
-static IMUCalibData_t IMU_CalibData;
-
 // Register definitions
 #define ACC_NM_SET     0x16
 #define ACC_CONFIG     0x08
@@ -149,7 +147,7 @@ HAL_StatusTypeDef IMU_Init(){
     error |= SEND(config, 2); 
 
     // hard code calibration values
-    error |= IMU_Calibrate(&IMU_CalibData);
+    error |= IMU_Calibrate();
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
@@ -202,13 +200,13 @@ HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
 }
 
 /**
- * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
+ * @brief Use pre-found data to upload calibration profile to IMU
  * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
  * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
- * @param *Data : struct holding IMU calibration data
+ * @param None
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
-HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
+HAL_StatusTypeDef IMU_Calibrate(){
 
     HAL_StatusTypeDef error = HAL_OK;
     // This function must be executed while the IMU is in configuration mode. Otherwise registers are not writable
@@ -217,27 +215,12 @@ HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
-    config[1] = 0x01;
+    uint8_t calibHardCode[]={2, 0, 0, 0, -13, -1, 69, 0, 3, 1, 156, 1, 0, 0, 0 ,0 ,0, 0, 232, 3, 23, 2 };
     for (int32_t reg=0; reg < 22; reg +=1) {
         config[0] = ACC_OFFSET_X_LSB + reg;
+        config[1]= calibHardCode[reg];
         error |=SEND(config, 2);
     }
-
-    config[0] = ACC_RADIUS_LSB;
-    config[1] = RADIUS_LSB_CALIB;
-    error |=SEND(config, 2);
-
-    config[0] = ACC_RADIUS_MSB;
-    config[1] = RADIUS_MSB_CALIB;
-    error |=SEND(config, 2);
-
-    config[0] = MAG_RADIUS_LSB;
-    config[1] = RADIUS_LSB_CALIB;
-    error |=SEND(config, 2);
-
-    config[0] = MAG_RADIUS_MSB;
-    config[1] = RADIUS_MSB_CALIB;
-    error |=SEND(config, 2);
 
     // TODO: think about switching to NDOF here
     return error;
