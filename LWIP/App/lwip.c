@@ -54,15 +54,7 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-/**
- * @brief Function version of the macro LWIP_MAKEU32() in def.h
- */
-static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
-  return  (((u32_t)((a) & 0xff) << 24) |
-           ((u32_t)((b) & 0xff) << 16) |
-           ((u32_t)((c) & 0xff) << 8)  |
-           (u32_t)((d) & 0xff));
-}
+
 /* USER CODE END 2 */
 
 /**
