@@ -59,7 +59,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
  * @brief Send data from Ethernet Fifo across ethernet.
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
-int Ethernet_SendMessage(void);
+BaseType_t Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
