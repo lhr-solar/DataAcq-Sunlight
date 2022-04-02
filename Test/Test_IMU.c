@@ -29,8 +29,6 @@ UART_HandleTypeDef huart1;
 
 HAL_StatusTypeDef error;
 
-IMUCalibData_t Calib_data;
-
 //These defines are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
 //If the below register returns a 1 anywhere, that means that it will only send values if the accelerometer
@@ -93,34 +91,7 @@ void IMUTest(void* argument){
     //code taken from main.c in Core folder
     osDelay(2000);
     IMU_Init();
-    IMUData_t Data;
-    
-
-    // function to set IMU to some mode
-    // Set of code to gather calibration data
-    
-    // while (1){
-    //     if (IMU_GetCalibData(&Calib_data)){ //if error
-    //         printf("I2C transmitting or receiving failed.\n\r");
-    //         printf("Consider checking I2C init function or changing device address to backup\n\r");
-    //     }
-    //     printf("ACCEL_DATA_offset_X: %d\n\r", Calib_data.accel_offset_x);
-    //     printf("ACCEL_DATA_offset_Y: %d\n\r", Calib_data.accel_offset_y); 
-    //     printf("ACCEL_DATA_offset_Z: %d\n\r", Calib_data.accel_offset_z); 
-    //     printf("MAG_DATA_offset_X: %d\n\r", Calib_data.mag_offset_x); 
-    //     printf("MAG_DATA_offset_Y: %d\n\r", Calib_data.mag_offset_y); 
-    //     printf("MAG_DATA_offset_Z: %d\n\r", Calib_data.mag_offset_z); 
-    //     printf("GYR_DATA_offset_X: %d\n\r", Calib_data.gyr_offset_x); 
-    //     printf("GYR_DATA_offset_Y: %d\n\r", Calib_data.gyr_offset_y); 
-    //     printf("GYR_DATA_offset_Z: %d\n\r", Calib_data.gyr_offset_z); 
-    //     printf("Accel radius: %d\n\r", Calib_data.accel_radius); 
-    //     printf("Mag radius: %d\n\r", Calib_data.mag_radius); 
-
-      
-    //     osDelay(2000); //This delays by tick count. Included to prevent too many I2C transmit/receive calls
-    // }
-
-  
+    IMUData_t Data;  
     
     while (1){
       

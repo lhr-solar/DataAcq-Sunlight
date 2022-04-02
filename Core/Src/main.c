@@ -38,8 +38,8 @@ SPI_HandleTypeDef hspi5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
-ETH_HandleTypeDef heth; //
-TIM_HandleTypeDef htim1; ///
+ETH_HandleTypeDef heth;
+TIM_HandleTypeDef htim1;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -142,7 +142,7 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  //IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK
+  IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK - ALSO ERROR CHECK
 
   /* USER CODE END 2 */
 
@@ -522,7 +522,6 @@ void StartDefaultTask(void *argument)
   /* init code for LWIP */
   MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
-
   /* Infinite loop */
   for(;;)
   {
