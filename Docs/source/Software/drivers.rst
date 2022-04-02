@@ -40,11 +40,10 @@ The units can be initialized in many different ways. The way it is initialized n
 in a way where calculations are done after the data is collected. If it turns out we need to use that method of initialization instead, 
 the header file will have to be changed to include the register addresses of where that data is located and the struct will have to be 
 changed as well. Refer to the data sheet for more info on different types of initializations. `IMU_Calibrate()` uses calibration data that 
-was collected in a clean environment (i.e not in a car with power signals and shaky movements). This data is stored in `calibHardCode[].` 
-The function `IMU_GetCalibData(IMUCalibData_t *Data)` is used when the car is not in motion to manually shake the board and record the calibration 
-values to hardcode in `calibHardCode[].` If the data is bad with this method, one other implementation is to put the module in the car, 
-call `IMU_GetCalibData(IMUCalibData_t *Data)` and hope it calibrates through the random movements of the car. Rather than use a hardcoded array, a
-better method would be to store the data (in SD card) for future use. Refer to data sheet for more info on calibration. 
+was collected in a clean environment (i.e not in a car with power signals and shaky movements). This data is stored in `IMUCalibData[]`. 
+The function `IMU_GetCalibData()` is used when the car is not in motion to manually shake the board and record the calibration 
+values to hardcode in `IMUCalibData[].` If the data is bad with this method, one other implementation is to put the module in the car, 
+and hope it calibrates through the random movements of the car.
 
 Global Positioning System (GPS)
 ===============================

@@ -7,6 +7,10 @@
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
 
+//This struct is initialized to values collected in clean environment, they will be overwritten if IMUCalibrate is called
+//but will go back to original values at reset
+static uint8_t IMUCalibData[] = {2, 0, 0, 0, -13, -1, 69, 0, 3, 1, 156, 1, 0, 0, 0 ,0 ,0, 0, 232, 3, 23, 2};
+
 // Register definitions
 #define ACC_NM_SET     0x16
 #define ACC_CONFIG     0x08
@@ -183,7 +187,7 @@ HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data){
  * @param *Data : struct used to collect IMU calibration data
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
-HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
+HAL_StatusTypeDef IMU_GetCalibData(){
 
     HAL_StatusTypeDef error = HAL_OK;
     // This function has to execute while the IMU is in configuration mode. Otherwise the registers cannot be read
@@ -195,7 +199,7 @@ HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
    //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
-    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, sizeof(IMUCalibData_t), HAL_MAX_DELAY);
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, IMUCalibData, sizeof(IMUCalibData), HAL_MAX_DELAY);
     return error;
 }
 
@@ -215,10 +219,9 @@ HAL_StatusTypeDef IMU_Calibrate(){
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
-    uint8_t calibHardCode[]={2, 0, 0, 0, -13, -1, 69, 0, 3, 1, 156, 1, 0, 0, 0 ,0 ,0, 0, 232, 3, 23, 2 };
     for (int32_t reg=0; reg < 22; reg +=1) {
         config[0] = ACC_OFFSET_X_LSB + reg;
-        config[1]= calibHardCode[reg];
+        config[1]= IMUCalibData[reg];
         error |=SEND(config, 2);
     }
 
