@@ -63,6 +63,8 @@ ErrorStatus Ethernet_Init() {
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
 void Ethernet_WaitForClient(){
+    if (clientfd >= 0) return;
+
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
     while (1) {

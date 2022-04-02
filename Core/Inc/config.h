@@ -4,16 +4,11 @@
  */
 
 // IP Address Configuration
-<<<<<<< HEAD
 #define IP4_CLIENT_ADDRESS          169, 254, 48, 100
 #define IP4_SERVER_ADDRESS          169, 254, 48, 219
 #define IP4_NETMASK                 255, 255, 0, 0
 #define IP4_GATEWAY                 0, 0, 0, 0
 #define SERVER_PORT                 65432
-=======
-#define IP4_ADDRESS             192, 168, 0, 100
-#define IP4_NETMASK             255, 255, 0, 0
->>>>>>> ethernet fixes
 
 
 

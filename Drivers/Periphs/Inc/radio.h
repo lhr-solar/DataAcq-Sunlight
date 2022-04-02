@@ -12,11 +12,7 @@
 #include "IMU.h"
 #include "GPS.h"
 
-<<<<<<< HEAD
 #define ETHERNET_QUEUESIZE 32
-=======
-#define ETHERNET_QUEUESIZE 256
->>>>>>> ethernet fixes
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
@@ -61,10 +57,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet.
-<<<<<<< HEAD
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
-=======
->>>>>>> ethernet fixes
  */
 int Ethernet_SendMessage(void);
 
