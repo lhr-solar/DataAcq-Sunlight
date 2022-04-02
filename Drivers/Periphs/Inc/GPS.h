@@ -8,7 +8,7 @@
 #include "main.h"
 #include <string.h>
 
-#define GPS_RX_QUEUE_SIZE 3
+#define GPS_RX_QUEUE_SIZE 8
 
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
@@ -33,7 +33,7 @@ typedef struct{
  * @brief Initialize GPS, configure GPS
  * @return ERROR or SUCCESS if transmit worked
  */
-ErrorStatus GPS_Init(void);
+ErrorStatus GPS_Init(UART_HandleTypeDef *huart);
 
 /** GPS Update Measurements
  * @brief Update All GPS measurements

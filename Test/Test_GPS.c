@@ -51,8 +51,10 @@ int main(void)
 void GPSTest(void* argument){
     GPSData_t Data;
     ErrorStatus status;
-    if(GPS_Init() == ERROR) printf("ERROR\n\r");
+
+    if(GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
     
+    printf("GPS initialized\n\r");
     while(1){
         status = GPS_UpdateMeasurements();
         if (status == ERROR) {
