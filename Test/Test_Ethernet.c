@@ -68,11 +68,9 @@ void TransmitTask(void* argument) {
 
     memset(&testmessage, 0, sizeof(testmessage));
     testmessage.id = GPS;
-    testmessage.length = sizeof(GPSData_t);
-    testmessage.data.GPSData.hr[0] = 'a';
-    testmessage.data.GPSData.hr[1] = 'b';
-    // char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
-    // memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
+    testmessage.length = sizeof(testmessage.data.GPSData);
+    char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
+    memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
 
     Ethernet_WaitForClient();
     while (1){

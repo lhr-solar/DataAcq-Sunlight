@@ -76,7 +76,6 @@ void MX_LWIP_Init(void)
   /* IP addresses initialization with DHCP (IPv4) */
   CFG_IP4_SETADDR(&ipaddr, IP4_ADDRESS);
   CFG_IP4_SETADDR(&netmask, IP4_NETMASK);
-  IP4_ADDR(&netmask, 255, 255, 0, 0);
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   /* add the network interface (IPv4/IPv6) with RTOS */

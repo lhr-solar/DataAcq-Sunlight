@@ -26,6 +26,7 @@ ErrorStatus Ethernet_Init() {
     lsocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
     if (lsocket < 0)
         return 0;
+    clientfd = -1;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
     sLocalAddr.sin_family = AF_INET;
@@ -50,6 +51,8 @@ ErrorStatus Ethernet_Init() {
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
 void Ethernet_WaitForClient(){
+    if (clientfd >= 0) return;
+
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
     while (1) {

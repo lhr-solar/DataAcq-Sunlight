@@ -11,7 +11,7 @@
 #include "IMU.h"
 #include "GPS.h"
 
-#define ETHERNET_QUEUESIZE 256
+#define ETHERNET_QUEUESIZE 32
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
