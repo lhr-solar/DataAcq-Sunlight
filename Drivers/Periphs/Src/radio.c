@@ -50,6 +50,34 @@ ErrorStatus Ethernet_Init() {
     }
     if (lwip_listen(lsocket, 20) != 0){
         lwip_close(lsocket);
+<<<<<<< HEAD
+=======
+        return ERROR;
+    }
+
+
+    return SUCCESS;
+}
+
+/** Ethernet waitForClient
+ * @brief Waits until a client is established - blocking funciton that waits until a client is established
+ * 
+ */
+void Ethernet_WaitForClient(){
+    struct sockaddr_in client_addr;
+    int addrlen = sizeof(client_addr);
+    while (1) {
+        clientfd = lwip_accept(lsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+        if (clientfd >= 0) break;
+    }
+}
+
+/** Ethernet PutInQueue
+ * @brief Put data in Ethernet Queue
+ * 
+ * @param msg Data to place in queue
+ * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
+>>>>>>> added the waiting function for ethernet
  */
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
     return xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
