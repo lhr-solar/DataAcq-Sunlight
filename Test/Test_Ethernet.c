@@ -56,6 +56,7 @@ void TransmitTask(void* argument) {
     printf("initializing ethernet...\n");
     ErrorStatus testStatus = Ethernet_Init();
 
+
     if (testStatus != SUCCESS) {
       printf("Initialization Error\n");
       Error_Handler();
@@ -76,17 +77,34 @@ void TransmitTask(void* argument) {
     test2message.id=GPS;
     test2message.data.GPSData.hr[0] = 'A';
     test2message.data.GPSData.hr[1] = 'B';
+    test2message.data.GPSData.day[0]='H';
+    test2message.data.GPSData.day[1]='i';
+    test2message.data.GPSData.min[0]='H';
+    test2message.data.GPSData.min[1]='i';
+    test2message.data.GPSData.latitude_Min[0]='H';
+    test2message.data.GPSData.latitude_Min[1]='e';
+    test2message.data.GPSData.latitude_Min[2]='l';
+    test2message.data.GPSData.latitude_Min[3]='l';
+    test2message.data.GPSData.latitude_Min[4]='o';
+    test2message.data.GPSData.latitude_Min[5]='s';
 
-    while (1) {
-        printf("putting data in queue\n");
 
+
+ //NOTE: need to handle returned error later
+    Ethernet_WaitForClient();
+    while (1){
+        printf("Beginning of while loop\n");
         Ethernet_PutInQueue(&test2message);
-        Ethernet_SendMessage();
-        Ethernet_PutInQueue(&test2message);
-        Ethernet_SendMessage();
-        
+        BaseType_t killClient = Ethernet_SendMessage();
+        osDelay(1000);
+        printf("Sending message now");
+        if(killClient == pdFALSE){
+            Ethernet_WaitForClient();
+            printf("The client connection was killed; Making new connection");
+        }
         osDelay(1000);
     }
+
 }
 
 /* End Test Threads -----------------------------------------------------------*/

@@ -15,7 +15,6 @@ static int lsocket;
  * @brief Initialize Ethernet, create queue to hold messages and allocate
  *        socket when connection has been established
  * 
- * @param lsocket pointer to socket to allocated in ethernet
  * @return ErrorStatus ERROR if socket could not be binded to local address
  *                     ERROR if socket did not receive connection request
  *                     SUCCESS if socket was created successfully
@@ -43,14 +42,21 @@ ErrorStatus Ethernet_Init() {
         return ERROR;
     }
 
+
+    return SUCCESS;
+}
+
+/** Ethernet waitForClient
+ * @brief Waits until a client is established - blocking funciton that waits until a client is established
+ * 
+ */
+void Ethernet_WaitForClient(){
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
     while (1) {
         clientfd = lwip_accept(lsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
         if (clientfd >= 0) break;
     }
-
-    return SUCCESS;
 }
 
 /** Ethernet PutInQueue

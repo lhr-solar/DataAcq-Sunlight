@@ -3,9 +3,12 @@
 
 void BroadcastingTask(void *argument){
     // this one is the while loop one - you put all the while loop things in here
-    int lsocket;
-    Ethernet_Init(&lsocket); //NOTE: need to handle returned error later
+    Ethernet_Init(); //NOTE: need to handle returned error later
+    Ethernet_WaitForClient();
     while (1){
-        Ethernet_SendMessage();
+        BaseType_t killClient = Ethernet_SendMessage();
+        if(killClient == pdFALSE){
+            Ethernet_WaitForClient();
+        }
     }
 }
