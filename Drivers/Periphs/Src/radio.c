@@ -61,7 +61,6 @@ ErrorStatus Ethernet_Init() {
 
 /** Ethernet waitForClient
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
- * 
  */
 void Ethernet_WaitForClient(){
     struct sockaddr_in client_addr;
@@ -87,6 +86,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
  * 
+<<<<<<< HEAD
 <<<<<<< HEAD
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
@@ -114,24 +114,40 @@ BaseType_t Ethernet_SendMessage() {
     }
 =======
  * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
+=======
+ * @return int - Bytes sent, -1 if Ethernet Queue is empty, 0 if Send failed
+>>>>>>> ethernet fixes
  */
-BaseType_t Ethernet_SendMessage() {
+int Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
 
     // pull message from queue to send over ethernet
-    if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+    if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return -1;
 
+    int bytes_sent = 0;
     if (clientfd >= 0) {
-        lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+        bytes_sent = lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+        if (bytes_sent < 0) {   // send failed
+            clientfd = -1;
+            bytes_sent = 0;     // reset bytes_sent to 0 to signify error
+        }
     }
+<<<<<<< HEAD
     else return pdFALSE;
 >>>>>>> Ethernet working
     return pdTRUE;
+=======
+    return bytes_sent;
+>>>>>>> ethernet fixes
 }
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
  */
 void Ethernet_EndConnection(){
+<<<<<<< HEAD
     if (servsocket >= 0) lwip_close(servsocket);
+=======
+    lwip_close(lsocket);
+>>>>>>> ethernet fixes
 }

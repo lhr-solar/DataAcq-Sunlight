@@ -4,8 +4,8 @@
 void BroadcastingTask(void *argument){
     Ethernet_Init();
     while (1){
-        BaseType_t killClient = Ethernet_SendMessage();
-        if(killClient == pdFALSE){
+        BaseType_t status = Ethernet_SendMessage();
+        if(status == pdFALSE){
             Ethernet_WaitForClient();
         }
     }
