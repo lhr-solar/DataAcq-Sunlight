@@ -12,6 +12,20 @@ static QueueHandle_t EthernetQ; // information will be put on this and all you d
 static struct sockaddr_in sLocalAddr;
 static int servsocket;
 
+/** Ethernet ConnectToServer
+ * @brief Waits until server connection is established - blocking
+ */
+static void Ethernet_ConnectToServer() {
+    if (servsocket < 0) {
+        do {
+            servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        } while (servsocket < 0);
+        printf("servsocket %d\n", servsocket);
+        while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
+        printf("done\n");
+    }
+}
+
 /** Ethernet Initialize
  * @brief Initialize Ethernet, create queue to hold messages and allocate
  *        socket when connection has been established
@@ -36,20 +50,6 @@ ErrorStatus Ethernet_Init() {
     return SUCCESS;
 }
 
-/** Ethernet ConnectToServer
- * @brief Waits until server connection is established - blocking
- */
-void Ethernet_ConnectToServer() {
-    if (servsocket < 0) {
-        do {
-            servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        } while (servsocket < 0);
-        printf("servsocket %d\n", servsocket);
-        while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
-        printf("done\n");
-    }
-}
-
 /** Ethernet PutInQueue
  * @brief Put data in Ethernet Queue
  * 
@@ -64,23 +64,23 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
  * 
- * @return int - Bytes sent, -1 if Ethernet Queue is empty, 0 if Send failed
+ * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
-int Ethernet_SendMessage() {
+BaseType_t Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
 
     int bytes_sent = 0;
     if (servsocket >= 0) {
         // pull message from queue to send over ethernet
-        if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return -1;
+        if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
 
         bytes_sent = lwip_send(servsocket, &eth_rx, sizeof(eth_rx), 0);
         if (bytes_sent < 0) {   // send failed
-            servsocket = -1;
             bytes_sent = 0;     // reset bytes_sent to 0 to signify error
+            Ethernet_ConnectToServer(); // reconnect to server if send failed
         }
     }
-    return bytes_sent;
+    return pdTRUE;
 }
 
 /** Ethernet End Connection

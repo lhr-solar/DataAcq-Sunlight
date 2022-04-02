@@ -49,7 +49,7 @@ ErrorStatus Ethernet_Init(void);
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking
  */
-void Ethernet_ConnectToServer();
+static void Ethernet_ConnectToServer(void);
 
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
@@ -62,7 +62,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet.
  */
-int Ethernet_SendMessage(void);
+BaseType_t Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
