@@ -46,12 +46,10 @@ typedef struct{
  */
 ErrorStatus Ethernet_Init(void);
 
-/** Ethernet waitForClient
- * @brief Waits until a client is established - blocking funciton that waits until a client is established
- * 
+/** Ethernet ConnectToServer
+ * @brief Waits until server connection is established - blocking
  */
-
-void Ethernet_WaitForClient();
+void Ethernet_ConnectToServer();
 
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue

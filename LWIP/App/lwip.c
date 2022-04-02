@@ -54,15 +54,7 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-/**
- * @brief Function version of the macro LWIP_MAKEU32() in def.h
- */
-static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
-  return  (((u32_t)((a) & 0xff) << 24) |
-           ((u32_t)((b) & 0xff) << 16) |
-           ((u32_t)((c) & 0xff) << 8)  |
-           (u32_t)((d) & 0xff));
-}
+
 /* USER CODE END 2 */
 
 /**
@@ -74,9 +66,9 @@ void MX_LWIP_Init(void)
   tcpip_init( NULL, NULL );
 
   /* IP addresses initialization with DHCP (IPv4) */
-  CFG_IP4_SETADDR(&ipaddr, IP4_ADDRESS);
+  CFG_IP4_SETADDR(&ipaddr, IP4_CLIENT_ADDRESS);
   CFG_IP4_SETADDR(&netmask, IP4_NETMASK);
-  IP4_ADDR(&gw, 0, 0, 0, 0);
+  CFG_IP4_SETADDR(&gw, IP4_GATEWAY);
 
   /* add the network interface (IPv4/IPv6) with RTOS */
   netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);

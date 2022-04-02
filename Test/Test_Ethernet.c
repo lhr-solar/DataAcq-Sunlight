@@ -72,17 +72,15 @@ void TransmitTask(void* argument) {
     char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
     memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
 
-    Ethernet_WaitForClient();
     while (1){
         printf("Beginning of while loop\n");
         status = Ethernet_PutInQueue(&testmessage);
         if (status != pdTRUE) printf("PutInQueue error\n");
         printf("Sending message now\n");
-        osDelay(50);
         bytes_sent = Ethernet_SendMessage();
         if (bytes_sent == 0) {
-            printf("The client connection was killed; Making new connection\n");
-            Ethernet_WaitForClient();
+            printf("Connection to server died; Making new connection\n");
+            Ethernet_ConnectToServer();
         }
         osDelay(1000);
     }
