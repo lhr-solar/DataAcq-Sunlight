@@ -79,8 +79,7 @@ BaseType_t Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
 
     // pull message from queue to send over ethernet
-    BaseType_t error = xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0);
-    if (error != pdTRUE) return error;
+    if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
 
     if (clientfd >= 0) {
         lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
