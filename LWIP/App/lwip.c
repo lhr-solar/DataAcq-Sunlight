@@ -26,6 +26,7 @@
 #endif /* MDK ARM Compiler */
 #include "ethernetif.h"
 #include <string.h>
+#include "config.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -53,7 +54,15 @@ osThreadAttr_t attributes;
 /* USER CODE END OS_THREAD_ATTR_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 2 */
-
+/**
+ * @brief Function version of the macro LWIP_MAKEU32() in def.h
+ */
+static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
+  return  (((u32_t)((a) & 0xff) << 24) |
+           ((u32_t)((b) & 0xff) << 16) |
+           ((u32_t)((c) & 0xff) << 8)  |
+           (u32_t)((d) & 0xff));
+}
 /* USER CODE END 2 */
 
 /**
@@ -65,7 +74,8 @@ void MX_LWIP_Init(void)
   tcpip_init( NULL, NULL );
 
   /* IP addresses initialization with DHCP (IPv4) */
-  IP4_ADDR(&ipaddr, 192, 168, 0, 100);
+  CFG_IP4_SETADDR(&ipaddr, IP4_ADDRESS);
+  CFG_IP4_SETADDR(&netmask, IP4_NETMASK);
   IP4_ADDR(&netmask, 255, 255, 0, 0);
   IP4_ADDR(&gw, 0, 0, 0, 0);
 

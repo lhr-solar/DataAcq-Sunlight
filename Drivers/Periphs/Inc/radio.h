@@ -11,7 +11,7 @@
 #include "IMU.h"
 #include "GPS.h"
 
-#define ETHERNET_SIZE 232
+#define ETHERNET_QUEUESIZE 256
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
@@ -62,16 +62,15 @@ void Ethernet_WaitForClient();
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
- * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
- *        wait until there is data in the queue to send it across
+ * @brief Send data from Ethernet Fifo across ethernet.
  */
-BaseType_t Ethernet_SendMessage(void);
+int Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
  * 
  * @param lsocket socket to close connection
  */
-void Ethernet_EndConnection(int lsocket);
+void Ethernet_EndConnection(void);
 
 #endif

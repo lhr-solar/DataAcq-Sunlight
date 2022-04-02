@@ -22,7 +22,7 @@ static int lsocket;
 ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     struct sockaddr_in sLocalAddr;
-    EthernetQ = xQueueCreate(ETHERNET_SIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
+    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
     lsocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
     if (lsocket < 0)
         return 0;
@@ -48,7 +48,6 @@ ErrorStatus Ethernet_Init() {
 
 /** Ethernet waitForClient
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
- * 
  */
 void Ethernet_WaitForClient(){
     struct sockaddr_in client_addr;
@@ -73,26 +72,28 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
  *        wait until there is data in the queue to send it across
  * 
- * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
+ * @return int - Bytes sent, -1 if Ethernet Queue is empty, 0 if Send failed
  */
-BaseType_t Ethernet_SendMessage() {
+int Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
 
     // pull message from queue to send over ethernet
-    if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+    if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return -1;
 
+    int bytes_sent = 0;
     if (clientfd >= 0) {
-        lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+        bytes_sent = lwip_send(clientfd, &eth_rx, sizeof(eth_rx), 0);
+        if (bytes_sent < 0) {   // send failed
+            clientfd = -1;
+            bytes_sent = 0;     // reset bytes_sent to 0 to signify error
+        }
     }
-    else return pdFALSE;
-    return pdTRUE;
+    return bytes_sent;
 }
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
- * 
- * @param lsocket socket to close connection
  */
-void Ethernet_EndConnection(int lsocket){
+void Ethernet_EndConnection(){
     lwip_close(lsocket);
 }

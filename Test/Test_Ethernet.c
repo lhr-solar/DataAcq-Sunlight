@@ -54,53 +54,37 @@ void StartDefaultTask(void *argument);
 /* Test Threads --------------------------------------------------------------*/
 void TransmitTask(void* argument) {
     printf("initializing ethernet...\n");
-    ErrorStatus testStatus = Ethernet_Init();
+    ErrorStatus initstatus = Ethernet_Init();
 
 
-    if (testStatus != SUCCESS) {
+    if (initstatus != SUCCESS) {
       printf("Initialization Error\n");
       Error_Handler();
     }
 
+    BaseType_t status;
+    int bytes_sent;
     EthernetMSG_t testmessage;
+
     memset(&testmessage, 0, sizeof(testmessage));
+    testmessage.id = GPS;
+    testmessage.length = sizeof(GPSData_t);
+    testmessage.data.GPSData.hr[0] = 'a';
+    testmessage.data.GPSData.hr[1] = 'b';
+    // char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
+    // memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
 
-    testmessage.length=sizeof(testmessage.data.IMUData);
-    testmessage.id=IMU;
-    testmessage.data.IMUData.gyr_x=43;
-
-
-    EthernetMSG_t test2message;
-    memset(&test2message, 0, sizeof(test2message));
-
-    test2message.length=sizeof(test2message.data.GPSData);
-    test2message.id=GPS;
-    test2message.data.GPSData.hr[0] = 'A';
-    test2message.data.GPSData.hr[1] = 'B';
-    test2message.data.GPSData.day[0]='H';
-    test2message.data.GPSData.day[1]='i';
-    test2message.data.GPSData.min[0]='H';
-    test2message.data.GPSData.min[1]='i';
-    test2message.data.GPSData.latitude_Min[0]='H';
-    test2message.data.GPSData.latitude_Min[1]='e';
-    test2message.data.GPSData.latitude_Min[2]='l';
-    test2message.data.GPSData.latitude_Min[3]='l';
-    test2message.data.GPSData.latitude_Min[4]='o';
-    test2message.data.GPSData.latitude_Min[5]='s';
-
-
-
- //NOTE: need to handle returned error later
     Ethernet_WaitForClient();
     while (1){
         printf("Beginning of while loop\n");
-        Ethernet_PutInQueue(&test2message);
-        BaseType_t killClient = Ethernet_SendMessage();
-        osDelay(1000);
-        printf("Sending message now");
-        if(killClient == pdFALSE){
+        status = Ethernet_PutInQueue(&testmessage);
+        if (status != pdTRUE) printf("PutInQueue error\n");
+        printf("Sending message now\n");
+        osDelay(50);
+        bytes_sent = Ethernet_SendMessage();
+        if (bytes_sent == 0) {
+            printf("The client connection was killed; Making new connection\n");
             Ethernet_WaitForClient();
-            printf("The client connection was killed; Making new connection");
         }
         osDelay(1000);
     }
