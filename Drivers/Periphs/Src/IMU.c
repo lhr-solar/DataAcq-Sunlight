@@ -57,6 +57,7 @@ static uint8_t IMUCalibData[] = {2, 0, 0, 0, -13, -1, 69, 0, 3, 1, 156, 1, 0, 0,
 //These defines are for calibrating the IMU without having to move it
 #define RADIUS_LSB_CALIB 0xF4
 #define RADIUS_MSB_CALIB 0x01
+#define NUM_REGISTERS    22
 
 /*
 The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. 
@@ -219,7 +220,7 @@ HAL_StatusTypeDef IMU_Calibrate(){
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
-    for (int32_t reg=0; reg < 22; reg +=1) {
+    for (uint8_t reg=0; reg < NUM_REGISTERS; reg++) {
         config[0] = ACC_OFFSET_X_LSB + reg;
         config[1]= IMUCalibData[reg];
         error |=SEND(config, 2);
