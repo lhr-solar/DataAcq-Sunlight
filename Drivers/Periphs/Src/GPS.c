@@ -14,7 +14,8 @@ ErrorStatus GPS_Init(UART_HandleTypeDef *huart){
     //The second command sends us only the information we want to recieve (nothing about satellites)
     //Sends data every 100 ms.
     //The third command says at what velocity to stop moving car (.2m/s at the moment)
-    uint8_t initCommands[] = "$PMTK101*32\r\n$PMTK220,100*1F\r\n$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n$PMTK386,0.2*3F\r\n";
+    //4th command says to increase baud rate to 115200
+    uint8_t initCommands[] = "$PMTK101*32\r\n$PMTK220,100*1F\r\n$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n$PMTK386,0.2*3F\r\n$PMTK251,3115200*27\r\n";
 
     // Initialize interrupts
 
