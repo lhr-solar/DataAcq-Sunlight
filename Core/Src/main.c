@@ -22,6 +22,7 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
+#include "IMU.h"
 #include "Tasks.h"
 #include "CANBus.h"
 
@@ -55,6 +56,8 @@ SPI_HandleTypeDef hspi5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
+ETH_HandleTypeDef heth;
+TIM_HandleTypeDef htim1;
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
@@ -138,6 +141,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+
+  IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK - ALSO ERROR CHECK
 
   /* USER CODE END 2 */
 
