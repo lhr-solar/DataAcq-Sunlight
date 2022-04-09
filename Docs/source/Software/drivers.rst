@@ -16,9 +16,16 @@ Ethernet
 
 Purpose
 
+The Ethernet drivers are sending GPS, CAN, and IMU data to the data acquisition team
+The sunlight is the client while data acquisition is the server
+
 Usage
 
+
+
 Additional Considerations
+
+
 
 Inertial Measurement Unit (IMU)
 ===============================
