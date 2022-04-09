@@ -68,13 +68,21 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
  */
 BaseType_t Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
+    uint8_t raw_ethmsg[sizeof(EthernetMSG_t)];
 
     int bytes_sent = 0;
     if (servsocket >= 0) {
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+        raw_ethmsg[0] = eth_rx.id;
+        raw_ethmsg[1] = eth_rx.length;
 
-        bytes_sent = lwip_send(servsocket, &eth_rx, sizeof(eth_rx), 0);
+        // for eliminating leading undefined bytes in union
+        memcpy(&raw_ethmsg[2],
+               (char *)&eth_rx.data + sizeof(eth_rx.data) - eth_rx.length, 
+               eth_rx.length);
+
+        bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
         if (bytes_sent < 0) {   // send failed
             bytes_sent = 0;     // reset bytes_sent to 0 to signify error
             Ethernet_ConnectToServer(); // reconnect to server if send failed
