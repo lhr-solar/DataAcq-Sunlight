@@ -1,11 +1,8 @@
-<<<<<<< EthernetNew
-=======
 #ifndef IMU_H
 #define IMU_H
 
 #include "main.h"
 #include <stdint.h>
->>>>>>> main
 
 typedef struct {
     int16_t accel_x;
@@ -18,8 +15,6 @@ typedef struct {
     int16_t gyr_y;
     int16_t gyr_z;
 } IMUData_t;
-<<<<<<< EthernetNew
-=======
 
 /** 
  * @brief Initialize IMU to collect data
@@ -60,4 +55,3 @@ HAL_StatusTypeDef IMU_Calibrate(void);
 HAL_StatusTypeDef IMU_Debug(void);
 
 #endif
->>>>>>> main
