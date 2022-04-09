@@ -3,11 +3,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "CANBus.h"
 #include "FreeRTOS.h"
-#include "queue.h"
-#include <stdio.h>
-#include <string.h>
 #include "radio.h"
 
 /******************************************************************************
@@ -63,7 +59,6 @@ void TransmitTask(void* argument) {
     }
 
     BaseType_t status;
-    int bytes_sent;
     EthernetMSG_t testmessage;
 
     memset(&testmessage, 0, sizeof(testmessage));
@@ -77,11 +72,7 @@ void TransmitTask(void* argument) {
         status = Ethernet_PutInQueue(&testmessage);
         if (status != pdTRUE) printf("PutInQueue error\n");
         printf("Sending message now\n");
-        bytes_sent = Ethernet_SendMessage();
-        if (bytes_sent == 0) {
-            printf("Connection to server died; Making new connection\n");
-            Ethernet_ConnectToServer();
-        }
+        if (Ethernet_SendMessage()) printf("Send message error");
         osDelay(1000);
     }
 

@@ -1,11 +1,5 @@
-
 #include "radio.h"
 #include "sockets.h"
-#include "queue.h"
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include "lwip.h"
 #include "config.h"
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.

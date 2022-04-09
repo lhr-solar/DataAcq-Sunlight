@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "CANBus.h"
+#include "lwip.h"
 #include "IMU.h"
 #include "GPS.h"
 
@@ -46,12 +47,6 @@ typedef struct{
  */
 ErrorStatus Ethernet_Init(void);
 
-/** Ethernet ConnectToServer
- * @brief Waits until server connection is established - blocking
- */
-//static void Ethernet_ConnectToServer(void);
-//can't include a static function in the header
-
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
  * 
@@ -62,13 +57,12 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet.
+ * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
 BaseType_t Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
- * 
- * @param lsocket socket to close connection
  */
 void Ethernet_EndConnection(void);
 
