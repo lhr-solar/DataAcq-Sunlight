@@ -16,21 +16,6 @@ typedef struct {
     int16_t gyr_z;
 } IMUData_t;
 
-typedef struct {
-    int16_t accel_offset_x;
-    int16_t accel_offset_y;
-    int16_t accel_offset_z;
-    int16_t mag_offset_x;
-    int16_t mag_offset_y;
-    int16_t mag_offset_z;
-    int16_t gyr_offset_x;
-    int16_t gyr_offset_y;
-    int16_t gyr_offset_z;
-    int16_t accel_radius;
-    int16_t mag_radius;
-} IMUCalibData_t;
-
-
 /** 
  * @brief Initialize IMU to collect data
  * @param None
@@ -46,21 +31,21 @@ HAL_StatusTypeDef IMU_Init(void);
 HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data);
 
 /**
- * @brief Update struct with IMU Calibration register data. Used to hardcode calibration
+ * @brief Update global with IMU Calibration register data. Used to hardcode calibration
  * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
- * @param *Data : struct used to collect IMU calibration data
+ * @param None
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
-HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data);
+HAL_StatusTypeDef IMU_GetCalibData(void);
 
 /**
- * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
+ * @brief Use pre-found data to upload calibration profile to IMU
  * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
  * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
- * @param *Data : struct holding IMU calibration data
+ * @param None
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
-HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data);
+HAL_StatusTypeDef IMU_Calibrate(void); 
 
 /** 
  * @brief This function aims to provide an all in one debug function. Call to help pinpoint an issue with the IMU

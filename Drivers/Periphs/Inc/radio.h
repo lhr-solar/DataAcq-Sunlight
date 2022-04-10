@@ -2,11 +2,17 @@
 #define RADIO_H
 
 #include "FreeRTOS.h"
+#include "sockets.h"
+#include "stm32f4xx.h"
+#include "queue.h"
+#include <stdint.h>
+#include <string.h>
 #include "CANBus.h"
+#include "lwip.h"
 #include "IMU.h"
 #include "GPS.h"
 
-#define ETHERNET_SIZE 32
+#define ETHERNET_QUEUESIZE 32
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
@@ -39,9 +45,9 @@ typedef struct{
  *                     ERROR if socket did not receive connection request
  *                     SUCCESS if socket was created successfully
  */
-ErrorStatus Ethernet_Init();
+ErrorStatus Ethernet_Init(void);
 
-/** Ethernet CollectMessage
+/** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
  * 
  * @param msg Data to place in queue
@@ -50,18 +56,14 @@ ErrorStatus Ethernet_Init();
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
- * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
- *        wait until there is data in the queue to send it across
- * 
- * @return BaseType_t - pdTrue if successful, pdFalse if no message in queue to send
+ * @brief Send data from Ethernet Fifo across ethernet.
+ * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
-BaseType_t Ethernet_SendMessage();
+BaseType_t Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection
- * 
- * @param lsocket socket to close connection
  */
-void Ethernet_EndConnection(int lsocket);
+void Ethernet_EndConnection(void);
 
 #endif

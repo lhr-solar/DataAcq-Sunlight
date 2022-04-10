@@ -38,6 +38,7 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern CAN_HandleTypeDef hcan1;
+<<<<<<< HEAD
 
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
@@ -47,6 +48,17 @@ extern SPI_HandleTypeDef hspi5;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 
+=======
+
+extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c2;
+
+extern SPI_HandleTypeDef hspi5;
+
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart3;
+
+>>>>>>> main
 extern ETH_HandleTypeDef heth; //
 extern TIM_HandleTypeDef htim1;//
 /* USER CODE END ET */

@@ -21,7 +21,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
+<<<<<<< HEAD
 #include "stm32f4xx_hal_can.h"//****
+=======
+#include "stm32f4xx_hal_can.h"
+>>>>>>> main
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -57,12 +61,16 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+<<<<<<< HEAD
 /*
 extern ETH_HandleTypeDef heth;
 extern CAN_HandleTypeDef hcan1;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim1;
 */
+=======
+
+>>>>>>> main
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */

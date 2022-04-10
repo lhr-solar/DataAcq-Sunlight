@@ -29,8 +29,11 @@ UART_HandleTypeDef huart1;
 
 HAL_StatusTypeDef error;
 
+<<<<<<< HEAD
 IMUCalibData_t Calib_data;
 
+=======
+>>>>>>> main
 //These defines are only necessary for debugging
 #define CALIB_STAT 0x35 //This register returns 0xFF if fully calibrated
 //If the below register returns a 1 anywhere, that means that it will only send values if the accelerometer
@@ -93,6 +96,7 @@ void IMUTest(void* argument){
     //code taken from main.c in Core folder
     osDelay(2000);
     IMU_Init();
+<<<<<<< HEAD
     //IMUData_t Data;
     
 
@@ -122,6 +126,12 @@ void IMUTest(void* argument){
 
     
     /*while (1){
+=======
+    IMUData_t Data;  
+    
+    while (1){
+      
+>>>>>>> main
         ErrorStatus err = IMU_GetMeasurements(&Data);
         if ((err) == ERROR){
             printf("I2C transmitting or receiving failed.\n\r");
@@ -139,7 +149,11 @@ void IMUTest(void* argument){
 
       
         osDelay(2000); //This delays by tick count. Included to prevent too many I2C transmit/receive calls
+<<<<<<< HEAD
     }*/
+=======
+    }
+>>>>>>> main
 }
 
 /**

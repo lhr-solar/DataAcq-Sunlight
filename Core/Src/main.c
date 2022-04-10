@@ -58,6 +58,8 @@ TIM_HandleTypeDef htim1; ///
 
 /* Private variables ---------------------------------------------------------*/
 
+ETH_HandleTypeDef heth;
+TIM_HandleTypeDef htim1;
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
@@ -142,7 +144,11 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
+<<<<<<< HEAD
   //IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK
+=======
+  IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK - ALSO ERROR CHECK
+>>>>>>> main
 
   /* USER CODE END 2 */
 

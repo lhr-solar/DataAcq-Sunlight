@@ -7,7 +7,13 @@
 #define DEV_ADDR 0x28
 #define ADDR (DEV_ADDR << 1)
 
+<<<<<<< HEAD
 static IMUCalibData_t IMU_CalibData;
+=======
+//This struct is initialized to values collected in clean environment, they will be overwritten if IMUCalibrate is called
+//but will go back to original values at reset
+static uint8_t IMUCalibData[] = {2, 0, 0, 0, -13, -1, 69, 0, 3, 1, 156, 1, 0, 0, 0 ,0 ,0, 0, 232, 3, 23, 2};
+>>>>>>> main
 
 // Register definitions
 #define ACC_NM_SET     0x16
@@ -55,6 +61,10 @@ static IMUCalibData_t IMU_CalibData;
 //These defines are for calibrating the IMU without having to move it
 #define RADIUS_LSB_CALIB 0xF4
 #define RADIUS_MSB_CALIB 0x01
+<<<<<<< HEAD
+=======
+#define NUM_REGISTERS    22
+>>>>>>> main
 
 /*
 The IMU works by way of communication through I2C. Registers are read/written to configure the IMU. 
@@ -149,7 +159,11 @@ HAL_StatusTypeDef IMU_Init(){
     error |= SEND(config, 2); 
 
     // hard code calibration values
+<<<<<<< HEAD
     error |= IMU_Calibrate(&IMU_CalibData);
+=======
+    error |= IMU_Calibrate();
+>>>>>>> main
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
@@ -185,7 +199,11 @@ HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data){
  * @param *Data : struct used to collect IMU calibration data
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
+<<<<<<< HEAD
 HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
+=======
+HAL_StatusTypeDef IMU_GetCalibData(){
+>>>>>>> main
 
     HAL_StatusTypeDef error = HAL_OK;
     // This function has to execute while the IMU is in configuration mode. Otherwise the registers cannot be read
@@ -197,11 +215,16 @@ HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
    //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
+<<<<<<< HEAD
     error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, sizeof(IMUCalibData_t), HAL_MAX_DELAY);
+=======
+    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, IMUCalibData, sizeof(IMUCalibData), HAL_MAX_DELAY);
+>>>>>>> main
     return error;
 }
 
 /**
+<<<<<<< HEAD
  * @brief Use IMUCalibData_t struct to upload calibration profile to IMU
  * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
  * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
@@ -209,6 +232,15 @@ HAL_StatusTypeDef IMU_GetCalibData(IMUCalibData_t *Data){
  * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
  */
 HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
+=======
+ * @brief Use pre-found data to upload calibration profile to IMU
+ * @note updating the last bytes of the Z offsets will set the respective peripheral bits in the calibration status register (0x35)
+ * @note The IMU must be in config mode (REG[0x3D]= 0) to read calibration registers
+ * @param None
+ * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ */
+HAL_StatusTypeDef IMU_Calibrate(){
+>>>>>>> main
 
     HAL_StatusTypeDef error = HAL_OK;
     // This function must be executed while the IMU is in configuration mode. Otherwise registers are not writable
@@ -217,6 +249,7 @@ HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
     config[1] = 0; // set to some configuration mode
     error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
     
+<<<<<<< HEAD
     config[1] = 0x01;
     for (int32_t reg=0; reg < 22; reg +=1) {
         config[0] = ACC_OFFSET_X_LSB + reg;
@@ -239,6 +272,14 @@ HAL_StatusTypeDef IMU_Calibrate(IMUCalibData_t *Data){
     config[1] = RADIUS_MSB_CALIB;
     error |=SEND(config, 2);
 
+=======
+    for (uint8_t reg=0; reg < NUM_REGISTERS; reg++) {
+        config[0] = ACC_OFFSET_X_LSB + reg;
+        config[1]= IMUCalibData[reg];
+        error |=SEND(config, 2);
+    }
+
+>>>>>>> main
     // TODO: think about switching to NDOF here
     return error;
 }

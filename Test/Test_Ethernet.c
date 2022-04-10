@@ -3,11 +3,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+<<<<<<< HEAD
 #include "CANBus.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include <stdio.h>
 #include <string.h>
+=======
+#include "FreeRTOS.h"
+>>>>>>> main
 #include "radio.h"
 
 /******************************************************************************
@@ -54,13 +58,21 @@ void StartDefaultTask(void *argument);
 /* Test Threads --------------------------------------------------------------*/
 void TransmitTask(void* argument) {
     printf("initializing ethernet...\n");
+<<<<<<< HEAD
     ErrorStatus testStatus = Ethernet_Init();
 
     if (testStatus != SUCCESS) {
+=======
+    ErrorStatus initstatus = Ethernet_Init();
+
+
+    if (initstatus != SUCCESS) {
+>>>>>>> main
       printf("Initialization Error\n");
       Error_Handler();
     }
 
+<<<<<<< HEAD
     EthernetMSG_t testmessage;
     memset(&testmessage, 0, sizeof(testmessage));
 
@@ -87,6 +99,26 @@ void TransmitTask(void* argument) {
         
         osDelay(1000);
     }
+=======
+    BaseType_t status;
+    EthernetMSG_t testmessage;
+
+    memset(&testmessage, 0, sizeof(testmessage));
+    testmessage.id = GPS;
+    testmessage.length = sizeof(testmessage.data.GPSData);
+    char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
+    memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
+
+    while (1){
+        printf("Beginning of while loop\n");
+        status = Ethernet_PutInQueue(&testmessage);
+        if (status != pdTRUE) printf("PutInQueue error\n");
+        printf("Sending message now\n");
+        if (Ethernet_SendMessage()) printf("Send message error");
+        osDelay(1000);
+    }
+
+>>>>>>> main
 }
 
 /* End Test Threads -----------------------------------------------------------*/
