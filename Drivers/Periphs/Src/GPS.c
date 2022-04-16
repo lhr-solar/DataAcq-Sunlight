@@ -1,52 +1,57 @@
 #include "GPS.h"
 #include <stdio.h>
+#include "cmsis_os.h"
 
 #define GPS_BUFSIZE     100
 char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
 
 static QueueHandle_t GPSRxQueue;
-UART_HandleTypeDef *GPS_UARTHandle;
 uint32_t GPSDroppedMessages = 0;    // for debugging purposes
 
-ErrorStatus GPS_Init(UART_HandleTypeDef *huart){
-    GPS_UARTHandle = huart;
+ErrorStatus GPS_Init(){
     GPSRxQueue = xQueueCreate(GPS_RX_QUEUE_SIZE, sizeof(GPSData_t)); //create queue
     
     /*
-     * The first command starts the module with "Hot Start" using all previous data stored
-     * The second command sends us only the information we want to recieve (nothing about satellites)
-     * Sends data every 100 ms.
-     * The third command says at what velocity to stop moving car (.2m/s at the moment)
-     * 4th command says to increase baud rate to 115200
-     * 
      * Each command needs a checksum, the 2-byte hex value following the '*'. 
      * The checksum is the XOR of every character between the '$' and the '*':
      * Ex. 0x32 = 'P' ^ 'M' ^ 'T' ^ 'K' ^ '1' ^ '0' ^ '1'
      */
-    uint8_t initCommands[] = "$PMTK101*32\r\n$PMTK220,1000*1F\r\n$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n$PMTK386,0.2*3F\r\n";
-
     char *init_commands[] = {
-        {"PMTK101"},
-        {"PMTK220,1000"},
-        {"PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"},
-        {"PMTK386,0.2"}
+        "PMTK104",
+        "PMTK220,1000",
+        "PMTK251,9600",
+        "PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+        "PMTK386,0.2"
     };
-    char command_buf[64];
 
-    for (uint8_t i = 0; i < sizeof(init_commands)/sizeof(*init_commands), i++) {
+    char command_buf[64];
+    char command_ending[] = "*  \r\n";
+    for (uint8_t i = 0; i < sizeof(init_commands)/sizeof(*init_commands); i++) {
+        uint8_t len = strlen(init_commands[i]);
+        // checksum
+        uint8_t checksum = 0;
+        for (uint8_t j = 0; j < len; j++) {
+            checksum ^= init_commands[i][j];
+        }
+        char checksum_str[3];
+        sprintf(checksum_str, "%.2X", checksum);
+        memcpy(&command_ending[1], checksum_str, 2);
+        // construct final message
         command_buf[0] = '$';
-        memcpy(&command_buf[1], init_commands[i], strlen(init_commands[i]));
+        memcpy(&command_buf[1], init_commands[i], len);
+        memcpy(&command_buf[len + 1], command_ending, sizeof(command_ending));
+        // send
+        printf("%s", command_buf);
+        if (HAL_UART_Transmit(&huart1, (uint8_t *)command_buf, len + 6, 100) != HAL_OK) return ERROR;
+        osDelay(10);
     }
 
-    // Initialize interrupts
-
-    if (HAL_UART_Transmit(GPS_UARTHandle, initCommands, sizeof(initCommands)-1, 100) != HAL_OK) return ERROR;
     return SUCCESS;
 }
 
 void GPS_StartReading() {
-    HAL_UART_Receive_IT(GPS_UARTHandle, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
+    HAL_UART_Receive_IT(&huart1, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
 }
 
 BaseType_t GPS_ReadData(GPSData_t *Data){
@@ -59,6 +64,7 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 
 static void GPS_Receive() {
     GPSData_t GPSData;
+    printf("%s", GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
         GPSData.latitude_Deg[1] = GPSRxDataBuf[21];
@@ -108,14 +114,17 @@ static void GPS_Receive() {
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart == GPS_UARTHandle) { 
-        if (GPSRxDataBuf[GPSBufIdx] == '\r') {  // message end sequence is CRLF, we check for LF
-            GPSRxDataBuf[GPSBufIdx] = '\0'; // add null terminator to input string
+    if (huart->Instance == USART1) {
+        char *curr = &GPSRxDataBuf[GPSBufIdx];
+        if (*curr == '\n' || *curr == '\r') {  // message end sequence is CRLF, we check for LF
+            *curr = '\0'; // add null terminator to input string
             GPSBufIdx = 0;  // reset buffer
             GPS_Receive();
         }
         
-        HAL_UART_Receive_IT(GPS_UARTHandle, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
-        GPSBufIdx = (GPSBufIdx + 1) % GPS_BUFSIZE;  // TODO: 
+        HAL_UART_Receive_IT(&huart1, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
+        if (*curr != '\0') {
+            GPSBufIdx = (GPSBufIdx + 1) % GPS_BUFSIZE;  // TODO: 
+        }
     }
 }

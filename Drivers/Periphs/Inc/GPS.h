@@ -36,7 +36,7 @@ typedef struct{
  * @brief Initialize GPS, configure GPS
  * @return ERROR or SUCCESS if transmit worked
  */
-ErrorStatus GPS_Init(UART_HandleTypeDef *huart);
+ErrorStatus GPS_Init();
 
 void GPS_StartReading();
 
