@@ -39,7 +39,7 @@ ErrorStatus GPS_Init(UART_HandleTypeDef *huart);
  * @brief Update All GPS measurements
  * @return SUCCESS or ERROR if read worked
  */
-ErrorStatus GPS_UpdateMeasurements(void);
+HAL_StatusTypeDef GPS_UpdateMeasurements(void);
 
 /** GPS Read Data
  * Wrapper function for XQueueReceive and should not be called from an ISR

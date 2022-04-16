@@ -24,11 +24,11 @@ ErrorStatus GPS_Init(UART_HandleTypeDef *huart){
     return SUCCESS;
 }
 
-ErrorStatus GPS_UpdateMeasurements(void){
+HAL_StatusTypeDef GPS_UpdateMeasurements(void){
     //Non-Blocking receive. The number of bytes received will need to be tested based on whether we are receiving
     //characters for some fields or numbers
     //ex. $GPRMC,064951.000,A,2307.1256,N,12016.4438,E,0.03,165.48,260406,3.05,W,A*2C (75 characters)
-
+    printf("waiting for data\n\r");
     return HAL_UART_Receive_IT(&huart1, (uint8_t*)GPSRxDataBuf, 76); //returning hal busy probably, causing error
 }
 
