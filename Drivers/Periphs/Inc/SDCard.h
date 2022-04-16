@@ -10,52 +10,34 @@
 //All printing done by this module is via UART
 
 /**
- * Initializes this module to print via the user's desired UART bus
- * NOTE: This function must be called before any other SDCard_() functions
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-void SDCard_Init();
+ * @brief Mounts the drive
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Init();
 
 /**
- * Prints desired message via UART
-**/
-void myprintf(const char *fmt, ...);
+ * @brief Reads how much memory is left in SD Card. Should be used for debugging purposes
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_GetStatistics();
 
 /**
- * Initializes the file drive for the SD card
- * @param FatFs FATFS handle
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-ErrorStatus SDCard_OpenFileSystem(FATFS FatFs);
+ * @brief Writes data to SD Card
+ * @param fil File object structure. Will be initialized if not already
+ * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
+ * @param message char array of data to write to SD Card
+ * @param size size of data to write to file
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t bytes);
 
 /**
- * Prints the SD card's total drive space and available space.
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-ErrorStatus SDCard_GetStatistics();
-
-/**
- * Prints given number of bytes of given text file
- * @param fil file handle
- * @param fileName name of file to be read
- * @param bytes maximum possible number of bytes that can be read
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes);
-
-/**
- * Writes desired message to a specific file on the card.
- * @param fil file handle
- * @param fileName name of file to be written to
- * @param message string to be written to the file
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-ErrorStatus SDCard_Write(FIL fil, char fileName[], char message[], uint32_t bytes);
-
-/**
- * Closes the FATFS file drive
- * NOTE: This function must be called when all SD card operations are over. Similar to how fclose() is required when working with files.
-**/
-void SDCard_CloseFileSystem();
+ * @brief Unmounts the drive
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_CloseFileSystem();
 
 #endif
