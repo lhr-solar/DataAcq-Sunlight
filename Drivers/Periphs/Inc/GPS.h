@@ -10,6 +10,9 @@
 
 #define GPS_RX_QUEUE_SIZE 8
 
+#define GPS_BUFSIZE     100
+extern char GPSRxDataBuf[GPS_BUFSIZE];
+
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
     char min[2]; // ^^

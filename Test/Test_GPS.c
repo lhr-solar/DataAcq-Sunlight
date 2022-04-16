@@ -20,7 +20,7 @@ osThreadId_t GPSTestHandle;
 const osThreadAttr_t GPSTest_attributes = {
   .name = "GPSTest",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
+  .stack_size = 1024
 };
 
 void SystemClock_Config(void);
@@ -57,6 +57,7 @@ void GPSTest(void* argument){
     GPS_StartReading();
 
     while(1){
+        printf("%s", GPSRxDataBuf);
         if (GPS_ReadData(&Data) == pdTRUE) {
             printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
             printf("Latitude Min: %.4s\n\r", Data.latitude_Min);
@@ -67,7 +68,7 @@ void GPSTest(void* argument){
             printf("Magnetic Variation Degrees: %.4s\n\r", Data.magneticVariation_Deg);
             printf("Magnetic Variation Direction: %c\n\r", Data.magneticVariation_EastWest);       
         }
-        osDelay(500); 
+        osDelay(1000); 
     }
 
 }
@@ -119,7 +120,7 @@ void SystemClock_Config(void){
 
 static void MX_USART1_UART_Init(void){
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
