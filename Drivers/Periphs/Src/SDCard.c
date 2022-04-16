@@ -8,10 +8,13 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 static FATFS FatFs;
 =======
 =======
 >>>>>>> Removed myprintf
+=======
+>>>>>>> Added debugging mode and changed function headers
 <<<<<<< HEAD
 static FRESULT fresult;   //Result after operations
 =======
@@ -29,18 +32,32 @@ void SDCard_Init(UART_HandleTypeDef *uartBus){
 =======
 static FRESULT fresult;   //Result after operations
 >>>>>>> Removed myprintf
+<<<<<<< HEAD
 >>>>>>> Removed myprintf
 
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
 #define DEBUGGINGMODE   1
+=======
+=======
+static FATFS FatFs;
+>>>>>>> Added debugging mode and changed function headers
+
+//If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
+//This should be disabled when running on system
+#define DEBUGGINGMODE   0
+>>>>>>> Added debugging mode and changed function headers
 
 /**
  * @brief Mounts the drive
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
+<<<<<<< HEAD
 FRESULT SDCard_Init() {
+=======
+FRESULT SDCard_Init(){
+>>>>>>> Added debugging mode and changed function headers
     //mount the drive
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     #ifdef DEBUGGINGMODE
@@ -49,7 +66,10 @@ FRESULT SDCard_Init() {
 <<<<<<< HEAD
   	    printf("f_mount error (%i)\r\n", (int)fresult);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> Added debugging mode and changed function headers
 =======
   	    myprintf("f_mount error (%i)\r\n", fresult);
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
@@ -57,26 +77,45 @@ FRESULT SDCard_Init() {
   	    printf("f_mount error (%i)\r\n", (int)fresult);
 >>>>>>> Removed myprintf
         return ERROR;
+<<<<<<< HEAD
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+=======
+=======
+>>>>>>> Added debugging mode and changed function headers
+>>>>>>> Added debugging mode and changed function headers
     }
     #endif
     return fresult;
 }
 
+<<<<<<< HEAD
  * @brief Reads how much memory is left in SD card-> Should be used for debugging purposes
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_GetStatistics() {
+=======
+/**
+ * @brief Reads how much memory is left in SD Card. Should be used for debugging purposes
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_GetStatistics(){
+>>>>>>> Added debugging mode and changed function headers
     DWORD free_clusters;
     DWORD free_sectors;
     DWORD total_sectors;
     FATFS *getFreeFs;
 <<<<<<< HEAD
+<<<<<<< HEAD
     #endif
 =======
+=======
+    FRESULT fresult;
+>>>>>>> Added debugging mode and changed function headers
 
     fresult = f_getfree("", &free_clusters, &getFreeFs);
+    #ifdef DEBUGGINGMODE
     if(fresult != FR_OK){
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -86,15 +125,23 @@ FRESULT SDCard_GetStatistics() {
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
 =======
         printf("f_getfree error (%i)\r\n", (int)fresult);
+<<<<<<< HEAD
 >>>>>>> Removed myprintf
         return ERROR;
+=======
+>>>>>>> Added debugging mode and changed function headers
     }
+<<<<<<< HEAD
 
 >>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
+=======
+    #endif
+>>>>>>> Added debugging mode and changed function headers
     //Formula comes from ChaN's documentation
     total_sectors = (getFreeFs->n_fatent - 2) * getFreeFs->csize;
     free_sectors = free_clusters * getFreeFs->csize;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     #ifdef DEBUGGINGMODE
@@ -103,6 +150,8 @@ FRESULT SDCard_GetStatistics() {
 =======
 =======
 >>>>>>> Removed myprintf
+=======
+>>>>>>> Added debugging mode and changed function headers
 <<<<<<< HEAD
     printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
 =======
@@ -112,8 +161,67 @@ FRESULT SDCard_GetStatistics() {
     printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
 >>>>>>> Removed myprintf
     return SUCCESS;
+=======
+    #ifdef DEBUGGINGMODE
+    printf("SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n", total_sectors / 2, free_sectors / 2);
+    #endif
+
+    return fresult;
 }
 
+/**
+ * @brief Writes data to SD Card
+ * @param fil File object structure. Will be initialized if not already
+ * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
+ * @param message char array of data to write to SD Card
+ * @param size size of data to write to file
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t size){
+    BYTE readBuf[size];
+    FRESULT fresult;
+    fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
+
+    #ifdef DEBUGGINGMODE
+  	printf("f_open error (%i)\r\n", fresult);
+    #endif
+    if (fresult != FR_OK) return fresult;
+
+    //Copy in a string
+    strncpy((char*)readBuf, message, strlen(message));
+    UINT bytesWrote;
+    fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
+
+    #ifdef DEBUGGINGMODE
+  	printf("f_write error (%i)\r\n", (int)fresult);
+    #endif
+    if (fresult != FR_OK) return fresult;
+
+    //close your file!
+    f_close(&fil);
+    return fresult;
+>>>>>>> Added debugging mode and changed function headers
+}
+
+/**
+ * @brief Unmounts the drive
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_CloseFileSystem(){
+    //un-mount the drive
+    return f_mount(NULL, "", 0);
+}
+
+//WON'T BE READING FROM SDCARD THROUGH MCU BUT JUST LEAVING FUNCTION JUST IN CASE
+/**
+ * Prints given number of bytes of given text file
+ * @param fil file handle
+ * @param fileName name of file to be read
+ * @param bytes maximum possible number of bytes that can be read
+ * @return SUCCESS if no errors, ERROR if some error occured
+**/
+/*
 ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
     //open file for reading
     fresult = f_open(&fil, fileName, FA_READ);
@@ -161,6 +269,7 @@ ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
 
     return fresult;
 }
+<<<<<<< HEAD
 
 /**
  * @brief Writes data to SD Card
@@ -343,3 +452,6 @@ FRESULT SDCard_CloseFileSystem(){
     // un-mount the drive
     return f_mount(NULL, "", 0);
 }
+=======
+*/
+>>>>>>> Added debugging mode and changed function headers

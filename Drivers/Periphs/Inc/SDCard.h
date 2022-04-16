@@ -9,12 +9,7 @@
 #include "IMU.h"
 #include "GPS.h"
 
-<<<<<<< HEAD
 #define SDCARD_WRITE_BUFSIZE        64
-=======
-
-//All printing done by this module is via UART
->>>>>>> Fixed header guard.
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
@@ -36,13 +31,6 @@ typedef struct {
 	SDCardData_t data;
 } SDCard_t;
 
-<<<<<<< HEAD
-=======
-/**
- * Prints desired message via UART
-**/
-void myprintf(const char *fmt, ...);
->>>>>>> Added description comments for globals in Main.h. Made several SD card functions return ErrorStatus instead of spinning infinitely if an error occurs.
 
 /**
  * @brief Mounts the drive
