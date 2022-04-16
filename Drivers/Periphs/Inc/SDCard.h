@@ -11,11 +11,10 @@
 
 /**
  * Initializes this module to print via the user's desired UART bus
- * NOTE: This function must be called before any other SDCard_() functions 
- * @param uartBus pointer to a UART handler
+ * NOTE: This function must be called before any other SDCard_() functions
  * @return SUCCESS if no errors, ERROR if some error occured
 **/
-void SDCard_Init(UART_HandleTypeDef *uartBus);
+void SDCard_Init();
 
 /**
  * Prints desired message via UART
