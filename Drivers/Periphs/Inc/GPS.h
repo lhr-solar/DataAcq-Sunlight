@@ -35,11 +35,7 @@ typedef struct{
  */
 ErrorStatus GPS_Init(UART_HandleTypeDef *huart);
 
-/** GPS Update Measurements
- * @brief Update All GPS measurements
- * @return SUCCESS or ERROR if read worked
- */
-HAL_StatusTypeDef GPS_UpdateMeasurements(void);
+void GPS_StartReading();
 
 /** GPS Read Data
  * Wrapper function for XQueueReceive and should not be called from an ISR

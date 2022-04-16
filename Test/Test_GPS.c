@@ -50,37 +50,24 @@ int main(void)
 
 void GPSTest(void* argument){
     GPSData_t Data;
-    HAL_StatusTypeDef status;
 
     if(GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
     
     printf("GPS initialized\n\r");
+    GPS_StartReading();
+
     while(1){
-        status = GPS_UpdateMeasurements();
-        switch (status){
-          case HAL_OK:
-            if (GPS_ReadData(&Data) == pdTRUE) {
-              printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
-              printf("Latitude Min: %.4s\n\r", Data.latitude_Min);
-              printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
-              printf("Longitude Degrees: %.5s\n\r", Data.longitude_Deg);
-              printf("Longitude Min: %.5s\n\r", Data.longitude_Min);
-              printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
-              printf("Magnetic Variation Degrees: %.4s\n\r", Data.magneticVariation_Deg);
-              printf("Magnetic Variation Direction: %c\n\r", Data.magneticVariation_EastWest);       
-            }
-            break;
-          case HAL_BUSY: 
-            printf("busy\n\r");
-            break;
-          case HAL_ERROR:
-            printf("error\n\r");
-            break;
-          case HAL_TIMEOUT:
-            printf("timeout\n\r");
-            break;
+        if (GPS_ReadData(&Data) == pdTRUE) {
+            printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
+            printf("Latitude Min: %.4s\n\r", Data.latitude_Min);
+            printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
+            printf("Longitude Degrees: %.5s\n\r", Data.longitude_Deg);
+            printf("Longitude Min: %.5s\n\r", Data.longitude_Min);
+            printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
+            printf("Magnetic Variation Degrees: %.4s\n\r", Data.magneticVariation_Deg);
+            printf("Magnetic Variation Direction: %c\n\r", Data.magneticVariation_EastWest);       
         }
-        osDelay(1000); 
+        osDelay(500); 
     }
 
 }

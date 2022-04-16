@@ -1,7 +1,9 @@
 #include "GPS.h"
 #include <stdio.h>
 
-static char GPSRxDataBuf[76];
+static char GPSRxDataBuf[100];
+static uint8_t GPSBufIdx = 0;
+
 static QueueHandle_t GPSRxQueue;
 UART_HandleTypeDef *GPS_UARTHandle;
 uint32_t GPSDroppedMessages = 0;    // for debugging purposes
@@ -10,26 +12,27 @@ ErrorStatus GPS_Init(UART_HandleTypeDef *huart){
     GPS_UARTHandle = huart;
     GPSRxQueue = xQueueCreate(GPS_RX_QUEUE_SIZE, sizeof(GPSData_t)); //create queue
     
-    //The first command starts the module with "Hot Start" using all previous data stored
-    //The second command sends us only the information we want to recieve (nothing about satellites)
-    //Sends data every 100 ms.
-    //The third command says at what velocity to stop moving car (.2m/s at the moment)
-    //4th command says to increase baud rate to 115200
+    /*
+     * The first command starts the module with "Hot Start" using all previous data stored
+     * The second command sends us only the information we want to recieve (nothing about satellites)
+     * Sends data every 100 ms.
+     * The third command says at what velocity to stop moving car (.2m/s at the moment)
+     * 4th command says to increase baud rate to 115200
+     * 
+     * Each command needs a checksum, the 2-byte hex value following the '*'. 
+     * The checksum is the XOR of every character between the '$' and the '*':
+     * Ex. 0x32 = 'P' ^ 'M' ^ 'T' ^ 'K' ^ '1' ^ '0' ^ '1'
+     */
     uint8_t initCommands[] = "$PMTK101*32\r\n$PMTK220,100*2F\r\n$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n$PMTK386,0.2*3F\r\n$PMTK251,115200*1F\r\n";
 
     // Initialize interrupts
 
-
-    if (HAL_UART_Transmit_IT(&huart1, initCommands, sizeof(initCommands)) != HAL_OK) return ERROR;
+    if (HAL_UART_Transmit(GPS_UARTHandle, initCommands, sizeof(initCommands), 100) != HAL_OK) return ERROR;
     return SUCCESS;
 }
 
-HAL_StatusTypeDef GPS_UpdateMeasurements(void){
-    //Non-Blocking receive. The number of bytes received will need to be tested based on whether we are receiving
-    //characters for some fields or numbers
-    //ex. $GPRMC,064951.000,A,2307.1256,N,12016.4438,E,0.03,165.48,260406,3.05,W,A*2C (75 characters)
-    printf("waiting for data\n\r");
-    return HAL_UART_Receive_IT(&huart1, (uint8_t*)GPSRxDataBuf, 76); //returning hal busy probably, causing error
+void GPS_StartReading() {
+    HAL_UART_Receive_IT(GPS_UARTHandle, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
 }
 
 BaseType_t GPS_ReadData(GPSData_t *Data){
@@ -42,6 +45,7 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 
 static void GPS_Recieve() {
     GPSData_t GPSData;
+    printf("%s\n", GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
         GPSData.latitude_Deg[1] = GPSRxDataBuf[21];
@@ -83,12 +87,18 @@ static void GPS_Recieve() {
     }
 
     if (xQueueSendToBackFromISR(GPSRxQueue, &GPSData, NULL) == errQUEUE_FULL) {
-        GPSDroppedMessages++;
+        GPSDroppedMessages++;   // for debugging and metrics purposes
     }
     printf("Sent to queue\n\r");
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *GPS_UARTHandle) {
-    printf("GPS RXNE interrupt\n\r");
-    GPS_Recieve();
+    if (GPSRxDataBuf[GPSBufIdx] == '\n') {  // message end sequence is CRLF, we check for LF
+        GPSRxDataBuf[GPSBufIdx] = '\0'; // add null terminator to input string
+        GPSBufIdx = 0;  // reset buffer
+        GPS_Recieve();
+    }
+    
+    HAL_UART_Receive_IT(GPS_UARTHandle, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
+    GPSBufIdx++;
 }
