@@ -1,3 +1,5 @@
+#ifndef GPS_H__
+#define GPS_H__
 
 typedef struct{
     char hr[2]; // Will not use these parameters unless we have to
@@ -17,3 +19,5 @@ typedef struct{
     char magneticVariation_Deg[4];
     char magneticVariation_EastWest;
 } GPSData_t;
+
+#endif
