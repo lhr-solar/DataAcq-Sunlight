@@ -6,6 +6,7 @@
 #include "FreeRTOS.h"
 #include "radio.h"
 #include "IMU.h"
+#include "GPS.h"
 
 
 /******************************************************************************
@@ -60,15 +61,8 @@ void TransmitTask(void* argument) {
       Error_Handler();
     }
 
-     IMUData_t IMU_Data;
-     GPSData_t GPS_Data;
-     CANData_t CAN_Data;
 
      EthernetMSG_t Message;
-     EthernetData_t dataType;
-     EthernetID_t typeID;
-
-     HAL_StatusTypeDef error;
 
      //error = IMU_GetMeasurements(IMU_Data);
 
@@ -87,12 +81,32 @@ void TransmitTask(void* argument) {
     //  Message.length = sizeof(CAN_Data);  // TODO: Ensure this is correct
     //  Message.data.GPSData = CAN_Data;
 
-    IMU_Data ={1, 2, 3, 4, 5, 6, 7, 8, 9};
-    GPS_Data = { ['0', '3'], ['2', '3'], ['1', '2'], ['g', 'h', 'i']
-                   , ['j', 'k'], ['l', 'm', 'n', 'o', 'p', 'q'], 'r'
-                   , ['s', 't', 'u'], ['v', 'w', 'x', 'y', 'z', '1'], '2'
-                   , ['3', '4', '5', '6'], ['7', '8'], ['9', 'A']
-                   , ['1', '2', '3', '4'], ['5', '6', '7', '8'], '9'};
+    IMUData_t IMU_Data ={1, 2, 3, 4, 5, 6, 7, 8, 9};
+    // GPSData_t GPS_Data = { {'0', '3'}, {'2', '3'}, {'1', '2'},{'2', '2', '2'}
+    //                , {'2', '0'}, {'4', '5', '6', '6', '1', '4'}, '6'
+    //                , {'6', '1', '4'}, {'6', '3', '7', '4', '3', '7'}, 'N'
+    //                , {'3', '4', '5', '6'}, {'7', '8'},{'9', '8'}
+    //                , {'1', '2', '3', '4'}, {'5', '6', '7', '8'}, 'N'};
+    GPSData_t GPS_Data;
+    GPS_Data.hr[2] = {'0','3'}; // Will not use these parameters unless we have to
+    GPS_Data.min[] = '12'; // ^^
+    GPS_Data.sec[] = '67'; // ^^
+    GPS_Data.ms = '678'; // ^^
+    GPS_Data.latitude_Deg = '12';
+    GPS_Data.latitude_Min = '123.56';
+    GPS_Data.NorthSouth ='N' ;
+    GPS_Data.longitude_Deg = '456';
+    GPS_Data.longitude_Min = '123456';
+    GPS_Data.EastWest ='W' ;
+    GPS_Data.speedInKnots ='4567' ;
+    GPS_Data.day = '34'; // Will not use these parameters unless we have to
+    GPS_Data.month = '45'; // ^^
+    GPS_Data.year = '2022'; // ^^
+    GPS_Data.magneticVariation_Deg = '45.5';
+    GPS_Data.magneticVariation_EastWest ="W" ;
+
+    char gpsData[] = "032312222204566146614637437N3456789812345678N";
+    memcpy(&Message.data.GPSData, gpsData, sizeof(gpsData));
  
     CANMSG_t CAN_Data;
     CANData_t data;
@@ -113,12 +127,13 @@ void TransmitTask(void* argument) {
     //testmessageGPS.length = sizeof(testmessageGPS.data.GPSData);
     //char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
     //memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
-    int8_t x=1
+    int8_t x=1;
 
     while (1){
         printf("Beginning of while loop\n");
 
         //IMU data
+    
         if(x%3==1){
         Message.id= IMU;
         Message.length = sizeof(IMU_Data);
@@ -126,12 +141,13 @@ void TransmitTask(void* argument) {
         Message.data.IMUData = IMU_Data;
         x++;
         }
+
     
-        else if(x%3==2)1{
+        else if(x%3==2){
         //GPS Data
         Message.id= GPS;
-        Message.length = sizeof(GPS_Data);  
-        Message.data.GPSData = GPS_Data;
+        memcpy(&Message.data.GPSData, gpsData, sizeof(gpsData));
+        Message.length = sizeof(gpsData);  
         x++;
         }
 
@@ -139,7 +155,7 @@ void TransmitTask(void* argument) {
         //CAN Data
         Message.id= CAN;
         Message.length = sizeof(CAN_Data); 
-        Message.data.GPSData = CAN_Data;
+        Message.data.CANData = CAN_Data;
         x++;
         }
 
