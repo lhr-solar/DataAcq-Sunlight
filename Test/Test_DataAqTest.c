@@ -88,11 +88,11 @@ void TransmitTask(void* argument) {
     //  Message.data.GPSData = CAN_Data;
 
     IMU_Data ={1, 2, 3, 4, 5, 6, 7, 8, 9};
-    GPS_Data = { ["a", "b"], ["c", "d"], ["e", "f"], ["g", "h", "i"]
-                   , ["j", "k"], ["l", "m", "n", "o", "p", "q"], "r"
-                   , ["s", "t", "u"], ["v", "w", "x", "y", "z", "1"], "2"
-                   , ["3", "4", "5", "6"], ["7", "8"], ["9", "A"]
-                   , ["1", "2", "3", "4"], ["5", "6", "7", "8"], "9"};
+    GPS_Data = { ['0', '3'], ['2', '3'], ['1', '2'], ['g', 'h', 'i']
+                   , ['j', 'k'], ['l', 'm', 'n', 'o', 'p', 'q'], 'r'
+                   , ['s', 't', 'u'], ['v', 'w', 'x', 'y', 'z', '1'], '2'
+                   , ['3', '4', '5', '6'], ['7', '8'], ['9', 'A']
+                   , ['1', '2', '3', '4'], ['5', '6', '7', '8'], '9'};
  
     CANMSG_t CAN_Data;
     CANData_t data;
@@ -113,7 +113,7 @@ void TransmitTask(void* argument) {
     //testmessageGPS.length = sizeof(testmessageGPS.data.GPSData);
     //char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
     //memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
-    int x=1
+    int8_t x=1
 
     while (1){
         printf("Beginning of while loop\n");
@@ -150,6 +150,11 @@ void TransmitTask(void* argument) {
         printf("Sending message now\n");
 
         if (Ethernet_SendMessage()) printf("Send message error");
+
+        if(x==3)
+        {
+            x=1;
+        }
         osDelay(1000);
     }
 
