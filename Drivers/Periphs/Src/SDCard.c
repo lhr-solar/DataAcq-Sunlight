@@ -89,6 +89,41 @@ FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t size){
     return fresult;
 }
 
+FRESULT SDCard_Sort_Write_Data(char qdata[])
+{
+    //check if data from queue is from imu, gps, or can. How to determine what data is what from queue?
+    //if imu, convert to char
+    //gps is already char
+    //don't convert can
+    //send data to corresponding file in sd card
+
+    FRESULT fresult;
+    FIL file;
+    char message[100];
+    uint32_t messageSize=sizeof(qdata);
+
+
+    //check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
+    if()//CAN
+    {
+        
+        fresult=SDCard_Write(file, "CAN_DATA.txt", message, messageSize);
+    }
+
+    else if()//IMU
+    {
+        fresult= SDCard_Write(file, "IMU_DATA.txt", message, messageSize);
+    }
+
+    else if() //GPS
+    {
+        fresult= SDCard_Write(file, "GPS_DATA.txt", message, messageSize);
+    }
+
+    return fsresult;
+
+}
+
 /**
  * @brief Unmounts the drive
  * @param None
