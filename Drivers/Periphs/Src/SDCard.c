@@ -203,35 +203,37 @@ FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t size){
 >>>>>>> Added debugging mode and changed function headers
 }
 
-FRESULT SDCard_Sort_Write_Data(char qdata[])
+FRESULT SDCard_Sort_Write_Data(SDCard_t card)
 {
     //check if data from queue is from imu, gps, or can. How to determine what data is what from queue?
     //if imu, convert to char
     //gps is already char
     //don't convert can
     //send data to corresponding file in sd card
+    //data reading task reads data into imu/gps/can. then this data is read into corresponding fields for sdcard. 
+    //then this function is called to pick through the data and format it. Then its printed to sd card
+
 
     FRESULT fresult;
     FIL file;
-    char message[100];
-    uint32_t messageSize=sizeof(qdata);
+    char* message;
+    uint32_t messageSize=sizeof(card.length);
 
 
     //check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
-    if()//CAN
+    if(card.id==CAN_SDCard)//CAN
     {
-        
-        fresult=SDCard_Write(file, "CAN_DATA.txt", message, messageSize);
+        fresult=SDCard_Write(file, "CAN_DATA.txt", card.data.CANData, card.length);
     }
 
-    else if()//IMU
+    else if(card.id==IMU_SDCard)//IMU
     {
-        fresult= SDCard_Write(file, "IMU_DATA.txt", message, messageSize);
+        fresult= SDCard_Write(file, "IMU_DATA.txt", card.data.IMUData, card.length);
     }
 
-    else if() //GPS
+    else if(card.id==GPS_SDCard) //GPS
     {
-        fresult= SDCard_Write(file, "GPS_DATA.txt", message, messageSize);
+        fresult= SDCard_Write(file, "GPS_DATA.txt", card.data.GPSData, card.length);
     }
 
     return fsresult;
