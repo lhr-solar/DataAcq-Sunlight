@@ -5,9 +5,34 @@
 #include <string.h>
 #include <stdarg.h> //for va_list var arg functions
 #include "fatfs.h"
+#include "CANBus.h"
+#include "IMU.h"
+#include "GPS.h"
 
 
 //All printing done by this module is via UART
+
+typedef enum{
+    // this is where you have different types for the different messages that you might have 
+    // for instance one for can 
+    // one for gps, one for imu, one for CAN
+    IMU_SDCard = 0x1,
+    GPS_SDCard = 0x2,
+    CAN_SDCard = 0x3
+} SDCardID_t;
+typedef union {
+    // need to use one of these - depends on the length of the data 
+	CANMSG_t CANData;
+    IMUData_t IMUData;
+    GPSData_t GPSData;
+} SDCardData_t;
+typedef struct{
+    // this contains the length of the data 
+    SDCardID_t id;
+    uint8_t length;
+	SDCardData_t data; // based on the length you choose how big the ethernetData is 
+} SDCard_t;
+
 
 /**
  * @brief Mounts the drive
