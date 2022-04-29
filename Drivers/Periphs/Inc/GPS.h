@@ -6,14 +6,14 @@ typedef struct{
     char ms[3]; // ^^
     char latitude_Deg[2];
     char latitude_Min[6];
-    char NorthSouth;
+    char NorthSouth[1];
     char longitude_Deg[3];
     char longitude_Min[6];
-    char EastWest;
+    char EastWest[1];
     char speedInKnots[4];
     char day[2]; // Will not use these parameters unless we have to
     char month[2]; // ^^
     char year[4]; // ^^
     char magneticVariation_Deg[4];
-    char magneticVariation_EastWest;
+    char magneticVariation_EastWest[1];
 } GPSData_t;

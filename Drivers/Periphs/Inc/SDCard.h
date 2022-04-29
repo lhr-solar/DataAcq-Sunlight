@@ -29,7 +29,7 @@ typedef union {
 typedef struct{
     // this contains the length of the data 
     SDCardID_t id;
-    uint8_t length;
+    //uint8_t length;
 	SDCardData_t data; // based on the length you choose how big the ethernetData is 
 } SDCard_t;
 
@@ -64,5 +64,12 @@ FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t bytes);
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_CloseFileSystem();
+
+/**
+ * @brief Sorts data from IMU, GPS, and CAN and prints them to corresponding files on SD card 
+ * @param card SDCard object structure. 
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Sort_Write_Data(SDCard_t card);
 
 #endif

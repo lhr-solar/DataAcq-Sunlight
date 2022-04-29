@@ -86,13 +86,33 @@ int main(void)
   }
 }
 void SDCardTestTask(void *argument){
-    FIL file;
+    //FIL file;
     if (SDCard_Init() != FR_OK) printf ("Init no working\n\r");
     if (SDCard_GetStatistics() != FR_OK) printf("Can't get statistics\n\r");
-    char* message = "fakedata pls work";
+    //char* message = "fakedata pls work";
+
+    //Fake IMU
+    SDCard_t fakeIMU;
+    fakeIMU.data.IMUData.accel_x=0x01;
+    fakeIMU.data.IMUData.accel_y=0x02;
+    fakeIMU.data.IMUData.accel_z=0x03; 
+    fakeIMU.data.IMUData.mag_x=0x04;
+    fakeIMU.data.IMUData.mag_y=0x05;
+    fakeIMU.data.IMUData.mag_z=0x06;
+    fakeIMU.data.IMUData.gyr_x=0x07;
+    fakeIMU.data.IMUData.gyr_y=0x08;
+    fakeIMU.data.IMUData.gyr_z=0x09;
+
+    fakeIMU.id=IMU_SDCard;
+
     while (1){
-        if (SDCard_Write(file, "test.txt", message, sizeof(message)) !=FR_OK) printf("Writing no working\n\r");
+        // if (SDCard_Write(file, "test.txt", message, sizeof(message)) !=FR_OK) printf("Writing no working\n\r");
+        // else break;
+
+        if (SDCard_Sort_Write_Data(fakeIMU) !=FR_OK) printf("Writing no working\n\r");
         else break;
+
+
     }
     SDCard_CloseFileSystem();
     printf("Unmounted\n\r");

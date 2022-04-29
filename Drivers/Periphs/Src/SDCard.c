@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h> //for va_list var arg functions
 #include "fatfs.h"
@@ -100,29 +101,107 @@ FRESULT SDCard_Sort_Write_Data(SDCard_t card)
     //then this function is called to pick through the data and format it. Then its printed to sd card
 
 
-    FRESULT fresult;
+    FRESULT fresult=FR_OK;
     FIL file;
-    char* message;
-    uint32_t messageSize=sizeof(card.length);
-
-
+    
     //check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
     if(card.id==CAN_SDCard)//CAN
     {
-        fresult=SDCard_Write(file, "CAN_DATA.txt", card.data.CANData, card.length);
+        //card.length=sizeof(card.data.CANData);
+        //char message[card.length];
+        char message[500];
+         memset(message, 0, sizeof(card.data.CANData.payload.data)+sizeof(card.data.CANData.id));
+        // memcpy(&message, card.data.CANData, sizeof(card.data.CANData));
+
+        sprintf(message, " %d", card.data.CANData.id);
+        
+        sprintf(message + strlen(message)," %d", card.data.CANData.payload.data.b);
+        sprintf(message + strlen(message)," %f", card.data.CANData.payload.data.f);
+        sprintf(message + strlen(message)," %d", card.data.CANData.payload.data.h);
+        sprintf(message + strlen(message)," %lu", card.data.CANData.payload.data.w);
+        
+    
+        fresult=SDCard_Write(file, "CAN_DATA.txt", message ,sizeof(message));
     }
 
     else if(card.id==IMU_SDCard)//IMU
     {
-        fresult= SDCard_Write(file, "IMU_DATA.txt", card.data.IMUData, card.length);
+        //card.length=sizeof(card.data.IMUData);
+        //how much space does a 16 bit signed int take in a string?? message should start at different points for each convewrsion
+        //int16_t is 2 bytes
+        // char* ax;
+        // char* ay;
+        // char* az;
+        // char* mx;
+        // char* my;
+        // char* mz;
+        // char* gx;
+        // char* gy;
+        // char* gz;
+
+        char message[500];
+        memset(&message, 0, sizeof(card.data.IMUData)); // 
+
+        //convert int to string and append each field to "message"
+        sprintf(message, " %d", card.data.IMUData.accel_x);
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.accel_y);
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.accel_z);
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_x);
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_y );
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_z );
+        
+        sprintf(message + strlen(message), " %d",card.data.IMUData.gyr_x );
+        
+        sprintf(message + strlen(message)," %d", card.data.IMUData.gyr_y );
+        
+        sprintf(message + strlen(message), " %d",card.data.IMUData.gyr_z );
+        sprintf(message+strlen(message), " \n");
+
+
+        // sprintf(message, ax);
+        // sprintf(message, ay);
+        // sprintf(message, az);
+        // sprintf(message, mx);
+        // sprintf(message, my);
+        // sprintf(message, mz);
+        // sprintf(message, gx);
+        // sprintf(message, gy);
+        // sprintf(message, gz);
+        
+        //memset(&message, 0, sizeof(card.data.IMUData));
+        //memcpy(&message, card.data.IMUData, sizeof(card.data.IMUData));
+        fresult= SDCard_Write(file, "IMU_DATA.txt", message, sizeof(message));
     }
 
     else if(card.id==GPS_SDCard) //GPS
     {
-        fresult= SDCard_Write(file, "GPS_DATA.txt", card.data.GPSData, card.length);
+        char message[500];
+
+        //GPS data is already given as a string
+
+        memset(&message, 0, sizeof(card.data.GPSData));
+        sprintf(message," %s",card.data.GPSData.latitude_Deg) ;
+
+        sprintf(message +strlen(message)," %s", card.data.GPSData.latitude_Min);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.NorthSouth);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.longitude_Deg);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.longitude_Min);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.EastWest);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.speedInKnots);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.magneticVariation_Deg);
+        sprintf(message+strlen(message)," %s", card.data.GPSData.magneticVariation_EastWest);
+
+        //memset(&message, 0, sizeof(card.data.GPSData));
+        //memcpy(&message, card.data.GPSData, sizeof(card.data.GPSData));
+        fresult= SDCard_Write(file, "GPS_DATA.txt", message, sizeof(message));
     }
 
-    return fsresult;
+    return fresult;
 
 }
 
