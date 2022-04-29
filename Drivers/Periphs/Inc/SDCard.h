@@ -49,7 +49,7 @@ typedef union {
 typedef struct{
     // this contains the length of the data 
     SDCardID_t id;
-    uint8_t length;
+    //uint8_t length;
 	SDCardData_t data; // based on the length you choose how big the ethernetData is 
 } SDCard_t;
 
