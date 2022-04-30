@@ -76,98 +76,55 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 
 static void GPS_Receive() {
     GPSData_t GPSData;
-    printf("%s\n\r", GPSRxDataBuf);
+    memset(&GPSData, 0, sizeof(GPSData));
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         uint16_t idx = 0;
         uint8_t field = 0;
         while (GPSRxDataBuf[idx] != '\0'){
             int structidx = 0;
             while (GPSRxDataBuf[idx] != ','){
-                printf("%c/n/r", GPSRxDataBuf[idx]);
                 switch(field){
                     case NAME:
                     break;
                     case TIME:
                         GPSData.time[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Time: %.8s\n\r", GPSData.time);
                         break;
                     case STATUS:
                         GPSData.status = GPSRxDataBuf[idx];
-                        printf("Status: %c\n\r", GPSData.status);
                         break;
                     case LATITUDE:
                         GPSData.latitude[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Latitude: %.8s\n\r", GPSData.latitude);
                         break;
                     case NS:
                         GPSData.NorthSouth = GPSRxDataBuf[idx];
-                        printf("Direction: %c\n\r", GPSData.NorthSouth);
                         break;
                     case LONGITUDE:
                         GPSData.longitude[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Longitude: %.9s\n\r", GPSData.longitude);
                         break;
                     case EW:
                         GPSData.EastWest = GPSRxDataBuf[idx];
-                        printf("Direction: %c\n\r", GPSData.EastWest);
                         break;
                     case SPEEDINKNOTS:
                         GPSData.speedInKnots[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Speed in Knots: %.4s\n\r", GPSData.speedInKnots);
                         break;
                     case COURSEINDEGREES:
                         GPSData.courseInDegrees[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Course in Degrees: %.6s\n\r", GPSData.courseInDegrees);
                         break;
                     case MAGNETICVAR:
                         GPSData.magneticVariation[structidx] = GPSRxDataBuf[idx];
                         structidx++;
-                        printf("Magnetic Variation: %.7s\n\r", GPSData.magneticVariation);
                         break;
                 }
                 idx++;
             }
+            idx++;
             field++;
         }
-        /*GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
-        GPSData.latitude_Deg[1] = GPSRxDataBuf[21];
-        GPSData.latitude_Deg[2] = GPSRxDataBuf[22];
-        GPSData.latitude_Deg[3] = GPSRxDataBuf[23];
-
-        GPSData.latitude_Min[0] = GPSRxDataBuf[25];
-        GPSData.latitude_Min[1] = GPSRxDataBuf[26];
-        GPSData.latitude_Min[2] = GPSRxDataBuf[27];
-        GPSData.latitude_Min[3] = GPSRxDataBuf[28];
-        //GPSData.latitude_Min[4] = GPSRxDataBuf[27];
-        //GPSData.latitude_Min[5] = GPSRxDataBuf[28];
-        GPSData.NorthSouth = GPSRxDataBuf[40]; //was 30
-        GPSData.longitude_Deg[0] = GPSRxDataBuf[32];
-        GPSData.longitude_Deg[1] = GPSRxDataBuf[33];
-        GPSData.longitude_Deg[2] = GPSRxDataBuf[34];
-        GPSData.longitude_Deg[3] = GPSRxDataBuf[35];
-        GPSData.longitude_Deg[4] = GPSRxDataBuf[36];
-
-        GPSData.longitude_Min[0] = GPSRxDataBuf[38];
-        GPSData.longitude_Min[1] = GPSRxDataBuf[39];
-        GPSData.longitude_Min[2] = GPSRxDataBuf[40];
-        GPSData.longitude_Min[5] = GPSRxDataBuf[41];
-        GPSData.EastWest = GPSRxDataBuf[43];
-        GPSData.speedInKnots[0] = GPSRxDataBuf[45];
-        GPSData.speedInKnots[1] = GPSRxDataBuf[46]; //decimal point
-        GPSData.speedInKnots[2] = GPSRxDataBuf[47];
-        GPSData.speedInKnots[2] = GPSRxDataBuf[48]; 
-        //.
-        //GPSData.speedInKnots[3] = GPSRxDataBuf[44]; //the decimal part
-        GPSData.magneticVariation_Deg[0] = GPSRxDataBuf[64];
-        GPSData.magneticVariation_Deg[1] = GPSRxDataBuf[65]; //the decimal point
-        GPSData.magneticVariation_Deg[2] = GPSRxDataBuf[66];
-        GPSData.magneticVariation_Deg[3] = GPSRxDataBuf[67]; 
-        GPSData.magneticVariation_EastWest = GPSRxDataBuf[69];*/
 
         if (xQueueSendToBackFromISR(GPSRxQueue, &GPSData, NULL) == errQUEUE_FULL) {
             GPSDroppedMessages++;   // for debugging and metrics purposes
