@@ -27,13 +27,14 @@ typedef union {
 } SDCardData_t;
 
 typedef struct {
+    char time[9]; // time taken from GPS module
     SDCardID_t id;
 	SDCardData_t data;
 } SDCard_t;
 
 
 /**
- * @brief Mounts the drive
+ * @brief Mounts the drive and intializes the queue
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
@@ -46,15 +47,13 @@ FRESULT SDCard_Init();
  */
 FRESULT SDCard_GetStatistics();
 
-/**
- * @brief Writes data to SD Card
- * @param fil File object structure. Will be initialized if not already
- * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
- * @param message char array of data to write to SD Card
- * @param size size of data to write to file
- * @return FRESULT FR_OK if ok and other errors specified in ff.h
+/** SD Card PutInQueue
+ * @brief Put data in SD Card Queue
+ * 
+ * @param data Data to place in queue
+ * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
  */
-FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size);
+BaseType_t SDCard_PutInQueue(SDCard_t* data);
 
 /**
  * @brief Unmounts the drive
@@ -62,12 +61,5 @@ FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_CloseFileSystem();
-
-/**
- * @brief Sorts data from IMU, GPS, and CAN and prints them to corresponding files on SD card 
- * @param carddata SDCard object structure. 
- * @return FRESULT FR_OK if ok and other errors specified in ff.h
- */
-FRESULT SDCard_Sort_Write_Data(SDCard_t *carddata, const char *time);
 
 #endif
