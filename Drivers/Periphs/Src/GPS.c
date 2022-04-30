@@ -21,7 +21,14 @@ static uint8_t GPSRxByte;
 static QueueHandle_t GPSRxQueue;
 uint32_t GPSDroppedMessages = 0;    // for debugging purposes
 
+/** GPSInit
+ * @brief Initialize GPS, configure GPS
+ * @return ERROR or SUCCESS if transmit worked
+ */
 ErrorStatus GPS_Init(){
+    //Initializes RX interrupts for GPS communication
+    HAL_UART_Receive_IT(&huart1, &GPSRxByte, 1);
+
     GPSRxQueue = xQueueCreate(GPS_RX_QUEUE_SIZE, sizeof(GPSData_t)); //create queue
     
     /*
@@ -30,11 +37,11 @@ ErrorStatus GPS_Init(){
      * Ex. 0x32 = 'P' ^ 'M' ^ 'T' ^ 'K' ^ '1' ^ '0' ^ '1'
      */
     char *init_commands[] = {
-        "PMTK104",
-        "PMTK220,1000",
-        "PMTK251,9600",
-        "PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-        "PMTK386,0.2"
+        "PMTK104", //This starts in cold start
+        "PMTK220,1000", //This sends data every 1 second
+        "PMTK251,9600", //This sets baud rate to 9600 b/s
+        "PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", //This sends us data with GPRMC configuration
+        "PMTK386,0.2" //This says a standstill speed is .2m/s
     };
 
     char command_buf[64];
@@ -62,10 +69,12 @@ ErrorStatus GPS_Init(){
     return SUCCESS;
 }
 
-void GPS_StartReading() {
-    HAL_UART_Receive_IT(&huart1, &GPSRxByte, 1);
-}
-
+/** GPS Read Data
+ * Wrapper function for XQueueReceive and should not be called from an ISR
+ * 
+ * @param Data
+ * @return pdTRUE if GPS message was successfully fetched from queue, pdFALSE if queue is empty
+ */
 BaseType_t GPS_ReadData(GPSData_t *Data){
     return xQueueReceive(GPSRxQueue, Data, (TickType_t)0);
 }
@@ -73,7 +82,6 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 // Callback for a completed UART Rx transfer.
 // Once the Rx transfer is complete, we can parse the input and 
 // push to the queue.
-
 static void GPS_Receive() {
     GPSData_t GPSData;
     memset(&GPSData, 0, sizeof(GPSData));

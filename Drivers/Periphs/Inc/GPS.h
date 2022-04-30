@@ -27,18 +27,17 @@ typedef struct{
 } GPSData_t;
 
 /** GPSInit
+ * 
  * @brief Initialize GPS, configure GPS
  * @return ERROR or SUCCESS if transmit worked
  */
 ErrorStatus GPS_Init();
 
-void GPS_StartReading();
-
 /** GPS Read Data
  * Wrapper function for XQueueReceive and should not be called from an ISR
  * 
  * @param Data
- * @return pdTRUE if CAN message was successfully fetched from queue, pdFALSE if queue is empty
+ * @return pdTRUE if GPS message was successfully fetched from queue, pdFALSE if queue is empty
  */
 BaseType_t GPS_ReadData(GPSData_t *Data);
 
