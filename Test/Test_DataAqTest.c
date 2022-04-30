@@ -29,6 +29,7 @@
  *****************************************************************************/
 
 CAN_HandleTypeDef hcan1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* Definitions for threads */
@@ -62,22 +63,43 @@ void TransmitTask(void* argument) {
         Error_Handler();
     }
 
-    BaseType_t status;
-    EthernetMSG_t testmessage;
+    static const char * const id_names[4] = {
+        // indexed with enum EthernetID_t
+        "",   // the enum starts at 0x1 so the first elem is blank
+        "IMU",
+        "GPS",
+        "CAN"
+    };
 
-    memset(&testmessage, 0, sizeof(testmessage));
-    testmessage.id = GPS;
-    testmessage.length = sizeof(testmessage.data.GPSData);
-    char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
-    memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
+    EthernetMSG_t can = {.id = CAN, .length = sizeof(CANMSG_t)}; 
+    EthernetMSG_t imu = {.id = IMU, .length = sizeof(IMUData_t)};
+    EthernetMSG_t gps = {.id = GPS, .length = sizeof(GPSData_t)};
 
+    EthernetMSG_t *message_list[] = {&imu, &gps, &can};
+
+    CANMSG_t candata = {.id = VOLT_DATA, .payload.idx = 69, .payload.data.w = 420};
+    memcpy(&can.data.CANData, &candata, sizeof(CANMSG_t));
+
+    memcpy( // gpsdata
+        &gps.data.GPSData, 
+        "The quick, brown fox jumps over a lazy dog. The qui", 
+        sizeof(GPSData_t));
+
+    for (uint8_t i = 0; i < (sizeof(IMUData_t) / sizeof(uint16_t)); i++) {
+        ((uint16_t *)(&imu.data.IMUData))[i] = 69;
+    }
+
+    printf("beginning send\n\r");
+
+    uint8_t i = 0;
     while (1) {
-        printf("Beginning of while loop\n\r");
-        status = Ethernet_PutInQueue(&testmessage);
-        if (status != pdTRUE) printf("PutInQueue error\n\r");
-        printf("Sending message now\n\r");
-        if (Ethernet_SendMessage()) printf("Send message error\n\r");
+        EthernetMSG_t *message = message_list[i];
+        i = (i + 1) % 3;  // for cycling between sending imu/gps/can
+
+        printf("sending %s message...\n\r", id_names[message->id]);
+        if (Ethernet_PutInQueue(message)!= pdTRUE) printf("PutInQueue error\n\r");
         osDelay(1000);
+        Ethernet_SendMessage();
     }
 }
 
