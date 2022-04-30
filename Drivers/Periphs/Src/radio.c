@@ -71,9 +71,10 @@ BaseType_t Ethernet_SendMessage() {
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 
-        // for eliminating leading undefined bytes in union
+        // copy data from dataptr into raw ethernet message array
+        // the struct word-aligns the first two bytes (id and length), so this is necessary
         memcpy(&raw_ethmsg[2],
-               (char *)&eth_rx.data + sizeof(eth_rx.data) - eth_rx.length, 
+               &eth_rx.data, 
                eth_rx.length);
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);

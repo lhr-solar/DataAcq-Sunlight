@@ -30,7 +30,7 @@ typedef union {
 } EthernetData_t;
 typedef struct{
     // this contains the length of the data 
-    EthernetID_t id;
+    uint8_t id; // should be of type EthernetID_t
     uint8_t length;
 	EthernetData_t data; // based on the length you choose how big the ethernetData is 
 } EthernetMSG_t;
