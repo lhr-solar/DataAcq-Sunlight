@@ -70,4 +70,11 @@ FRESULT SDCard_Sort_Write_Data();
  */
 FRESULT SDCard_CloseFileSystem();
 
+/**
+ * @brief Mounts the drive
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_OpenFileSystem();
+
 #endif

@@ -140,6 +140,16 @@ FRESULT SDCard_CloseFileSystem(){
     return f_mount(NULL, "", 0);
 }
 
+/**
+ * @brief Mounts the drive
+ * @param None
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_OpenFileSystem(){
+    // un-mount the drive
+    return f_mount(&FatFs, "", 1); //1=mount now
+}
+
 //STATIC FUNCTIONS FOR WRITING TO SD CARD WITH CORRECT FORMAT
 // Wrappers for snprintf() for each of the message data types
 // Each function takes a buffer to write to, the buffer size, 
