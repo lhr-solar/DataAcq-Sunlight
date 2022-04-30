@@ -162,3 +162,4 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         HAL_UART_Receive_IT(huart, (uint8_t *)&GPSRxByte, 1);
     }
 }
+    
