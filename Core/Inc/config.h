@@ -31,7 +31,6 @@
 
 // Helper Macros
 
-
 // Function version of the macro LWIP_MAKEU32() in def.h
 static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
   return  (((u32_t)((a) & 0xff) << 24) |

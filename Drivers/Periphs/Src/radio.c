@@ -71,9 +71,15 @@ BaseType_t Ethernet_SendMessage() {
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 
-        // for eliminating leading undefined bytes in union
+        // for eliminating leading undefined bytes in union 
+        void *dataptr;
+        if (eth_rx.id == CAN) dataptr = &eth_rx.data.CANData;
+        else if (eth_rx.id == IMU) dataptr = &eth_rx.data.IMUData;
+        else dataptr = &eth_rx.data.GPSData;
+
+        //copy data from dataptr into raw ethernet message array
         memcpy(&raw_ethmsg[2],
-               (char *)&eth_rx.data + sizeof(eth_rx.data) - eth_rx.length, 
+               (char *)dataptr, 
                eth_rx.length);
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
