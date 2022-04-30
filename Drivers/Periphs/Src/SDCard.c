@@ -3,15 +3,24 @@
 #include <string.h>
 #include <stdarg.h> //for va_list var arg functions
 #include "fatfs.h"
-#include "SDcard.h"
+#include "SDCard.h"
 #include "main.h"
 
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
 #define DEBUGGINGMODE   0
-#define SDCARD_QUEUESIZE 256
+#define SDCARD_QUEUESIZE 16
 static FATFS FatFs;
 static QueueHandle_t SDCardQ; // information will be put on this
+static const char * const filenames_list[] = {
+    "can.csv",
+    "imu.csv",
+    "gps.csv"};
+
+static int SPrint_CAN(char *sdcard_write_buf, size_t bufsize, CANMSG_t *can, const char *time);
+static int SPrint_IMU(char *sdcard_write_buf, size_t bufsize, IMUData_t *imu, const char *time);
+static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, GPSData_t *gps, const char *time);
+static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size);
 
 /**
  * @brief Mounts the drive and initializes Queue
@@ -70,6 +79,58 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data) {
 }
 
 /**
+ * @brief Formats data to be written to SD card based on type of data input. 
+ * NOTE: Blocking - Waits for data to be in queue before writing
+ * @param none
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Sort_Write_Data(){
+    // check if data from queue is from imu, gps, or can.
+    // send data to corresponding file in sd card
+    SDCard_t cardData;
+    enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
+    static char message[SDCARD_WRITE_BUFSIZE];
+    
+    FIL file;
+    uint8_t fname_idx = 0;
+    uint16_t bytes_written = -1;
+
+    if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return FR_DISK_ERR;
+    // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
+    switch (cardData.id) {
+        case CAN_SDCard:
+            fname_idx = CAN_FNAME;
+            bytes_written = SPrint_CAN(message, 
+                                       SDCARD_WRITE_BUFSIZE, 
+                                       &cardData.data.CANData,
+                                       cardData.time);
+            break;
+        case IMU_SDCard:
+            fname_idx = IMU_FNAME;
+            bytes_written = SPrint_IMU(message, 
+                                       SDCARD_WRITE_BUFSIZE, 
+                                       &cardData.data.IMUData,
+                                       cardData.time);
+            break;
+        case GPS_SDCard:
+            fname_idx = GPS_FNAME;
+            bytes_written = SPrint_GPS(message, 
+                                       SDCARD_WRITE_BUFSIZE, 
+                                       &cardData.data.GPSData,
+                                       cardData.time);
+            break;
+        default:
+            break;
+    }
+
+    if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
+    #ifdef DEBUGGINGMODE
+    printf("Write: %s", message);
+    #endif
+    return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
+}
+
+/**
  * @brief Unmounts the drive
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
@@ -88,10 +149,9 @@ static int SPrint_CAN(char *sdcard_write_buf,
                       size_t bufsize, 
                       CANMSG_t *can, 
                       const char *time) {
-    uint32_t data;
     return snprintf(sdcard_write_buf, 
                     bufsize, 
-                    "%s,%d,%d,%lu\r\n", 
+                    "%.9s,%d,%d,%lu\r\n", 
                     time,
                     can->id, 
                     can->payload.idx, 
@@ -104,7 +164,7 @@ static int SPrint_IMU(char *sdcard_write_buf,
                       const char *time) {
     return snprintf(sdcard_write_buf, 
                     bufsize, 
-                    "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
+                    "%.9s,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
                     time,
                     imu->accel_x,
                     imu->accel_y,
@@ -127,7 +187,7 @@ static int SPrint_GPS(char *sdcard_write_buf,
 
     return snprintf(sdcard_write_buf, 
                     bufsize, 
-                    "%s,%s\r\n",
+                    "%.9s,%s\r\n",
                     time,
                     gps_str);
 }
@@ -163,66 +223,4 @@ static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, 
     //close your file!
     f_close(&fil);
     return fresult;
-}
-
-static const char * const filenames_list[] = {
-    "can.csv",
-    "imu.csv",
-    "gps.csv"};
-
-/**
- * @brief Formats data to be written to SD card based on type of data input
- * @param none
- * @return FRESULT FR_OK if ok and other errors specified in ff.h
- */
-static FRESULT SDCard_Sort_Write_Data() {
-    // check if data from queue is from imu, gps, or can.
-    // send data to corresponding file in sd card
-    SDCard_t *cardData;
-    enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
-    static char message[SDCARD_WRITE_BUFSIZE];
-    
-    FIL file;
-    uint8_t fname_idx = 0;
-    uint16_t bytes_written = -1;
-
-    if (xQueueReceive(SDCardQ, &cardData, (TickType_t)0) != pdTRUE){
-        // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
-        switch (cardData->id) {
-
-        case CAN_SDCard:
-            fname_idx = CAN_FNAME;
-            bytes_written = SPrint_CAN(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData->data.CANData,
-                                       &cardData->time);
-            break;
-
-        case IMU_SDCard:
-            fname_idx = IMU_FNAME;
-            bytes_written = SPrint_IMU(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData->data.IMUData,
-                                       &cardData->time);
-            break;
-
-        case GPS_SDCard:
-            fname_idx = GPS_FNAME;
-            bytes_written = SPrint_GPS(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData->data.GPSData,
-                                       &cardData->time);
-            break;
-
-        default:
-            break;
-
-        }
-    }
-
-    if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
-    #ifdef DEBUGGINGMODE
-    printf("Write: %s", message);
-    #endif
-    return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
 }

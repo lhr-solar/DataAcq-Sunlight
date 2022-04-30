@@ -86,7 +86,7 @@ int main(void)
   }
 }
 void SDCardTestTask(void *argument){
-
+    printf("Starting test\n\r");
     if (SDCard_Init() != FR_OK) {
       printf ("SD Card failed to initialize\n\r");
       goto DONE;
@@ -110,19 +110,43 @@ void SDCardTestTask(void *argument){
     memset(&imudata, 42, sizeof(imudata));
     memcpy(&imu.data.IMUData, &imudata, sizeof(IMUData_t));
 
-    char time[] = "9 am";
+    char currenttime[] = "9 ammmm";
 
     // Perform 5 writes of each type of data
     for (uint8_t i = 0; i < 5; i++) {
         printf("Writing cycle %d\n\r", i);
-        SDCard_Sort_Write_Data(&can, time);
+        memcpy(can.time, currenttime, 7);
+        if (SDCard_PutInQueue(&can) == errQUEUE_FULL) {
+          printf("Data CAN failed\n\r"); 
+          goto DONE;
+        }
         printf("... \n\r");
-        SDCard_Sort_Write_Data(&gps, time);
+        memcpy(gps.time, currenttime, 7);
+        if (SDCard_PutInQueue(&gps) == errQUEUE_FULL) {
+          printf("Data GPS failed\n\r");
+          goto DONE;
+        }
         printf("... \n\r");
-        SDCard_Sort_Write_Data(&imu, time);
+        memcpy(imu.time, currenttime, 7);
+        if (SDCard_PutInQueue(&imu) == errQUEUE_FULL) {
+          printf("Data CAN failed\n\r");
+          goto DONE;
+        }
         printf("... \n\r");
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
     }
-
+    osDelay(1000);
 
     DONE:
     SDCard_CloseFileSystem();

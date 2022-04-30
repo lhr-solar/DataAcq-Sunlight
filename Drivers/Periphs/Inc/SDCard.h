@@ -56,6 +56,14 @@ FRESULT SDCard_GetStatistics();
 BaseType_t SDCard_PutInQueue(SDCard_t* data);
 
 /**
+ * @brief Formats data to be written to SD card based on type of data input. 
+ * NOTE: Blocking - Waits for data to be in queue before writing
+ * @param none
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ */
+FRESULT SDCard_Sort_Write_Data();
+
+/**
  * @brief Unmounts the drive
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
