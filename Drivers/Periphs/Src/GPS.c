@@ -137,7 +137,6 @@ static void GPS_Receive() {
         if (xQueueSendToBackFromISR(GPSRxQueue, &GPSData, NULL) == errQUEUE_FULL) {
             GPSDroppedMessages++;   // for debugging and metrics purposes
         }
-        printf("Sent to queue\n\r");
     }
     else {
         
