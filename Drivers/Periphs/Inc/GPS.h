@@ -1,23 +1,45 @@
-#ifndef GPS_H__
-#define GPS_H__
+#ifndef GPS_H
+#define GPS_H
+
+#include <stdlib.h>
+#include <stdint.h>
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "main.h"
+#include <string.h>
+
+#define GPS_RX_QUEUE_SIZE 8
+
+#define GPS_BUFSIZE     100
+extern char GPSRxDataBuf[GPS_BUFSIZE];
 
 typedef struct{
-    char hr[2]; // Will not use these parameters unless we have to
-    char min[2]; // ^^
-    char sec[2]; // ^^
-    char ms[3]; // ^^
-    char latitude_Deg[2];
-    char latitude_Min[6];
+    char time[9]; //2 hr, 2 min, 2 sec, 3 ms
+    char status; //Data Valid (A) or Not Valid (V)
+    char latitude[8]; //2 degrees, 6 minutes
     char NorthSouth;
-    char longitude_Deg[3];
-    char longitude_Min[6];
+    char longitude[9]; //3 degrees, 6 minutes
     char EastWest;
-    char speedInKnots[4];
-    char day[2]; // Will not use these parameters unless we have to
-    char month[2]; // ^^
-    char year[4]; // ^^
-    char magneticVariation_Deg[4];
-    char magneticVariation_EastWest;
+    char speedInKnots[4]; //x.xx
+    char courseInDegrees[6]; //xxx.xx
+    char date[6]; //may not use this (ddmmyy)
+    char magneticVariation[7]; // "x.xx y" y is E or W
 } GPSData_t;
+
+/** GPSInit
+ * @brief Initialize GPS, configure GPS
+ * @return ERROR or SUCCESS if transmit worked
+ */
+ErrorStatus GPS_Init();
+
+void GPS_StartReading();
+
+/** GPS Read Data
+ * Wrapper function for XQueueReceive and should not be called from an ISR
+ * 
+ * @param Data
+ * @return pdTRUE if CAN message was successfully fetched from queue, pdFALSE if queue is empty
+ */
+BaseType_t GPS_ReadData(GPSData_t *Data);
 
 #endif
