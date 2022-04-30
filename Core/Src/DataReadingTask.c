@@ -21,28 +21,35 @@ void DataReadingTask(void* argument){
 
         // Send IMU data
         error = IMU_GetMeasurements(&IMU_Data);
-        Message.id= IMU;
-        Message.length = sizeof(IMU_Data);  // TODO: Ensure this is correct
-        //Message.data.IMUData = IMU_Data; // TODO: Make sure we're passing by value and not by reference
-        memcpy(&Message.data.IMUData, &IMU_Data, sizeof(IMU_Data));
-        status = Ethernet_PutInQueue(&Message);
+        if (error != HAL_ERROR){
+            Message.id= IMU;
+            Message.length = sizeof(IMU_Data);  // TODO: Ensure this is correct
+            //Message.data.IMUData = IMU_Data; // TODO: Make sure we're passing by value and not by reference
+            memcpy(&Message.data.IMUData, &IMU_Data, sizeof(IMU_Data));
+            status = Ethernet_PutInQueue(&Message);
+        }
+
 
         // Send CANBus data
         status = CAN_FetchMessage(&CAN_Data);  // TODO: Double check this is the proper return
-        Message.id= CAN;
-        Message.length = sizeof(CAN_Data);
-        //Message.data.CANData = CAN_Data; // TODO: Make sure we're passing by value and not by reference
-        memcpy(&Message.data.CANData, &CAN_Data, sizeof(CAN_Data));
-        status = Ethernet_PutInQueue(&Message);
+        if (status != pdFALSE) {
+            Message.id= CAN;
+            Message.length = sizeof(CAN_Data);
+            //Message.data.CANData = CAN_Data; // TODO: Make sure we're passing by value and not by reference
+            memcpy(&Message.data.CANData, &CAN_Data, sizeof(CAN_Data));
+            status = Ethernet_PutInQueue(&Message);
+        }
+
 
         // Send GPS data
         status = GPS_ReadData(&GPS_Data);  // TODO: Double check this is the proper return
-        Message.id= GPS;
-        Message.length = sizeof(GPS_Data);
-        //Message.data.GPSData = GPS_Data; // TODO: Make sure we're passing by value and not by reference
-        memcpy(&Message.data.GPSData, &GPS_Data, sizeof(GPS_Data));
-        status = Ethernet_PutInQueue(&Message);
-
+        if (status != pdFALSE) {
+            Message.id= GPS;
+            Message.length = sizeof(GPS_Data);
+            //Message.data.GPSData = GPS_Data; // TODO: Make sure we're passing by value and not by reference
+            memcpy(&Message.data.GPSData, &GPS_Data, sizeof(GPS_Data));
+            status = Ethernet_PutInQueue(&Message);
+        }
     }
 
 }
