@@ -13,9 +13,23 @@ Welcome to Sunlight's documentation!
 .. toctree::
    :hidden:
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Overview
 
-   overview
-   apps
-   drivers
+   Overview/design-overview
+   Overview/software-overview
 
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Software
+
+   Software/apps
+   Software/drivers
+   Software/tasks
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Glossary
+
+   glossary

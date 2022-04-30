@@ -26,6 +26,7 @@
 #endif /* MDK ARM Compiler */
 #include "ethernetif.h"
 #include <string.h>
+#include "config.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -65,9 +66,9 @@ void MX_LWIP_Init(void)
   tcpip_init( NULL, NULL );
 
   /* IP addresses initialization with DHCP (IPv4) */
-  ipaddr.addr = 0;
-  netmask.addr = 0;
-  gw.addr = 0;
+  CFG_IP4_SETADDR(&ipaddr, IP4_CLIENT_ADDRESS);
+  CFG_IP4_SETADDR(&netmask, IP4_NETMASK);
+  CFG_IP4_SETADDR(&gw, IP4_GATEWAY);
 
   /* add the network interface (IPv4/IPv6) with RTOS */
   netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
@@ -104,7 +105,10 @@ void MX_LWIP_Init(void)
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
   /* Start DHCP negotiation for a network interface (IPv4) */
-  dhcp_start(&gnetif);
+  // dhcp_start(&gnetif);
+
+  // Set static IP address
+  netif_set_addr(&gnetif, &ipaddr, &netmask, &gw);
 
 /* USER CODE BEGIN 3 */
 
