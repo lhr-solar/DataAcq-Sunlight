@@ -51,13 +51,12 @@ int main(void)
 void GPSTest(void* argument){
     GPSData_t Data;
 
-    if(GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
+    GPS_StartReading();
+    if (GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
     
     printf("GPS initialized\n\r");
-    GPS_StartReading();
 
     while(1){
-        printf("%s", GPSRxDataBuf);
         if (GPS_ReadData(&Data) == pdTRUE) {
             printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
             printf("Latitude Min: %.4s\n\r", Data.latitude_Min);

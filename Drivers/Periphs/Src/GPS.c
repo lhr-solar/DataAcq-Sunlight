@@ -5,6 +5,7 @@
 #define GPS_BUFSIZE     100
 char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
+static uint8_t GPSRxByte;
 
 static QueueHandle_t GPSRxQueue;
 uint32_t GPSDroppedMessages = 0;    // for debugging purposes
@@ -44,14 +45,14 @@ ErrorStatus GPS_Init(){
         // send
         printf("%s", command_buf);
         if (HAL_UART_Transmit(&huart1, (uint8_t *)command_buf, len + 6, 100) != HAL_OK) return ERROR;
-        osDelay(10);
+        osDelay(500);
     }
 
     return SUCCESS;
 }
 
 void GPS_StartReading() {
-    HAL_UART_Receive_IT(&huart1, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
+    HAL_UART_Receive_IT(&huart1, &GPSRxByte, 1);
 }
 
 BaseType_t GPS_ReadData(GPSData_t *Data){
@@ -64,7 +65,7 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 
 static void GPS_Receive() {
     GPSData_t GPSData;
-    printf("%s", GPSRxDataBuf);
+    printf("%s\n", GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
         GPSData.latitude_Deg[1] = GPSRxDataBuf[21];
@@ -107,7 +108,7 @@ static void GPS_Receive() {
         printf("Sent to queue\n\r");
     }
     else {
-        // printf("Wrong GPS data type recieved\n\r");
+        
     }
 
     
@@ -115,16 +116,18 @@ static void GPS_Receive() {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART1) {
-        char *curr = &GPSRxDataBuf[GPSBufIdx];
-        if (*curr == '\n' || *curr == '\r') {  // message end sequence is CRLF, we check for LF
-            *curr = '\0'; // add null terminator to input string
+        char byte_received = (char)GPSRxByte;
+
+        GPSRxDataBuf[GPSBufIdx] = byte_received;
+        if (byte_received == '\n') {  // message end sequence is CRLF, we check for LF
+            GPSRxDataBuf[GPSBufIdx - 1] = '\0'; // add null terminator to input string @ the CR
             GPSBufIdx = 0;  // reset buffer
             GPS_Receive();
         }
-        
-        HAL_UART_Receive_IT(&huart1, (uint8_t *)&GPSRxDataBuf[GPSBufIdx], 1);
-        if (*curr != '\0') {
-            GPSBufIdx = (GPSBufIdx + 1) % GPS_BUFSIZE;  // TODO: 
+        else{
+            GPSBufIdx = (GPSBufIdx + 1) % GPS_BUFSIZE;
         }
+
+        HAL_UART_Receive_IT(huart, (uint8_t *)&GPSRxByte, 1);
     }
 }
