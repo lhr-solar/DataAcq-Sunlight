@@ -9,8 +9,6 @@
 #include "IMU.h"
 #include "GPS.h"
 
-#define SDCARD_WRITE_BUFSIZE        64
-
 typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 

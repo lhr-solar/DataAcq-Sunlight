@@ -8,8 +8,9 @@
 
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
-#define DEBUGGINGMODE   0
-#define SDCARD_QUEUESIZE 16
+#define DEBUGGINGMODE               0
+#define SDCARD_WRITE_BUFSIZE        128
+#define SDCARD_QUEUESIZE            32
 static FATFS FatFs;
 static QueueHandle_t SDCardQ; // information will be put on this
 static const char * const filenames_list[] = {
