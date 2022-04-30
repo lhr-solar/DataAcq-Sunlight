@@ -54,7 +54,7 @@ void TransmitTask(void* argument) {
 
 
     if (initstatus != SUCCESS) {
-      printf("Initialization Error\n");
+      printf("Initialization Error\n\r");
       Error_Handler();
     }
 
@@ -68,11 +68,11 @@ void TransmitTask(void* argument) {
     memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
 
     while (1){
-        printf("Beginning of while loop\n");
+        printf("Beginning of while loop\n\r");
         status = Ethernet_PutInQueue(&testmessage);
-        if (status != pdTRUE) printf("PutInQueue error\n");
-        printf("Sending message now\n");
-        if (Ethernet_SendMessage()) printf("Send message error");
+        if (status != pdTRUE) printf("PutInQueue error\n\r");
+        printf("Sending message now\n\r");
+        if (Ethernet_SendMessage()) printf("Send message error\n\r");
         osDelay(1000);
     }
 

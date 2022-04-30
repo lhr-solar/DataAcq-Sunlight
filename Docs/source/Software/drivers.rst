@@ -11,19 +11,30 @@ Usage
 
 Additional Considerations
 
-Ethernet
+Ethernet 
 ========
 
 Purpose
 
-The Ethernet drivers are sending GPS, CAN, and IMU data to the data acquisition team
+The Ethernet drivers are sending GPS, CAN, and IMU data to the data acquisition team.
 The sunlight is the client while data acquisition is the server
 
 Usage
 
-
+``Ethernet_Init()`` is first called as a way to create the Queue and create a socket when a connection has been established.
+``Ethernet_ConnectToServer()`` is a static blocking function called inside ``Ethernet_Init()`` that is either called when connection
+first needs to be established or when connection is lost with data acquisition.  ``Ethernet_SendMessage()`` then collects data from the 
+Ethernet Queue and sends through Ethernet - if there is no connection, it calls ``Ethernet_ConnectToServer()``. ``Ethernet_SendMessage()`` returns pdFalse
+if the Queue is empty and pdTrue if the Queue is not empty. The struct EthernetMSG_t will hold the data packets of either information 
+regarding IMU, GPS, or CAN. The struct consists of an id enum, length, and a union of data. Since the data is in a union, there will be zero padding
+at the MSB.
 
 Additional Considerations
+
+Sunlight could have been implemented as a server instead of a client. This implementation would make more sense if Ethernet had the option of sending
+messages to multiple clients. The way that it is implemented, Sunlight is trying to connect to Data acquisition so that it can send information. 
+As sunlight as the server, data acquisition would try and connect to sunlight in order to send information. In order to implement these changes, both 
+``Ethernet_ConnectToServer()`` and ``Ethernet_Init()`` would need to be changed so that it waits for a client to connect and send messages to that specific client. 
 
 
 
