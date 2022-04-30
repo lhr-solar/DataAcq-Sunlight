@@ -64,6 +64,7 @@ void GPSTest(void* argument){
             printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
             printf("Longitude: %.9s\n\r", Data.longitude);
             printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
+            printf("Course in Degrees: %.6s\n\r", Data.courseInDegrees);
             printf("Magnetic Variation: %.7s\n\r", Data.magneticVariation);      
         }
         osDelay(1000); 

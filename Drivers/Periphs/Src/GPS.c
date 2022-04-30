@@ -83,41 +83,51 @@ static void GPS_Receive() {
         while (GPSRxDataBuf[idx] != '\0'){
             int structidx = 0;
             while (GPSRxDataBuf[idx] != ','){
+                printf("%c/n/r", GPSRxDataBuf[idx]);
                 switch(field){
                     case NAME:
                     break;
                     case TIME:
                         GPSData.time[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Time: %.8s\n\r", GPSData.time);
                         break;
                     case STATUS:
                         GPSData.status = GPSRxDataBuf[idx];
+                        printf("Status: %c\n\r", GPSData.status);
                         break;
                     case LATITUDE:
                         GPSData.latitude[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Latitude: %.8s\n\r", GPSData.latitude);
                         break;
                     case NS:
                         GPSData.NorthSouth = GPSRxDataBuf[idx];
+                        printf("Direction: %c\n\r", GPSData.NorthSouth);
                         break;
                     case LONGITUDE:
                         GPSData.longitude[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Longitude: %.9s\n\r", GPSData.longitude);
                         break;
                     case EW:
                         GPSData.EastWest = GPSRxDataBuf[idx];
+                        printf("Direction: %c\n\r", GPSData.EastWest);
                         break;
                     case SPEEDINKNOTS:
                         GPSData.speedInKnots[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Speed in Knots: %.4s\n\r", GPSData.speedInKnots);
                         break;
                     case COURSEINDEGREES:
                         GPSData.courseInDegrees[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Course in Degrees: %.6s\n\r", GPSData.courseInDegrees);
                         break;
                     case MAGNETICVAR:
                         GPSData.magneticVariation[structidx] = GPSRxDataBuf[idx];
                         structidx++;
+                        printf("Magnetic Variation: %.7s\n\r", GPSData.magneticVariation);
                         break;
                 }
                 idx++;
