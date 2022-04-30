@@ -1,133 +1,78 @@
-/* Copyright (c) 2020 UT Longhorn Racing Solar */
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "FreeRTOS.h"
-#include "radio.h"
-
-/******************************************************************************
- * CANBus Drivers Test
- * * This test utilizes two RTOS threads to transmit and recieve CAN messages.
- * * The main focus is to verify driver functionality, so the RTOS part is not
- *   very in-depth.
- * 
- * * Test procedure:
- * 1. Serial output should read:
- *        "CAN message (word): 0ABCDEF0"
- *        (note: you may want to add carriage returns to the print statements)
- * 2. The char tx[4] array can be changed to different content to observe
- *    matching outputs over serial.
- * 3. Transmit IDs (defined when calling CAN_TransmitMessage) can be set to
- *    messages with different formats, but the tx array and output printf()
- *    will need to be modified for the different message formats.
- *
- *****************************************************************************/
+#include "Tasks.h"
+#include "GPS.h"
+#include <stdio.h>
 
 CAN_HandleTypeDef hcan1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
-/* Definitions for threads */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-osThreadId_t TransmitTaskHandle;
-osThreadAttr_t TransmitTask_attributes = {
-  .name = "Transmit Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+
+osThreadId_t GPSTestHandle;
+const osThreadAttr_t GPSTest_attributes = {
+  .name = "GPSTest",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024
 };
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
+void GPSTest(void *argument);
 
-
-/* Test Threads --------------------------------------------------------------*/
-void TransmitTask(void* argument) {
-    printf("initializing ethernet...\n");
-    ErrorStatus initstatus = Ethernet_Init();
-
-
-    if (initstatus != SUCCESS) {
-      printf("Initialization Error\n\r");
-      Error_Handler();
-    }
-
-    BaseType_t status;
-    EthernetMSG_t testmessage;
-
-    memset(&testmessage, 0, sizeof(testmessage));
-    testmessage.id = GPS;
-    testmessage.length = sizeof(testmessage.data.GPSData);
-    char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
-    memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
-
-    while (1){
-        printf("Beginning of while loop\n\r");
-        status = Ethernet_PutInQueue(&testmessage);
-        if (status != pdTRUE) printf("PutInQueue error\n\r");
-        printf("Sending message now\n\r");
-        if (Ethernet_SendMessage()) printf("Send message error\n\r");
-        osDelay(1000);
-    }
-
-}
-
-/* End Test Threads -----------------------------------------------------------*/
-
-
-
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* Configure the system clock */
   SystemClock_Config();
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART1_UART_Init();
   MX_USART3_UART_Init();
-
-  /* Init scheduler */
-  printf("initializing os");
   osKernelInitialize();
-  printf("...\n");
+  
+  GPSTestHandle = osThreadNew(GPSTest, NULL, &GPSTest_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes); 
 
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-  /* USER CODE BEGIN RTOS_THREADS */
-  TransmitTaskHandle = osThreadNew(TransmitTask, NULL, &TransmitTask_attributes);
-  /* USER CODE END RTOS_THREADS */
 
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
-  /* Infinite loop */
-  while (1)
-  {
-
-  }
+  osKernelStart(); 
+  while (1);
+  
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
+void GPSTest(void* argument){
+    GPSData_t Data;
+
+    GPS_StartReading();
+    if (GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
+    
+    printf("GPS initialized\n\r");
+
+    while(1){
+        if (GPS_ReadData(&Data) == pdTRUE) {
+            printf("Time: %.8s\n\r", Data.time);
+            printf("Status: %c\n\r", Data.status);
+            printf("Latitude: %.8s\n\r", Data.latitude);
+            printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
+            printf("Longitude: %.9s\n\r", Data.longitude);
+            printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
+            printf("Course in Degrees: %.6s\n\r", Data.courseInDegrees);
+            printf("Magnetic Variation: %.7s\n\n\r", Data.magneticVariation);      
+        }
+        osDelay(1000); 
+    }
+
+}
+
+void SystemClock_Config(void){
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -172,22 +117,22 @@ void SystemClock_Config(void)
   }
 }
 
+static void MX_USART1_UART_Init(void){
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 
-/**
-  * @brief USART3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART3_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART3_Init 0 */
-
-  /* USER CODE END USART3_Init 0 */
-
-  /* USER CODE BEGIN USART3_Init 1 */
-
-  /* USER CODE END USART3_Init 1 */
+static void MX_USART3_UART_Init(void){
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
@@ -200,19 +145,9 @@ static void MX_USART3_UART_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART3_Init 2 */
-
-  /* USER CODE END USART3_Init 2 */
-
 }
 
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
+static void MX_GPIO_Init(void){
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
@@ -273,49 +208,14 @@ static void MX_GPIO_Init(void)
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
+void StartDefaultTask(void *argument){
   for(;;)
   {
-    osDelay(1);
+    //printf("In default task\n\r");
+    osDelay(1); //was originally 1, increased delay because this thread kept overtaking the GPSTest thread
   }
-  /* USER CODE END 5 */
 }
 
- /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
-}
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
