@@ -58,124 +58,27 @@ void TransmitTask(void* argument) {
 
 
     if (initstatus != SUCCESS) {
-      printf("Initialization Error\n");
-      Error_Handler();
+        printf("Initialization Error\n");
+        Error_Handler();
     }
 
-
-     EthernetMSG_t Message;
-
-     //error = IMU_GetMeasurements(IMU_Data);
-
-    //  //IMU data
-    //  Message.id= IMU;
-    //  Message.length = sizeof(IMU_Data);  // TODO: Ensure this is correct
-    //  Message.data.IMUData = IMU_Data; // TODO: Make sure 
-
-    //  //GPS Data
-    //  Message.id= GPS;
-    //  Message.length = sizeof(GPS_Data);  // TODO: Ensure this is correct
-    //  Message.data.GPSData = GPS_Data;
-
-    //  //CAN Data
-    //  Message.id= CAN;
-    //  Message.length = sizeof(CAN_Data);  // TODO: Ensure this is correct
-    //  Message.data.GPSData = CAN_Data;
-
-    // IMUData_t IMU_Data ={0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
-    // GPSData_t GPS_Data = { {'0', '3'}, {'2', '3'}, {'1', '2'},{'2', '2', '2'}
-    //                , {'2', '0'}, {'4', '5', '6', '6', '1', '4'}, '6'
-    //                , {'6', '1', '4'}, {'6', '3', '7', '4', '3', '7'}, 'N'
-    //                , {'3', '4', '5', '6'}, {'7', '8'},{'9', '8'}
-    //                , {'1', '2', '3', '4'}, {'5', '6', '7', '8'}, 'N'};
-    GPSData_t GPS_Data;
-
- 
-    CANMSG_t CAN_Data;
-    // CANData_t data;
-    // data.w = 0xFFFFFFFF;
-    //CANPayload_t payload1 = {0xE, data};
- 
-    // CAN_Data.id = 0x02;
-    // CAN_Data.payload = payload1;
-
-
-     
     BaseType_t status;
-    
-    int8_t x=1;
+    EthernetMSG_t testmessage;
 
-    while (1){
-        printf("Beginning of while loop\n");
+    memset(&testmessage, 0, sizeof(testmessage));
+    testmessage.id = GPS;
+    testmessage.length = sizeof(testmessage.data.GPSData);
+    char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
+    memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
 
-        //IMU data
-    
-        if(x%3==1){
-        IMUData_t IMU_Data ={0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
-        Message.id= IMU;
-        Message.length = sizeof(IMU_Data);
-        //memcpy(&Message.data.IMUData, teststring, sizeof(teststring));
-        Message.data.IMUData = IMU_Data;
-        x+=1;
-        }
-        
-
-    
-        else if(x%3==2){
-        //GPS Data
-        Message.id= GPS;
-        memcpy(GPS_Data.hr,"03",2); // Will not use these parameters unless we have to
-        memcpy(GPS_Data.min, "12", 2); // ^^
-        memcpy(GPS_Data.sec, "67", 2); // ^^
-        memcpy(GPS_Data.ms ,"678", 3); // ^^
-        memcpy(GPS_Data.latitude_Deg , "12", 2);
-        memcpy(GPS_Data.latitude_Min ,"123.56", 6);
-    //memcpy(GPS_Data.NorthSouth ,"N", 1) ;
-        GPS_Data.NorthSouth= 'N';
-
-        memcpy(GPS_Data.longitude_Deg ,"456", 3);
-        memcpy(GPS_Data.longitude_Min ,"123456", 6);
-    //memcpy(GPS_Data.EastWest, "W", 1) ;
-        GPS_Data.EastWest='W';
-        memcpy(GPS_Data.speedInKnots ,"4567", 4) ;
-        memcpy(GPS_Data.day ,"34", 2); // Will not use these parameters unless we have to
-        memcpy(GPS_Data.month ,"45", 2); // ^^
-        memcpy(GPS_Data.year ,"2022", 4); // ^^
-        memcpy(GPS_Data.magneticVariation_Deg ,"45.5", 4);
-        //memcpy(GPS_Data.magneticVariation_EastWest , "W", 1);
-        GPS_Data.magneticVariation_EastWest='W';
-
-        //memcpy(&Message.data.GPSData, gpsData, sizeof(gpsData));
-        Message.length = sizeof(GPS_Data);  
-        Message.data.GPSData=GPS_Data;
-        x+=1;
-        }
-
-        else if(x%3==0){
-        //CAN Data
-        CANData_t data;
-        data.w = 0x22223331;
-        CANPayload_t payload1 = {0xE, data};
- 
-        CAN_Data.id = 0x02;
-        CAN_Data.payload = payload1;
-        Message.data.CANData=CAN_Data;
-        Message.length=sizeof(CAN_Data);
-        x+=1;
-        }
-
-        status = Ethernet_PutInQueue(&Message);
-
+    while (1) {
+        printf("Beginning of while loop\n\r");
+        status = Ethernet_PutInQueue(&testmessage);
         if (status != pdTRUE) printf("PutInQueue error\n\r");
-    
         printf("Sending message now\n\r");
-
         if (Ethernet_SendMessage()) printf("Send message error\n\r");
-
-    
         osDelay(1000);
     }
-
 }
 
 /* End Test Threads -----------------------------------------------------------*/
