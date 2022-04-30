@@ -71,15 +71,10 @@ BaseType_t Ethernet_SendMessage() {
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 
-        // for eliminating leading undefined bytes in union 
-        void *dataptr;
-        if (eth_rx.id == CAN) dataptr = &eth_rx.data.CANData;
-        else if (eth_rx.id == IMU) dataptr = &eth_rx.data.IMUData;
-        else dataptr = &eth_rx.data.GPSData;
-
-        //copy data from dataptr into raw ethernet message array
+        // copy data from dataptr into raw ethernet message array
+        // the struct word-aligns the first two bytes (id and length), so this is necessary
         memcpy(&raw_ethmsg[2],
-               (char *)dataptr, 
+               &eth_rx.data, 
                eth_rx.length);
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);

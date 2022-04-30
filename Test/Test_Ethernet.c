@@ -60,28 +60,12 @@ void TransmitTask(void* argument) {
 
     BaseType_t status;
     EthernetMSG_t testmessage;
-    uint8_t raw_ethmsg[sizeof(EthernetMSG_t)];
 
     memset(&testmessage, 0, sizeof(testmessage));
     testmessage.id = GPS;
     testmessage.length = sizeof(testmessage.data.GPSData);
     char teststring[] = "zyxwvutsrqponmlkjihgfedcba\n";
     memcpy(&testmessage.data.GPSData, teststring, sizeof(teststring));
-
-    //tesing whether there are leading undefined bytes 
-    void *dataptr;
-    if (testmessage.id == CAN) dataptr = &testmessage.data.CANData;
-    else if (testmessage.id == IMU) dataptr = &testmessage.data.IMUData;
-    else dataptr = &testmessage.data.GPSData;
-    printf("the data pointer address: %p\n\r", dataptr);
-    //testing whether the data pointer and union pointer have the same address - they should as that means there are no leading undefined bytes
-    printf("union pointers: %p, %p, %p, %p\n\r", &testmessage.data, &testmessage.data.CANData, &testmessage.data.IMUData, &testmessage.data.GPSData);
-    //testing whether the data is stored in the correct place
-    memcpy(&raw_ethmsg[2],
-               (char *)dataptr, 
-               testmessage.length);
-    printf("data: %d %d\n\r",raw_ethmsg[2],raw_ethmsg[3]);
-    printf("more data: %s \n\r",testmessage.data.GPSData.day);
 
     while (1){
         printf("Beginning of while loop\n\r");
