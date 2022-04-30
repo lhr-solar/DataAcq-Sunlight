@@ -3,21 +3,21 @@
 #include <string.h>
 #include <stdarg.h> //for va_list var arg functions
 #include "fatfs.h"
-#include "SDCard.h"
+#include "SDcard.h"
 #include "main.h"
 
 static FATFS FatFs;
 
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
-#define DEBUGGINGMODE   0
+#define DEBUGGINGMODE   1
 
 /**
  * @brief Mounts the drive
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_Init(){
+FRESULT SDCard_Init() {
     //mount the drive
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     #ifdef DEBUGGINGMODE
@@ -29,11 +29,11 @@ FRESULT SDCard_Init(){
 }
 
 /**
- * @brief Reads how much memory is left in SD Card. Should be used for debugging purposes
+ * @brief Reads how much memory is left in SD card-> Should be used for debugging purposes
  * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_GetStatistics(){
+FRESULT SDCard_GetStatistics() {
     DWORD free_clusters;
     DWORD free_sectors;
     DWORD total_sectors;
@@ -65,7 +65,7 @@ FRESULT SDCard_GetStatistics(){
  * @param size size of data to write to file
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t size){
+FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size) {
     BYTE readBuf[size];
     FRESULT fresult;
     fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
@@ -90,84 +90,143 @@ FRESULT SDCard_Write(FIL fil, char fileName[], char message[], uint32_t size){
     return fresult;
 }
 
-FRESULT SDCard_Sort_Write_Data(SDCard_t card)
-{
-    //check if data from queue is from imu, gps, or can. How to determine what data is what from queue?
-    //if imu, convert to char
-    //gps is already char
-    //don't convert can
-    //send data to corresponding file in sd card
-    //data reading task reads data into imu/gps/can. then this data is read into corresponding fields for sdcard. 
-    //then this function is called to pick through the data and format it. Then its printed to sd card
+// Wrappers for snprintf() for each of the message data types
+// Each function takes a buffer to write to, the buffer size, 
+// and a pointer to the respective data structs
+
+static int SPrint_CAN(char *sdcard_write_buf, 
+                      size_t bufsize, 
+                      CANMSG_t *can, 
+                      const char *time) {
+    uint32_t data;
+
+    switch (can->id) {
+    // Handle messages with one byte of data
+    case TRIP:
+    case ALL_CLEAR:
+    case CONTACTOR_STATE:
+    case WDOG_TRIGGERED:
+    case CAN_ERROR:
+    case CHARGE_ENABLE:
+        data = can->payload.data.b;
+        break;
+
+    // Handle messages with 4 byte data and optionally idx
+    case CURRENT_DATA:
+    case SOC_DATA:
+    case VOLT_DATA:
+    case TEMP_DATA:
+        data = can->payload.data.w;
+        break;
+
+    // Handle invalid messages
+    // TODO: add controls CAN messages
+    default:
+        return -1;
+    }
+
+    return snprintf(sdcard_write_buf, 
+                    bufsize, 
+                    "%s,%d,%d,%lu\r\n", 
+                    time,
+                    can->id, 
+                    can->payload.idx, 
+                    data);
+}
+
+static int SPrint_IMU(char *sdcard_write_buf, 
+                      size_t bufsize, 
+                      IMUData_t *imu, 
+                      const char *time) {
+    return snprintf(sdcard_write_buf, 
+                    bufsize, 
+                    "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
+                    time,
+                    imu->accel_x,
+                    imu->accel_y,
+                    imu->accel_z,
+                    imu->mag_x,
+                    imu->mag_y,
+                    imu->mag_z,
+                    imu->gyr_x,
+                    imu->gyr_y,
+                    imu->gyr_z);
+}
+
+static int SPrint_GPS(char *sdcard_write_buf, 
+                      size_t bufsize, 
+                      GPSData_t *gps, 
+                      const char *time) {
+    char gps_str[sizeof(GPSData_t) + 1];
+    memcpy(gps_str, gps, sizeof(GPSData_t));
+    gps_str[sizeof(GPSData_t)] = '\0';
+
+    return snprintf(sdcard_write_buf, 
+                    bufsize, 
+                    "%s,%s\r\n",
+                    time,
+                    gps_str);
+}
 
 
-    FRESULT fresult=FR_OK;
+static const char * const filenames_list[] = {
+        "can.csv",
+        "imu.csv",
+        "gps.csv"
+    };
+FRESULT SDCard_Sort_Write_Data(SDCard_t *carddata, const char *time) {
+    // check if data from queue is from imu, gps, or can. How to determine what data is what from queue?
+    // if imu, convert to char
+    // gps is already char
+    // don't convert can
+    // send data to corresponding file in sd card
+    // data reading task reads data into imu/gps/can. then this data is read into corresponding fields for sdcard-> 
+    // then this function is called to pick through the data and format it. Then its printed to sd card
+
+    enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
+    static char message[SDCARD_WRITE_BUFSIZE];
+    
     FIL file;
-    
-    //check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
-    if(card.id==CAN_SDCard)//CAN
-    {
-        //card.length=sizeof(card.data.CANData);
-        //char message[card.length];
-        char message[500];
-         memset(message, 0, sizeof(card.data.CANData.payload.data)+sizeof(card.data.CANData.id));
-        // memcpy(&message, card.data.CANData, sizeof(card.data.CANData));
-        //change sprintf to snprintf
-        sprintf(message, "CAN ID: %d\n", card.data.CANData.id);
+    uint8_t fname_idx = 0;
+    uint16_t bytes_written = -1;
+
+    // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
+    switch (carddata->id) {
+
+    case CAN_SDCard:
+        fname_idx = CAN_FNAME;
+        bytes_written = SPrint_CAN(message, 
+                                   SDCARD_WRITE_BUFSIZE, 
+                                   &carddata->data.CANData,
+                                   time);
+        break;
         
-        sprintf(message + strlen(message),"Byte: %u\n", card.data.CANData.payload.data.b);
-        sprintf(message + strlen(message),"Float: %f\n", card.data.CANData.payload.data.f);
-        sprintf(message + strlen(message),"Halfword: %u\n", card.data.CANData.payload.data.h);
-        sprintf(message + strlen(message),"Word: %lu\n", card.data.CANData.payload.data.w);
-        
+    case IMU_SDCard:
+        fname_idx = IMU_FNAME;
+        bytes_written = SPrint_IMU(message, 
+                                   SDCARD_WRITE_BUFSIZE, 
+                                   &carddata->data.IMUData,
+                                   time);
+        break;
+
+    case GPS_SDCard:
+        fname_idx = GPS_FNAME;
+        bytes_written = SPrint_GPS(message, 
+                                   SDCARD_WRITE_BUFSIZE, 
+                                   &carddata->data.GPSData,
+                                   time);
+        break;
+
+    default:
+        break;
     
-        fresult=SDCard_Write(file, "CAN_DATA.txt", message ,sizeof(message));
     }
 
-    else if(card.id==IMU_SDCard)//IMU
-    {
-        char message[500];
-        memset(&message, 0, sizeof(card.data.IMUData)); // 
-
-        //convert int to string and append each field to "message"
-        sprintf(message, "Accel x: %d\n", card.data.IMUData.accel_x);
-        sprintf(message + strlen(message),"Accel y: %d\n", card.data.IMUData.accel_y);
-        sprintf(message + strlen(message),"Accel z: %d\n", card.data.IMUData.accel_z);
-        sprintf(message + strlen(message),"Mag x: %d\n", card.data.IMUData.mag_x);
-        sprintf(message + strlen(message),"Mag y: %d\n", card.data.IMUData.mag_y );
-        sprintf(message + strlen(message),"Mag z: %d\n", card.data.IMUData.mag_z );
-        sprintf(message + strlen(message), "Gyr x: %d\n",card.data.IMUData.gyr_x );
-        sprintf(message + strlen(message),"Gyr y: %d\n", card.data.IMUData.gyr_y );
-        sprintf(message + strlen(message), "Gyr z: %d\n",card.data.IMUData.gyr_z );
-
-        fresult= SDCard_Write(file, "IMU_DATA.txt", message, sizeof(message));
-    }
-
-    else if(card.id==GPS_SDCard) //GPS
-    {
-        char message[500];
-
-        //GPS data is already given as a string
-
-        memset(&message, 0, sizeof(card.data.GPSData));
-        sprintf(message,"Lat Deg: %s",card.data.GPSData.latitude_Deg) ;
-
-        sprintf(message +strlen(message),"Lat min: %s\n", card.data.GPSData.latitude_Min);
-        sprintf(message+strlen(message),"Dir: %s", card.data.GPSData.NorthSouth);
-        sprintf(message+strlen(message),"Long Deg: %s", card.data.GPSData.longitude_Deg);
-        sprintf(message+strlen(message),"Long Min: %s", card.data.GPSData.longitude_Min);
-        sprintf(message+strlen(message),"Dir: %s", card.data.GPSData.EastWest);
-        sprintf(message+strlen(message),"Speed in Knots %s", card.data.GPSData.speedInKnots);
-        sprintf(message+strlen(message),"Mag Var in Deg: %s", card.data.GPSData.magneticVariation_Deg);
-        sprintf(message+strlen(message),"Mag Var Dir: %s", card.data.GPSData.magneticVariation_EastWest);
-
-        //memset(&message, 0, sizeof(card.data.GPSData));
-        //memcpy(&message, card.data.GPSData, sizeof(card.data.GPSData));
-        fresult= SDCard_Write(file, "GPS_DATA.txt", message, sizeof(message));
-    }
-
-    return fresult;
-
+    if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
+    #ifdef DEBUGGINGMODE
+    printf("Write: %s", message);
+    #endif
+    return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
 }
 
 /**
@@ -176,40 +235,6 @@ FRESULT SDCard_Sort_Write_Data(SDCard_t card)
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_CloseFileSystem(){
-    //un-mount the drive
+    // un-mount the drive
     return f_mount(NULL, "", 0);
 }
-
-//WON'T BE READING FROM SDCARD THROUGH MCU BUT JUST LEAVING FUNCTION JUST IN CASE
-/**
- * Prints given number of bytes of given text file
- * @param fil file handle
- * @param fileName name of file to be read
- * @param bytes maximum possible number of bytes that can be read
- * @return SUCCESS if no errors, ERROR if some error occured
-**/
-/*
-ErrorStatus SDCard_Read(FIL fil, char fileName[], uint32_t bytes){
-    //open file for reading
-    fresult = f_open(&fil, fileName, FA_READ);
-    if (fresult != FR_OK) {
-  	    printf("f_open error (%i)\r\n", (int)fresult);
-        return ERROR;
-    }
-    
-    printf("File opened for reading!\r\n");
-    
-    //We can either use f_read OR f_gets to get data out of files
-    //f_gets is a wrapper on f_read that does some string formatting for us
-    BYTE readBuf[30];   //30 byte buffer
-    TCHAR* rres = f_gets((TCHAR*)readBuf, 30, &fil);
-    if(rres != 0) {
-  	    printf("Read string from 'test.txt' contents: %s\r\n", (char*)readBuf);
-    } else {
-  	    printf("f_gets error (%i)\r\n", fresult);
-    }
-
-    f_close(&fil);
-    return SUCCESS;
-}
-*/

@@ -86,68 +86,47 @@ int main(void)
   }
 }
 void SDCardTestTask(void *argument){
-    //FIL file;
-    if (SDCard_Init() != FR_OK) printf ("Init no working\n\r");
-    if (SDCard_GetStatistics() != FR_OK) printf("Can't get statistics\n\r");
-    //char* message = "fakedata pls work";
 
-    //Fake IMU
-    // SDCard_t fakeIMU;
-    // fakeIMU.data.IMUData.accel_x=0x01;
-    // fakeIMU.data.IMUData.accel_y=0x02;
-    // fakeIMU.data.IMUData.accel_z=0x03; 
-    // fakeIMU.data.IMUData.mag_x=0x04;
-    // fakeIMU.data.IMUData.mag_y=0x05;
-    // fakeIMU.data.IMUData.mag_z=0x06;
-    // fakeIMU.data.IMUData.gyr_x=0x07;
-    // fakeIMU.data.IMUData.gyr_y=0x08;
-    // fakeIMU.data.IMUData.gyr_z=0x09;
-    // fakeIMU.id=IMU_SDCard;
-
-    // //Fake CAN 
-    // SDCard_t fakeCAN;
-    // fakeCAN.id=CAN_SDCard;
-    // fakeCAN.data.CANData.id=0x10C;
-    // fakeCAN.data.CANData.payload.data.b=1;
-    // fakeCAN.data.CANData.payload.data.f=2;
-    // fakeCAN.data.CANData.payload.data.h=3;
-    // fakeCAN.data.CANData.payload.data.w=4;
-
-    //Fake GPS
-    SDCard_t fakeGPS;
-    memcpy(&fakeGPS.data.GPSData, "144326.00A5107.0017737N11402.3291611W0080323.32103070", 48);
-    
-    // memcpy(fakeGPS.data.GPSData.hr,"11",2) ;
-    // memcpy(fakeGPS.data.GPSData.min, "30", 2); // ^^
-    // memcpy(fakeGPS.data.GPSData.sec,"55",2); // ^^
-    // memcpy(fakeGPS.data.GPSData.ms,"555", 3); // ^^
-    // memcpy(fakeGPS.data.GPSData.latitude_Deg, "45", 2);
-    // memcpy(fakeGPS.data.GPSData.latitude_Min, "345.34",6);
-    // memcpy(fakeGPS.data.GPSData.NorthSouth,"N", 1);
-    // memcpy(fakeGPS.data.GPSData.longitude_Deg,"354", 3);
-    // memcpy(fakeGPS.data.GPSData.longitude_Min,".453.56", 6);
-    // memcpy(fakeGPS.data.GPSData.EastWest, "W", 1);
-    // memcpy(fakeGPS.data.GPSData.speedInKnots,"45.6", 4);
-    // memcpy(fakeGPS.data.GPSData.day,"16", 2);// Will not use these parameters unless we have to
-    // memcpy(fakeGPS.data.GPSData.month,"04", 2); // ^^
-    // memcpy(fakeGPS.data.GPSData.year,"2022", 4); // ^^
-    // memcpy(fakeGPS.data.GPSData.magneticVariation_Deg,"45.6", 4);
-    // memcpy(fakeGPS.data.GPSData.magneticVariation_EastWest,"W", 1);
-
-    //int x=1;
-
-    while (1){
-        // if (SDCard_Write(file, "test.txt", message, sizeof(message)) !=FR_OK) printf("Writing no working\n\r");
-        // else break;
-
-        
-        //SDCard_Sort_Write_Data(fakeIMU);
-        //SDCard_Sort_Write_Data(fakeCAN);
-        if(SDCard_Sort_Write_Data(fakeGPS)!=FR_OK) printf("writing is wrong\n\r") ;
-        else break;
+    if (SDCard_Init() != FR_OK) {
+      printf ("SD Card failed to initialize\n\r");
+      goto DONE;
     }
+    if (SDCard_GetStatistics() != FR_OK) {
+      printf("GetStatistics failed\n\r");
+      goto DONE;
+    }
+
+    SDCard_t can = {.id = CAN_SDCard}, imu = {.id = IMU_SDCard}, gps = {.id = GPS_SDCard};
+
+    CANMSG_t candata = {.id = VOLT_DATA, .payload.idx = 42, .payload.data.w = 420};
+    memcpy(&can.data.CANData, &candata, sizeof(CANMSG_t));
+
+    GPSData_t gpsdata;
+    memset(&gpsdata, 0, sizeof(gpsdata));
+    memcpy(&gpsdata, "test gps data", sizeof("test gps data") - 1);
+    memcpy(&gps.data.GPSData, &gpsdata, sizeof(GPSData_t));
+
+    IMUData_t imudata;
+    memset(&imudata, 42, sizeof(imudata));
+    memcpy(&imu.data.IMUData, &imudata, sizeof(IMUData_t));
+
+    char time[] = "9 am";
+
+    // Perform 5 writes of each type of data
+    for (uint8_t i = 0; i < 5; i++) {
+        printf("Writing cycle %d\n\r", i);
+        SDCard_Sort_Write_Data(&can, time);
+        printf("... \n\r");
+        SDCard_Sort_Write_Data(&gps, time);
+        printf("... \n\r");
+        SDCard_Sort_Write_Data(&imu, time);
+        printf("... \n\r");
+    }
+
+
+    DONE:
     SDCard_CloseFileSystem();
-    printf("Unmounted\n\r");
+    printf("Unmounted, shutting down thread\n\r");
 }
 /**
   * @brief System Clock Configuration
