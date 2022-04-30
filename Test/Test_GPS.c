@@ -58,14 +58,13 @@ void GPSTest(void* argument){
 
     while(1){
         if (GPS_ReadData(&Data) == pdTRUE) {
-            printf("Latitude Degrees: %.4s\n\r", Data.latitude_Deg);
-            printf("Latitude Min: %.4s\n\r", Data.latitude_Min);
+            printf("Time: %.8s\n\r", Data.time);
+            printf("Status: %c\n\r", Data.status);
+            printf("Latitude: %.8s\n\r", Data.latitude);
             printf("Direction: %c%c\n\r", Data.NorthSouth, Data.EastWest);
-            printf("Longitude Degrees: %.5s\n\r", Data.longitude_Deg);
-            printf("Longitude Min: %.5s\n\r", Data.longitude_Min);
+            printf("Longitude: %.9s\n\r", Data.longitude);
             printf("Speed in Knots: %.4s\n\r", Data.speedInKnots);
-            printf("Magnetic Variation Degrees: %.4s\n\r", Data.magneticVariation_Deg);
-            printf("Magnetic Variation Direction: %c\n\r", Data.magneticVariation_EastWest);       
+            printf("Magnetic Variation: %.7s\n\r", Data.magneticVariation);      
         }
         osDelay(1000); 
     }

@@ -3,10 +3,21 @@
 #include "cmsis_os.h"
 
 #define GPS_BUFSIZE     100
+#define NAME            0
+#define TIME            1
+#define STATUS          2
+#define LATITUDE        3
+#define NS              4
+#define LONGITUDE       5
+#define EW              6
+#define SPEEDINKNOTS    7
+#define COURSEINDEGREES 8
+#define DATE            9
+#define MAGNETICVAR     10    
+
 char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
 static uint8_t GPSRxByte;
-
 static QueueHandle_t GPSRxQueue;
 uint32_t GPSDroppedMessages = 0;    // for debugging purposes
 
@@ -65,9 +76,55 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
 
 static void GPS_Receive() {
     GPSData_t GPSData;
-    printf("%s\n", GPSRxDataBuf);
+    printf("%s\n\r", GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
-        GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
+        uint16_t idx = 0;
+        uint8_t field = 0;
+        while (GPSRxDataBuf[idx] != '\0'){
+            int structidx = 0;
+            while (GPSRxDataBuf[idx] != ','){
+                switch(field){
+                    case NAME:
+                    break;
+                    case TIME:
+                        GPSData.time[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                    case STATUS:
+                        GPSData.status = GPSRxDataBuf[idx];
+                        break;
+                    case LATITUDE:
+                        GPSData.latitude[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                    case NS:
+                        GPSData.NorthSouth = GPSRxDataBuf[idx];
+                        break;
+                    case LONGITUDE:
+                        GPSData.longitude[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                    case EW:
+                        GPSData.EastWest = GPSRxDataBuf[idx];
+                        break;
+                    case SPEEDINKNOTS:
+                        GPSData.speedInKnots[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                    case COURSEINDEGREES:
+                        GPSData.courseInDegrees[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                    case MAGNETICVAR:
+                        GPSData.magneticVariation[structidx] = GPSRxDataBuf[idx];
+                        structidx++;
+                        break;
+                }
+                idx++;
+            }
+            field++;
+        }
+        /*GPSData.latitude_Deg[0] = GPSRxDataBuf[20];
         GPSData.latitude_Deg[1] = GPSRxDataBuf[21];
         GPSData.latitude_Deg[2] = GPSRxDataBuf[22];
         GPSData.latitude_Deg[3] = GPSRxDataBuf[23];
@@ -100,7 +157,7 @@ static void GPS_Receive() {
         GPSData.magneticVariation_Deg[1] = GPSRxDataBuf[65]; //the decimal point
         GPSData.magneticVariation_Deg[2] = GPSRxDataBuf[66];
         GPSData.magneticVariation_Deg[3] = GPSRxDataBuf[67]; 
-        GPSData.magneticVariation_EastWest = GPSRxDataBuf[69];
+        GPSData.magneticVariation_EastWest = GPSRxDataBuf[69];*/
 
         if (xQueueSendToBackFromISR(GPSRxQueue, &GPSData, NULL) == errQUEUE_FULL) {
             GPSDroppedMessages++;   // for debugging and metrics purposes

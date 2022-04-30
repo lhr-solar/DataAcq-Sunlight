@@ -14,22 +14,16 @@
 extern char GPSRxDataBuf[GPS_BUFSIZE];
 
 typedef struct{
-    char hr[2]; // Will not use these parameters unless we have to
-    char min[2]; // ^^
-    char sec[2]; // ^^
-    char ms[3]; // ^^
-    char latitude_Deg[4]; //was 2
-    char latitude_Min[4]; //was 6
+    char time[9]; //2 hr, 2 min, 2 sec, 3 ms
+    char status; //Data Valid (A) or Not Valid (V)
+    char latitude[8]; //2 degrees, 6 minutes
     char NorthSouth;
-    char longitude_Deg[5]; //was 3
-    char longitude_Min[4]; //was 6
+    char longitude[9]; //3 degrees, 6 minutes
     char EastWest;
-    char speedInKnots[4]; //was 4, msy need to make 4 for decimal part. the third one is "."
-    char day[2]; // Will not use these parameters unless we have to
-    char month[2]; // ^^
-    char year[4]; // ^^
-    char magneticVariation_Deg[4]; //was 4, may change back to 4 for decimal. the third is "."
-    char magneticVariation_EastWest;
+    char speedInKnots[4]; //x.xx
+    char courseInDegrees[6]; //xxx.xx
+    char date[6]; //may not use this (ddmmyy)
+    char magneticVariation[7]; // "x.xx y" y is E or W
 } GPSData_t;
 
 /** GPSInit
