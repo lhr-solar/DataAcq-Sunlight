@@ -112,13 +112,13 @@ FRESULT SDCard_Sort_Write_Data(SDCard_t card)
         char message[500];
          memset(message, 0, sizeof(card.data.CANData.payload.data)+sizeof(card.data.CANData.id));
         // memcpy(&message, card.data.CANData, sizeof(card.data.CANData));
-
-        sprintf(message, " %d", card.data.CANData.id);
+        //change sprintf to snprintf
+        sprintf(message, "CAN ID: %d\n", card.data.CANData.id);
         
-        sprintf(message + strlen(message)," %d", card.data.CANData.payload.data.b);
-        sprintf(message + strlen(message)," %f", card.data.CANData.payload.data.f);
-        sprintf(message + strlen(message)," %d", card.data.CANData.payload.data.h);
-        sprintf(message + strlen(message)," %lu", card.data.CANData.payload.data.w);
+        sprintf(message + strlen(message),"Byte: %u\n", card.data.CANData.payload.data.b);
+        sprintf(message + strlen(message),"Float: %f\n", card.data.CANData.payload.data.f);
+        sprintf(message + strlen(message),"Halfword: %u\n", card.data.CANData.payload.data.h);
+        sprintf(message + strlen(message),"Word: %lu\n", card.data.CANData.payload.data.w);
         
     
         fresult=SDCard_Write(file, "CAN_DATA.txt", message ,sizeof(message));
@@ -126,55 +126,20 @@ FRESULT SDCard_Sort_Write_Data(SDCard_t card)
 
     else if(card.id==IMU_SDCard)//IMU
     {
-        //card.length=sizeof(card.data.IMUData);
-        //how much space does a 16 bit signed int take in a string?? message should start at different points for each convewrsion
-        //int16_t is 2 bytes
-        // char* ax;
-        // char* ay;
-        // char* az;
-        // char* mx;
-        // char* my;
-        // char* mz;
-        // char* gx;
-        // char* gy;
-        // char* gz;
-
         char message[500];
         memset(&message, 0, sizeof(card.data.IMUData)); // 
 
         //convert int to string and append each field to "message"
-        sprintf(message, " %d", card.data.IMUData.accel_x);
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.accel_y);
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.accel_z);
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_x);
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_y );
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.mag_z );
-        
-        sprintf(message + strlen(message), " %d",card.data.IMUData.gyr_x );
-        
-        sprintf(message + strlen(message)," %d", card.data.IMUData.gyr_y );
-        
-        sprintf(message + strlen(message), " %d",card.data.IMUData.gyr_z );
-        sprintf(message+strlen(message), " \n");
+        sprintf(message, "Accel x: %d\n", card.data.IMUData.accel_x);
+        sprintf(message + strlen(message),"Accel y: %d\n", card.data.IMUData.accel_y);
+        sprintf(message + strlen(message),"Accel z: %d\n", card.data.IMUData.accel_z);
+        sprintf(message + strlen(message),"Mag x: %d\n", card.data.IMUData.mag_x);
+        sprintf(message + strlen(message),"Mag y: %d\n", card.data.IMUData.mag_y );
+        sprintf(message + strlen(message),"Mag z: %d\n", card.data.IMUData.mag_z );
+        sprintf(message + strlen(message), "Gyr x: %d\n",card.data.IMUData.gyr_x );
+        sprintf(message + strlen(message),"Gyr y: %d\n", card.data.IMUData.gyr_y );
+        sprintf(message + strlen(message), "Gyr z: %d\n",card.data.IMUData.gyr_z );
 
-
-        // sprintf(message, ax);
-        // sprintf(message, ay);
-        // sprintf(message, az);
-        // sprintf(message, mx);
-        // sprintf(message, my);
-        // sprintf(message, mz);
-        // sprintf(message, gx);
-        // sprintf(message, gy);
-        // sprintf(message, gz);
-        
-        //memset(&message, 0, sizeof(card.data.IMUData));
-        //memcpy(&message, card.data.IMUData, sizeof(card.data.IMUData));
         fresult= SDCard_Write(file, "IMU_DATA.txt", message, sizeof(message));
     }
 
@@ -185,16 +150,16 @@ FRESULT SDCard_Sort_Write_Data(SDCard_t card)
         //GPS data is already given as a string
 
         memset(&message, 0, sizeof(card.data.GPSData));
-        sprintf(message," %s",card.data.GPSData.latitude_Deg) ;
+        sprintf(message,"Lat Deg: %s",card.data.GPSData.latitude_Deg) ;
 
-        sprintf(message +strlen(message)," %s", card.data.GPSData.latitude_Min);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.NorthSouth);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.longitude_Deg);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.longitude_Min);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.EastWest);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.speedInKnots);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.magneticVariation_Deg);
-        sprintf(message+strlen(message)," %s", card.data.GPSData.magneticVariation_EastWest);
+        sprintf(message +strlen(message),"Lat min: %s\n", card.data.GPSData.latitude_Min);
+        sprintf(message+strlen(message),"Dir: %s", card.data.GPSData.NorthSouth);
+        sprintf(message+strlen(message),"Long Deg: %s", card.data.GPSData.longitude_Deg);
+        sprintf(message+strlen(message),"Long Min: %s", card.data.GPSData.longitude_Min);
+        sprintf(message+strlen(message),"Dir: %s", card.data.GPSData.EastWest);
+        sprintf(message+strlen(message),"Speed in Knots %s", card.data.GPSData.speedInKnots);
+        sprintf(message+strlen(message),"Mag Var in Deg: %s", card.data.GPSData.magneticVariation_Deg);
+        sprintf(message+strlen(message),"Mag Var Dir: %s", card.data.GPSData.magneticVariation_EastWest);
 
         //memset(&message, 0, sizeof(card.data.GPSData));
         //memcpy(&message, card.data.GPSData, sizeof(card.data.GPSData));

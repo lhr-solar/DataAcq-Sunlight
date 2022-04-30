@@ -92,27 +92,59 @@ void SDCardTestTask(void *argument){
     //char* message = "fakedata pls work";
 
     //Fake IMU
-    SDCard_t fakeIMU;
-    fakeIMU.data.IMUData.accel_x=0x01;
-    fakeIMU.data.IMUData.accel_y=0x02;
-    fakeIMU.data.IMUData.accel_z=0x03; 
-    fakeIMU.data.IMUData.mag_x=0x04;
-    fakeIMU.data.IMUData.mag_y=0x05;
-    fakeIMU.data.IMUData.mag_z=0x06;
-    fakeIMU.data.IMUData.gyr_x=0x07;
-    fakeIMU.data.IMUData.gyr_y=0x08;
-    fakeIMU.data.IMUData.gyr_z=0x09;
+    // SDCard_t fakeIMU;
+    // fakeIMU.data.IMUData.accel_x=0x01;
+    // fakeIMU.data.IMUData.accel_y=0x02;
+    // fakeIMU.data.IMUData.accel_z=0x03; 
+    // fakeIMU.data.IMUData.mag_x=0x04;
+    // fakeIMU.data.IMUData.mag_y=0x05;
+    // fakeIMU.data.IMUData.mag_z=0x06;
+    // fakeIMU.data.IMUData.gyr_x=0x07;
+    // fakeIMU.data.IMUData.gyr_y=0x08;
+    // fakeIMU.data.IMUData.gyr_z=0x09;
+    // fakeIMU.id=IMU_SDCard;
 
-    fakeIMU.id=IMU_SDCard;
+    // //Fake CAN 
+    // SDCard_t fakeCAN;
+    // fakeCAN.id=CAN_SDCard;
+    // fakeCAN.data.CANData.id=0x10C;
+    // fakeCAN.data.CANData.payload.data.b=1;
+    // fakeCAN.data.CANData.payload.data.f=2;
+    // fakeCAN.data.CANData.payload.data.h=3;
+    // fakeCAN.data.CANData.payload.data.w=4;
+
+    //Fake GPS
+    SDCard_t fakeGPS;
+    memcpy(&fakeGPS.data.GPSData, "144326.00A5107.0017737N11402.3291611W0080323.32103070", 48);
+    
+    // memcpy(fakeGPS.data.GPSData.hr,"11",2) ;
+    // memcpy(fakeGPS.data.GPSData.min, "30", 2); // ^^
+    // memcpy(fakeGPS.data.GPSData.sec,"55",2); // ^^
+    // memcpy(fakeGPS.data.GPSData.ms,"555", 3); // ^^
+    // memcpy(fakeGPS.data.GPSData.latitude_Deg, "45", 2);
+    // memcpy(fakeGPS.data.GPSData.latitude_Min, "345.34",6);
+    // memcpy(fakeGPS.data.GPSData.NorthSouth,"N", 1);
+    // memcpy(fakeGPS.data.GPSData.longitude_Deg,"354", 3);
+    // memcpy(fakeGPS.data.GPSData.longitude_Min,".453.56", 6);
+    // memcpy(fakeGPS.data.GPSData.EastWest, "W", 1);
+    // memcpy(fakeGPS.data.GPSData.speedInKnots,"45.6", 4);
+    // memcpy(fakeGPS.data.GPSData.day,"16", 2);// Will not use these parameters unless we have to
+    // memcpy(fakeGPS.data.GPSData.month,"04", 2); // ^^
+    // memcpy(fakeGPS.data.GPSData.year,"2022", 4); // ^^
+    // memcpy(fakeGPS.data.GPSData.magneticVariation_Deg,"45.6", 4);
+    // memcpy(fakeGPS.data.GPSData.magneticVariation_EastWest,"W", 1);
+
+    //int x=1;
 
     while (1){
         // if (SDCard_Write(file, "test.txt", message, sizeof(message)) !=FR_OK) printf("Writing no working\n\r");
         // else break;
 
-        if (SDCard_Sort_Write_Data(fakeIMU) !=FR_OK) printf("Writing no working\n\r");
+        
+        //SDCard_Sort_Write_Data(fakeIMU);
+        //SDCard_Sort_Write_Data(fakeCAN);
+        if(SDCard_Sort_Write_Data(fakeGPS)!=FR_OK) printf("writing is wrong\n\r") ;
         else break;
-
-
     }
     SDCard_CloseFileSystem();
     printf("Unmounted\n\r");
