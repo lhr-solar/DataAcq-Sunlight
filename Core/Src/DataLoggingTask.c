@@ -5,7 +5,7 @@
 
 void DataLoggingTask(void* argument){
     int cntr = 0;
-
+    if (SDCard_Init() != FR_OK); //TODO: ERROR CHECKING HERE
     while (1){
         if (SDCard_Sort_Write_Data() == FR_OK) cntr++; //increment counter if data was written
         if (cntr > MOUNTCYCLES) {

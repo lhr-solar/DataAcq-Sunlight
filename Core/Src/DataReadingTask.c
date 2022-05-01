@@ -9,6 +9,9 @@
 // (and to be saved on SD card when SD card code is finished).
 
 void DataReadingTask(void* argument){
+    if (IMU_Init() != HAL_OK); //TODO: ERROR CHECKING HERE
+    if (GPS_Init() == ERROR); //TODO: ERROR CHECKING HERE
+    //if ()
     while(1) {
         CANMSG_t CANData;
         IMUData_t IMUData;

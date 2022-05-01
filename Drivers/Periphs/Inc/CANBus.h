@@ -72,16 +72,10 @@ typedef struct {
 /** CAN Config
  * @brief Initialize CAN, configure CAN filters/interrupts, and start CAN
  * 
- * @param hcan pointer to CAN handle
  * @param mode CAN_MODE_NORMAL or CAN_MODE_LOOPBACK for operation mode
- * @param queue (QueueHandle_t) initialized FreeRTOS queue for recieved messages
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_Config(
-        CAN_HandleTypeDef *hcan,
-        uint32_t mode,
-        QueueHandle_t *queue);
-
+HAL_StatusTypeDef CAN_Init( uint32_t mode);
 
 /** CAN Fetch Message
  * @brief Fetch a CAN message from the queue
@@ -93,7 +87,6 @@ HAL_StatusTypeDef CAN_Config(
  */
 BaseType_t CAN_FetchMessage(CANMSG_t *message);
 
-
 /** CAN Transmit Message
  * @brief Transmit message over CAN
  * @note This is really basic and does not check for a full transmit Mailbox
@@ -103,10 +96,6 @@ BaseType_t CAN_FetchMessage(CANMSG_t *message);
  * @param len Length of data (Bytes) to transmit (MAX 8B)
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_TransmitMessage(
-        uint32_t StdId,
-        uint8_t *TxData,
-        uint8_t len);
-
+HAL_StatusTypeDef CAN_TransmitMessage(uint32_t StdId, uint8_t *TxData, uint8_t len);
 
 #endif /* CAN_BUS_H */

@@ -172,8 +172,7 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  if (SDCard_Init() != FR_OK); //TODO: ERROR CHECKING HERE
-  if (IMU_Init() != HAL_OK); //TODO: ERROR CHECKING HERE
+  
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
