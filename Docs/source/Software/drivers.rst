@@ -84,7 +84,8 @@ Usage
 ``SDCard_Init()`` mounts the SD card and should be called before any other function. ``SDCard_GetStatistics()`` should be used when debugging
 and not in the main loop (unless to check if there is not enough data left). ``SDCard_PutInQueue()`` should be used by the thread placing
 data in the queue while ``SDCard_Sort_Write_Data()`` will take the data from the queue or return an error if there is no data. The error
-does not pertain to an empty queue. ``SDCard_t`` has a time component that should be sampled from the GPS drivers. In order to prevent data
+does not pertain to an empty queue. ``SDCard_t`` contains the data that will be written to the card. The ``id`` detects which file will
+be written to. The timestamp should be sampled from the GPS drivers and should be accurate to around a second. In order to prevent data
 loss in the event of a shutdown sequence it might be necessary to mount and unmount the SD Card periodically. This can be done with the 
 functions ``SDCard_OpenFileSystem()`` & ``SDCard_CloseFileSystem()``.
 
