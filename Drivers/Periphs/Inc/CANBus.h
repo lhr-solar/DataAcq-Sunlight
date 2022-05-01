@@ -59,7 +59,7 @@ typedef union {
  * @note    data is a union so only one of the fields should be filled out or bad stuff will happen.
  */
 typedef struct {
-	uint8_t idx : 8;
+	uint8_t idx;
 	CANData_t data;
 } CANPayload_t;
 

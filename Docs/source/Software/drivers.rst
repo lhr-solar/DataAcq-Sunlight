@@ -77,10 +77,22 @@ SD Card
 =======
 
 Purpose
+The SD Card is used to collect data in the event that it could not be sent to the data acquisition system over ethernet. This means that
+data is logged periodically and can be parsed later.
 
 Usage
+``SDCard_Init()`` mounts the SD card and should be called before any other function. ``SDCard_GetStatistics()`` should be used when debugging
+and not in the main loop (unless to check if there is not enough data left). ``SDCard_PutInQueue()`` should be used by the thread placing
+data in the queue while ``SDCard_Sort_Write_Data()`` will take the data from the queue or return an error if there is no data. The error
+does not pertain to an empty queue. ``SDCard_t`` contains the data that will be written to the card. The ``id`` detects which file will
+be written to. The timestamp should be sampled from the GPS drivers and should be accurate to around a second. In order to prevent data
+loss in the event of a shutdown sequence it might be necessary to mount and unmount the SD Card periodically. This can be done with the 
+functions ``SDCard_OpenFileSystem()`` & ``SDCard_CloseFileSystem()``.
 
 Additional Considerations
+It would be interesting to consider sending Data Acquisition a message if the SD Card gets close to becoming full. The helper functions in
+this driver are dependent on the length of the time string being exactly 9 characters. We should also try calculating how fast the SD
+card fills up so we can find an appropriately sized one.
 
 Real Time Clock (RTC)
 =====================

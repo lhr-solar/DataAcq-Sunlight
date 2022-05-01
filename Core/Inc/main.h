@@ -31,6 +31,9 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define SD_CS_GPIO_Port GPIOF  //SD card chip select GPIO Port
+#define SD_CS_Pin 2 //SD card chip select pin 
+#define SD_SPI_HANDLE hspi5 //SD card SPI handler
 
 /* USER CODE END Includes */
 

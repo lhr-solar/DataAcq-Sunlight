@@ -16,46 +16,26 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
-#include "IMU.h"
 #include "SDCard.h"
-#include "Tasks.h"
-#include "CANBus.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-CAN_HandleTypeDef hcan1;
 
 I2C_HandleTypeDef hi2c1;
+UART_HandleTypeDef huart3;
+
+CAN_HandleTypeDef hcan1;
+
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi5;
 
 UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart3;
+
+HAL_StatusTypeDef error;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -64,46 +44,19 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-osThreadId_t DataLoggingTaskHandle;
-osThreadAttr_t DataLoggingTask_attributes = {
-  .name = "Data Logging Task",
+osThreadId_t SDCardTestHandle;
+osThreadAttr_t SDCardTestTask_attributes = {
+  .name = "SD Card Test Task",
   .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
   .stack_size = 1024 //arbitrary value might need to make it larger or smaller
 };
-osThreadId_t DataReadingTaskHandle;
-osThreadAttr_t DataReadingTask_attributes = {
-  .name = "Data Reading Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
-osThreadId_t BroadcastingTaskHandle;
-osThreadAttr_t BroadcastingTask_attributes = {
-  .name = "Broadcasting Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
-/* USER CODE BEGIN PV */
 
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
-static void MX_I2C2_Init(void);
 static void MX_SPI5_Init(void);
-static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
+void SDCardTestTask(void *argument);
 void StartDefaultTask(void *argument);
-
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -111,86 +64,94 @@ void StartDefaultTask(void *argument);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
-  MX_I2C2_Init();
   MX_SPI5_Init();
-  MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_FATFS_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-  /* USER CODE BEGIN RTOS_THREADS */
-  DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
-  DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
-  BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
-  /* USER CODE END RTOS_THREADS */
+  SDCardTestHandle = osThreadNew(SDCardTestTask, NULL, &SDCardTestTask_attributes);
 
-  /* USER CODE BEGIN RTOS_EVENTS */
-  if (SDCard_Init() != FR_OK); //TODO: ERROR CHECKING HERE
-  if (IMU_Init() != HAL_OK); //TODO: ERROR CHECKING HERE
-  /* USER CODE END RTOS_EVENTS */
-
-  /* Start scheduler */
   osKernelStart();
 
-  /* We should never get here as control is now taken by the scheduler */
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+  while (1){
 
-    /* USER CODE BEGIN 3 */
   }
-  /* USER CODE END 3 */
 }
+void SDCardTestTask(void *argument){
+    printf("Starting test\n\r");
+    if (SDCard_Init() != FR_OK) {
+      printf ("SD Card failed to initialize\n\r");
+      goto DONE;
+    }
+    if (SDCard_GetStatistics() != FR_OK) {
+      printf("GetStatistics failed\n\r");
+      goto DONE;
+    }
 
+    SDCard_t can = {.id = CAN_SDCard}, imu = {.id = IMU_SDCard}, gps = {.id = GPS_SDCard};
+
+    CANMSG_t candata = {.id = VOLT_DATA, .payload.idx = 42, .payload.data.w = 420};
+    memcpy(&can.data.CANData, &candata, sizeof(CANMSG_t));
+
+    GPSData_t gpsdata;
+    memset(&gpsdata, 0, sizeof(gpsdata));
+    memcpy(&gpsdata, "test gps data", sizeof("test gps data") - 1);
+    memcpy(&gps.data.GPSData, &gpsdata, sizeof(GPSData_t));
+
+    IMUData_t imudata;
+    memset(&imudata, 42, sizeof(imudata));
+    memcpy(&imu.data.IMUData, &imudata, sizeof(IMUData_t));
+
+    char currenttime[] = "9 ammmm";
+
+    // Perform 5 writes of each type of data
+    for (uint8_t i = 0; i < 5; i++) {
+        printf("Writing cycle %d\n\r", i);
+        memcpy(can.time, currenttime, 7);
+        if (SDCard_PutInQueue(&can) == errQUEUE_FULL) {
+          printf("Data CAN failed\n\r"); 
+          goto DONE;
+        }
+        printf("... \n\r");
+        memcpy(gps.time, currenttime, 7);
+        if (SDCard_PutInQueue(&gps) == errQUEUE_FULL) {
+          printf("Data GPS failed\n\r");
+          goto DONE;
+        }
+        printf("... \n\r");
+        memcpy(imu.time, currenttime, 7);
+        if (SDCard_PutInQueue(&imu) == errQUEUE_FULL) {
+          printf("Data CAN failed\n\r");
+          goto DONE;
+        }
+        printf("... \n\r");
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
+        if (SDCard_Sort_Write_Data() != FR_OK) {
+          printf("ERROR WRITE\n\r");
+          goto DONE;
+        }
+    }
+    osDelay(1000);
+
+    DONE:
+    SDCard_CloseFileSystem();
+    printf("Unmounted, shutting down thread\n\r");
+}
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -242,98 +203,6 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief I2C2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C2_Init(void)
-{
-
-  /* USER CODE BEGIN I2C2_Init 0 */
-
-  /* USER CODE END I2C2_Init 0 */
-
-  /* USER CODE BEGIN I2C2_Init 1 */
-
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.ClockSpeed = 100000;
-  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C2_Init 2 */
-
-  /* USER CODE END I2C2_Init 2 */
-
-}
-
-/**
   * @brief SPI5 Initialization Function
   * @param None
   * @retval None
@@ -368,39 +237,6 @@ static void MX_SPI5_Init(void)
   /* USER CODE BEGIN SPI5_Init 2 */
 
   /* USER CODE END SPI5_Init 2 */
-
-}
-
-/**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART1_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART1_Init 0 */
-
-  /* USER CODE END USART1_Init 0 */
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART1_Init 2 */
-
-  /* USER CODE END USART1_Init 2 */
 
 }
 
