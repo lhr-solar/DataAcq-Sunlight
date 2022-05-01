@@ -21,11 +21,11 @@ void DataReadingTask(void* argument){
             memcpy(SDCardData.time, GPSData.time, sizeof(GPSData.time)); //assign timestamp
             EthMessage.id= GPS;
             EthMessage.length = sizeof(GPSData);
-            memcpy(&EthMessage.data.GPSData, &GPSData, sizeof(GPSData));
+            EthMessage.data.GPSData = GPSData;
             Ethernet_PutInQueue(&EthMessage);// TODO: Add error handling on Ethernet_PutInQueue()
 
             SDCardData.id = GPS_SDCard;
-            memcpy(&SDCardData.data.GPSData, &GPSData, sizeof(GPSData));
+            SDCardData.data.GPSData = GPSData;
             SDCard_PutInQueue(&SDCardData); // TODO: Add error handling 
         }
         else {} // TODO: error handling for GPS_ReadData()
@@ -34,24 +34,24 @@ void DataReadingTask(void* argument){
         if (IMU_GetMeasurements(&IMUData) != HAL_ERROR){
             EthMessage.id = IMU;
             EthMessage.length = sizeof(IMUData); 
-            memcpy(&EthMessage.data.IMUData, &IMUData, sizeof(IMUData)); // copy to pass by value and not reference
+            EthMessage.data.IMUData = IMUData;
             Ethernet_PutInQueue(&EthMessage);// TODO: Add error handling on Ethernet_PutInQueue()
 
             SDCardData.id = IMU_SDCard;
-            memcpy(&SDCardData.data.IMUData, &IMUData, sizeof(IMUData));
+            SDCardData.data.IMUData = IMUData;
             SDCard_PutInQueue(&SDCardData); // TODO: add error handling    
-        
-        } else {} // TODO: error handling for IMU_GetMeasurements()
+        } 
+        else {} // TODO: error handling for IMU_GetMeasurements()
 
         // retrive and send as many CAN EthMessages as possible
-        while (CAN_FetchEthMessage(&CANData) != pdFALSE) { 
+        while (CAN_FetchMessage(&CANData) != pdFALSE) { 
             EthMessage.id= CAN;
             EthMessage.length = sizeof(CANData);
-            memcpy(&EthMessage.data.CANData, &CANData, sizeof(CANData));
+            EthMessage.data.CANData = CANData;
             Ethernet_PutInQueue(&EthMessage); // TODO: Add error handling on Ethernet_PutInQueue()
             
             SDCardData.id = CAN_SDCard;
-            memcpy(&SDCardData.data.CANData, &CANData, sizeof(CANData));
+            SDCardData.data.CANData = CANData;
             SDCard_PutInQueue(&SDCardData); // TODO: add error handling
         }
     }
