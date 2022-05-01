@@ -23,6 +23,7 @@
 #include "fatfs.h"
 #include "lwip.h"
 #include "IMU.h"
+#include "SDCard.h"
 #include "Tasks.h"
 #include "CANBus.h"
 
