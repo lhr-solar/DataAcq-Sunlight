@@ -4,7 +4,6 @@
 #define MOUNTCYCLES 500
 
 void DataLoggingTask(void* argument){
-    if (SDCard_Init() != FR_OK); //TODO: ERROR CHECKING HERE
     int cntr = 0;
 
     while (1){

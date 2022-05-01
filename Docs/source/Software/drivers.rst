@@ -89,8 +89,9 @@ loss in the event of a shutdown sequence it might be necessary to mount and unmo
 functions ``SDCard_OpenFileSystem()`` & ``SDCard_CloseFileSystem()``.
 
 Additional Considerations
-It would be interesting to consider sending Data Acquisition a message if the SD Card gets close to becoming full.The helper functions in
-this driver are dependent on the length of the time string being exactly 9 characters.
+It would be interesting to consider sending Data Acquisition a message if the SD Card gets close to becoming full. The helper functions in
+this driver are dependent on the length of the time string being exactly 9 characters. We should also try calculating how fast the SD
+card fills up so we can find an appropriately sized one.
 
 Real Time Clock (RTC)
 =====================

@@ -140,8 +140,6 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
-  IMU_Init(); //TODO: REMOVE THIS IF INITIALIZATION IN DATA READING TASK - ALSO ERROR CHECK
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -173,7 +171,8 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
+  if (SDCard_Init() != FR_OK); //TODO: ERROR CHECKING HERE
+  if (IMU_Init() != HAL_OK); //TODO: ERROR CHECKING HERE
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
