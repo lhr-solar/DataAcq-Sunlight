@@ -44,7 +44,7 @@ void DataReadingTask(void* argument){
         // Send IMU data and log in SD card
         error = IMU_GetMeasurements(&IMU_Data);
         if (error != HAL_ERROR){
-            Message.id= IMU;
+            Message.id = IMU;
             Message.length = sizeof(IMU_Data); 
             memcpy(&Message.data.IMUData, &IMU_Data, sizeof(IMU_Data)); // copy to pass by value and not reference
             Ethernet_PutInQueue(&Message);// TODO: Add error handling on Ethernet_PutInQueue()
