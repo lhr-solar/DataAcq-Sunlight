@@ -27,6 +27,7 @@
  *****************************************************************************/
 
 CAN_HandleTypeDef hcan1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* Definitions for threads */
@@ -62,7 +63,7 @@ void TransmitTask(void* argument){
     while (RecieveInitialized == 0);
     while (1) {
         CAN_TransmitMessage(CURRENT_DATA, tx, 4);
-        printf("broadcasting task\n");
+        printf("broadcasting task\n\r");
         osDelay(1000);
     }
 }
@@ -76,7 +77,7 @@ void RecieveTask(void* argument){
     CANMSG_t message;
     while (1) {
         if (CAN_FetchMessage(&message) == pdTRUE) {
-            printf("CAN message (word): %.8lX\n", message.payload.data.w);
+            printf("CAN message (word): %.8lX\n\r", message.payload.data.w);
         }
         osDelay(200);
     }
