@@ -63,12 +63,11 @@ void TransmitTask(void* argument){
     while (RecieveInitialized == 0);
     while (1) {
         CAN_TransmitMessage(CURRENT_DATA, tx, 4);
-        printf("broadcasting task\n\r");
+        // printf("broadcasting task\n\r");
         osDelay(1000);
     }
 }
 
-#define CAN_RX_QUEUE_SIZE 32
 void RecieveTask(void* argument){
     if (CAN_Init(CAN_MODE_LOOPBACK) != HAL_OK) Error_Handler();
 
@@ -106,7 +105,7 @@ int main(void)
   /* Init scheduler */
   printf("initializing os");
   osKernelInitialize();
-  printf("...\n");
+  printf("...\n\r");
 
   /* Create the thread(s) */
   /* creation of defaultTask */

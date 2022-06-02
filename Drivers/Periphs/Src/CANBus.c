@@ -27,7 +27,7 @@ uint32_t DroppedMessages = 0;   // for debugging purposes
 static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx_data) {
     CANMSG_t canmessage;
     canmessage.id = rx_header->StdId;
-
+    // TODO: add IDs of every CAN message
     switch (canmessage.id) {
     // Handle messages with one byte of data
     case TRIP:
@@ -84,7 +84,7 @@ static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx
 static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
     hcan1.Instance = CAN1;
     hcan1.Init.Prescaler = 45;
-    hcan1.Init.Mode = CAN_MODE_NORMAL;
+    hcan1.Init.Mode = mode;
     hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
     hcan1.Init.TimeSeg1 = CAN_BS1_3TQ;
     hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
@@ -105,7 +105,7 @@ static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
 HAL_StatusTypeDef CAN_Init(uint32_t mode) {
-    RxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANData_t)); // creates the xQUEUE with the size of the fifo
+    RxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
     HAL_StatusTypeDef configstatus = MX_CAN1_Init(mode);
     if (configstatus != HAL_OK) return configstatus;
 
@@ -193,7 +193,7 @@ HAL_StatusTypeDef CAN_TransmitMessage(
  *        on RxFifo0
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
-    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData);
+    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData);
     CAN_Recieve(&RxHeader, RxData);
 }
 
@@ -203,7 +203,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
  *        on RxFifo1
  */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
-    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &RxHeader, RxData);
+    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &RxHeader, RxData);
     CAN_Recieve(&RxHeader, RxData);
 }
 #endif
