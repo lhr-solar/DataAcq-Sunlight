@@ -27,7 +27,7 @@ uint32_t DroppedMessages = 0;   // for debugging purposes
 static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx_data) {
     CANMSG_t canmessage;
     canmessage.id = rx_header->StdId;
-    // TODO: add IDs of every CAN message
+
     switch (canmessage.id) {
     // Handle messages with one byte of data
     case TRIP:
