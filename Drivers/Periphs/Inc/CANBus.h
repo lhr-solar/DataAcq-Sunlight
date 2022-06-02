@@ -33,6 +33,7 @@
  */
 
 // Enum for ID's of all messages that can be sent across CAN bus
+// IDs must be listed in strictly increasing order!
 
 typedef enum {
     // System Critical
@@ -87,7 +88,9 @@ typedef enum {
     BLACKBODY_IRRADIANCE_SENSOR_2_MEASUREMENT   = 0x631,    // 4B   - float
     BLACKBODY_IRRADIANCE_RTD_BOARD_EN_COMMAND   = 0x632,    // 1B
     BLACKBODY_IRRADIANCE_RTD_BOARD_FAULT	    = 0x633,    // 1B
-    PV_CURVE_TRACER_PROFILE	                    = 0x640     // 5B
+    PV_CURVE_TRACER_PROFILE	                    = 0x640,    // 5B
+
+    LARGEST_CAN_ID                                          // For the lookup table size
 } CANId_t;
 
 // Union of data that can be sent across CAN bus. Only one field must be filled out

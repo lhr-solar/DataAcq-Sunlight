@@ -15,6 +15,22 @@ static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
 uint32_t DroppedMessages = 0;   // for debugging purposes
 
+/**
+ * @brief Lookup table containing the lengths (in bytes) of corresponding 
+ *        to every valid CAN message ID, and if the index is used.
+ * @note  Entries are populated at the bottom
+ */
+struct CanLUTEntry {uint8_t idx_used : 1; uint8_t len : 7;};
+static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID];
+
+/**
+ * @brief Fetch metadata associated with an id
+ * @return True if valid entry, False if invalid
+ */
+static inline bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry) {
+    *entry = CanMetadataLUT[id];
+    return (entry->len != 0);
+}
 
 /** CAN Recieve
  * @brief Convert a raw CAN message to CANMSG_t and add to the RxFifo
@@ -26,44 +42,21 @@ uint32_t DroppedMessages = 0;   // for debugging purposes
  */
 static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx_data) {
     CANMSG_t canmessage;
+    struct CanLUTEntry metadata;
+    memset(&canmessage, 0, sizeof(canmessage));
+
     canmessage.id = rx_header->StdId;
 
-    switch (canmessage.id) {
-    // Handle messages with one byte of data
-    case TRIP:
-    case ALL_CLEAR:
-    case CONTACTOR_STATE:
-    case WDOG_TRIGGERED:
-    case CAN_ERROR:
-    case CHARGE_ENABLE:
-        memcpy(
-            &(canmessage.payload.data.b),
-            rx_data,
-            sizeof(canmessage.payload.data.b));
-        break;
+    if (!CAN_FetchMetadata(canmessage.id, &metadata)) {
+        return HAL_ERROR;   // invalid ID
+    }
 
-    // Handle messages with 4 byte data
-    case CURRENT_DATA:
-    case SOC_DATA:
-        memcpy(
-            &(canmessage.payload.data.w),
-            rx_data,
-            sizeof(canmessage.payload.data.w));
-        break;
-
-    // Handle messages with idx + 4 byte data
-    case VOLT_DATA:
-    case TEMP_DATA:
+    if (metadata.idx_used) {
         canmessage.payload.idx = rx_data[0];
-        memcpy(
-            &(canmessage.payload.data.w),
-            &(rx_data[1]),
-            sizeof(canmessage.payload.data.w));
-        break;
-
-    // Handle invalid messages
-    default:
-        return HAL_ERROR;	// Do nothing if invalid
+        memcpy(canmessage.payload.data.bytes, &rx_data[1], metadata.len);
+    }
+    else {
+        memcpy(canmessage.payload.data.bytes, rx_data, metadata.len);
     }
 
     // Add message to FIFO
@@ -207,3 +200,62 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
     CAN_Recieve(&RxHeader, RxData);
 }
 #endif
+
+
+
+
+static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID] = {
+    // System Critical
+    [DASH_KILL_SWITCH]	                        = {.idx_used = 0, .len = 1},
+    [TRIP]    	                                = {.idx_used = 0, .len = 1},
+    [ANY_SYSTEM_FAILURES]	                    = {.idx_used = 0, .len = 1},
+    [IGNITION]	                                = {.idx_used = 0, .len = 1},
+    [ANY_SYSTEM_SHUTOFF]	                    = {.idx_used = 0, .len = 1},
+    
+    // BPS
+    [ALL_CLEAR]	                                = {.idx_used = 0, .len = 1},
+    [CONTACTOR_STATE]	                        = {.idx_used = 0, .len = 1},
+    [CURRENT_DATA]	                            = {.idx_used = 0, .len = 4},
+    [VOLT_DATA]	                                = {.idx_used = 1, .len = 4},
+    [TEMP_DATA]	                                = {.idx_used = 1, .len = 4},
+    [SOC_DATA]	                                = {.idx_used = 0, .len = 4},
+    [WDOG_TRIGGERED]	                        = {.idx_used = 0, .len = 1},
+    [CAN_ERROR]	                                = {.idx_used = 0, .len = 1},
+    [BPS_COMMAND_MSG]	                        = {.idx_used = 0, .len = 8},
+    [SUPPLEMENTAL_VOLTAGE]	                    = {.idx_used = 0, .len = 2},
+    [CHARGE_ENABLE]   	                        = {.idx_used = 0, .len = 1},
+    
+    // Controls
+    [CAR_STATE]	                                = {.idx_used = 0, .len = 1},
+    [MOTOR_CONTROLLER_BUS]	                    = {.idx_used = 0, .len = 8},
+    [VELOCITY]	                                = {.idx_used = 0, .len = 8},
+    [MOTOR_CONTROLLER_PHASE_CURRENT]	        = {.idx_used = 0, .len = 8},
+    [MOTOR_VOLTAGE_VECTOR]	                    = {.idx_used = 0, .len = 8},
+    [MOTOR_CURRENT_VECTOR]	                    = {.idx_used = 0, .len = 8},
+    [MOTOR_BACKEMF]	                            = {.idx_used = 0, .len = 8},
+    [MOTOR_TEMPERATURE]	                        = {.idx_used = 0, .len = 8},
+    [ODOMETER_BUS_AMP_HOURS]  	                = {.idx_used = 0, .len = 8},
+    [ARRAY_CONTACTOR_STATE_CHANGE]	            = {.idx_used = 0, .len = 1},
+    
+    // Array
+    [SUNSCATTER_A_MPPT1_ARRAY_VOLTAGE_SETPOINT] = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_ARRAY_VOLTAGE_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_ARRAY_CURRENT_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_BATTERY_VOLTAGE_MEASUREMENT]  = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_BATTERY_CURRENT_MEASUREMENT]  = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_OVERRIDE_EN_COMMAND]	        = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_A_FAULT]	                    = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_B_MPPT2_ARRAY_VOLTAGE_SETPOINT] = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_ARRAY_VOLTAGE_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_ARRAY_CURRENT_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_BATTERY_VOLTAGE_MEASUREMENT]  = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_BATTERY_CURRENT_MEASUREMENT]  = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_OVERRIDE_EN_COMMAND]	        = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_B_FAULT]	                    = {.idx_used = 0, .len = 1},
+    [BLACKBODY_RTD_SENSOR_MEASUREMENT]	        = {.idx_used = 0, .len = 5},
+    [BLACKBODY_IRRADIANCE_SENSOR_1_MEASUREMENT] = {.idx_used = 0, .len = 4},
+    [BLACKBODY_IRRADIANCE_SENSOR_2_MEASUREMENT] = {.idx_used = 0, .len = 4},
+    [BLACKBODY_IRRADIANCE_RTD_BOARD_EN_COMMAND] = {.idx_used = 0, .len = 1},
+    [BLACKBODY_IRRADIANCE_RTD_BOARD_FAULT]	    = {.idx_used = 0, .len = 1},
+    [PV_CURVE_TRACER_PROFILE]	                = {.idx_used = 0, .len = 5}
+};
