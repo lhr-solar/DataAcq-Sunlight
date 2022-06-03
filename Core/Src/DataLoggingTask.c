@@ -9,6 +9,8 @@ void DataLoggingTask(void* argument){
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
 
+    // TODO: go look at top of SDCard.c
+
     while (1){
         if (SDCard_Sort_Write_Data() == FR_OK) cntr++; //increment counter if data was written
         if (cntr > MOUNTCYCLES) {

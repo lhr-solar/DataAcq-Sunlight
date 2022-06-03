@@ -15,6 +15,8 @@ void DataReadingTask(void* argument){
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
 
+    // TODO: cleanup everything
+
     while(1) {
         CANMSG_t CANData;
         IMUData_t IMUData;

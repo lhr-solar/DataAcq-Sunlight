@@ -6,9 +6,11 @@
 #include "SDCard.h"
 #include "main.h"
 
+// TODO: fix CAN message
+
 //If debugging mode is set printf's will be enabled and diagnostic information will be printed over UART. 
 //This should be disabled when running on system
-#define DEBUGGINGMODE               0
+#define DEBUGGINGMODE               0   // TODO: unified debug in config
 #define SDCARD_WRITE_BUFSIZE        128
 #define SDCARD_QUEUESIZE            32
 static FATFS FatFs;
