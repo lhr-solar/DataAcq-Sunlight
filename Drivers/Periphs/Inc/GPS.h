@@ -1,17 +1,13 @@
 #ifndef GPS_H
 #define GPS_H
 
-#include <stdlib.h>
-#include <stdint.h>
+#include "stm32f4xx.h"
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "main.h"
-#include <string.h>
+#include <stdint.h>
 
-#define GPS_RX_QUEUE_SIZE 8
-
-#define GPS_BUFSIZE     100
-extern char GPSRxDataBuf[GPS_BUFSIZE];
+#define GPS_RX_QUEUE_SIZE   8
+#define GPS_BUFSIZE         100
 
 typedef struct{
     char time[9]; //2 hr, 2 min, 2 sec, 3 ms

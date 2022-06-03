@@ -2,6 +2,7 @@
 
 #include "CANBus.h"
 #include "main.h"
+#include "config.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -13,7 +14,7 @@ static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
-uint32_t DroppedMessages = 0;   // for debugging purposes
+uint32_t CANDroppedMessages = 0;   // for debugging purposes
 
 /**
  * @brief Lookup table containing the lengths (in bytes) of corresponding 
@@ -51,7 +52,7 @@ static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx
 
     // Add message to FIFO
     if (xQueueSendToBackFromISR(RxQueue, &canmessage, NULL) == errQUEUE_FULL) {
-        DroppedMessages++;
+        CANDroppedMessages++;
         return HAL_ERROR;
     }
     return HAL_OK;
@@ -206,56 +207,56 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
 
 static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID] = {
     // System Critical
-    [DASH_KILL_SWITCH]	                        = {.idx_used = 0, .len = 1},
-    [TRIP]    	                                = {.idx_used = 0, .len = 1},
-    [ANY_SYSTEM_FAILURES]	                    = {.idx_used = 0, .len = 1},
-    [IGNITION]	                                = {.idx_used = 0, .len = 1},
-    [ANY_SYSTEM_SHUTOFF]	                    = {.idx_used = 0, .len = 1},
+    [DASH_KILL_SWITCH]                          = {.idx_used = 0, .len = 1},
+    [TRIP]                                      = {.idx_used = 0, .len = 1},
+    [ANY_SYSTEM_FAILURES]                       = {.idx_used = 0, .len = 1},
+    [IGNITION]                                  = {.idx_used = 0, .len = 1},
+    [ANY_SYSTEM_SHUTOFF]                        = {.idx_used = 0, .len = 1},
     
     // BPS
-    [ALL_CLEAR]	                                = {.idx_used = 0, .len = 1},
-    [CONTACTOR_STATE]	                        = {.idx_used = 0, .len = 1},
-    [CURRENT_DATA]	                            = {.idx_used = 0, .len = 4},
-    [VOLT_DATA]	                                = {.idx_used = 1, .len = 4},
-    [TEMP_DATA]	                                = {.idx_used = 1, .len = 4},
-    [SOC_DATA]	                                = {.idx_used = 0, .len = 4},
-    [WDOG_TRIGGERED]	                        = {.idx_used = 0, .len = 1},
-    [CAN_ERROR]	                                = {.idx_used = 0, .len = 1},
-    [BPS_COMMAND_MSG]	                        = {.idx_used = 0, .len = 8},
-    [SUPPLEMENTAL_VOLTAGE]	                    = {.idx_used = 0, .len = 2},
-    [CHARGE_ENABLE]   	                        = {.idx_used = 0, .len = 1},
+    [ALL_CLEAR]                                 = {.idx_used = 0, .len = 1},
+    [CONTACTOR_STATE]                           = {.idx_used = 0, .len = 1},
+    [CURRENT_DATA]                              = {.idx_used = 0, .len = 4},
+    [VOLT_DATA]                                 = {.idx_used = 1, .len = 4},
+    [TEMP_DATA]                                 = {.idx_used = 1, .len = 4},
+    [SOC_DATA]                                  = {.idx_used = 0, .len = 4},
+    [WDOG_TRIGGERED]                            = {.idx_used = 0, .len = 1},
+    [CAN_ERROR]                                 = {.idx_used = 0, .len = 1},
+    [BPS_COMMAND_MSG]                           = {.idx_used = 0, .len = 8},
+    [SUPPLEMENTAL_VOLTAGE]                      = {.idx_used = 0, .len = 2},
+    [CHARGE_ENABLE]                             = {.idx_used = 0, .len = 1},
     
     // Controls
-    [CAR_STATE]	                                = {.idx_used = 0, .len = 1},
-    [MOTOR_CONTROLLER_BUS]	                    = {.idx_used = 0, .len = 8},
-    [VELOCITY]	                                = {.idx_used = 0, .len = 8},
-    [MOTOR_CONTROLLER_PHASE_CURRENT]	        = {.idx_used = 0, .len = 8},
-    [MOTOR_VOLTAGE_VECTOR]	                    = {.idx_used = 0, .len = 8},
-    [MOTOR_CURRENT_VECTOR]	                    = {.idx_used = 0, .len = 8},
-    [MOTOR_BACKEMF]	                            = {.idx_used = 0, .len = 8},
-    [MOTOR_TEMPERATURE]	                        = {.idx_used = 0, .len = 8},
-    [ODOMETER_BUS_AMP_HOURS]  	                = {.idx_used = 0, .len = 8},
-    [ARRAY_CONTACTOR_STATE_CHANGE]	            = {.idx_used = 0, .len = 1},
+    [CAR_STATE]                                 = {.idx_used = 0, .len = 1},
+    [MOTOR_CONTROLLER_BUS]                      = {.idx_used = 0, .len = 8},
+    [VELOCITY]                                  = {.idx_used = 0, .len = 8},
+    [MOTOR_CONTROLLER_PHASE_CURRENT]            = {.idx_used = 0, .len = 8},
+    [MOTOR_VOLTAGE_VECTOR]                      = {.idx_used = 0, .len = 8},
+    [MOTOR_CURRENT_VECTOR]                      = {.idx_used = 0, .len = 8},
+    [MOTOR_BACKEMF]                             = {.idx_used = 0, .len = 8},
+    [MOTOR_TEMPERATURE]                         = {.idx_used = 0, .len = 8},
+    [ODOMETER_BUS_AMP_HOURS]                    = {.idx_used = 0, .len = 8},
+    [ARRAY_CONTACTOR_STATE_CHANGE]              = {.idx_used = 0, .len = 1},
     
     // Array
     [SUNSCATTER_A_MPPT1_ARRAY_VOLTAGE_SETPOINT] = {.idx_used = 0, .len = 4},
-    [SUNSCATTER_A_ARRAY_VOLTAGE_MEASUREMENT]	= {.idx_used = 0, .len = 4},
-    [SUNSCATTER_A_ARRAY_CURRENT_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_ARRAY_VOLTAGE_MEASUREMENT]    = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_A_ARRAY_CURRENT_MEASUREMENT]    = {.idx_used = 0, .len = 4},
     [SUNSCATTER_A_BATTERY_VOLTAGE_MEASUREMENT]  = {.idx_used = 0, .len = 4},
     [SUNSCATTER_A_BATTERY_CURRENT_MEASUREMENT]  = {.idx_used = 0, .len = 4},
-    [SUNSCATTER_A_OVERRIDE_EN_COMMAND]	        = {.idx_used = 0, .len = 1},
-    [SUNSCATTER_A_FAULT]	                    = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_A_OVERRIDE_EN_COMMAND]          = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_A_FAULT]                        = {.idx_used = 0, .len = 1},
     [SUNSCATTER_B_MPPT2_ARRAY_VOLTAGE_SETPOINT] = {.idx_used = 0, .len = 4},
-    [SUNSCATTER_B_ARRAY_VOLTAGE_MEASUREMENT]	= {.idx_used = 0, .len = 4},
-    [SUNSCATTER_B_ARRAY_CURRENT_MEASUREMENT]	= {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_ARRAY_VOLTAGE_MEASUREMENT]    = {.idx_used = 0, .len = 4},
+    [SUNSCATTER_B_ARRAY_CURRENT_MEASUREMENT]    = {.idx_used = 0, .len = 4},
     [SUNSCATTER_B_BATTERY_VOLTAGE_MEASUREMENT]  = {.idx_used = 0, .len = 4},
     [SUNSCATTER_B_BATTERY_CURRENT_MEASUREMENT]  = {.idx_used = 0, .len = 4},
-    [SUNSCATTER_B_OVERRIDE_EN_COMMAND]	        = {.idx_used = 0, .len = 1},
-    [SUNSCATTER_B_FAULT]	                    = {.idx_used = 0, .len = 1},
-    [BLACKBODY_RTD_SENSOR_MEASUREMENT]	        = {.idx_used = 0, .len = 5},
+    [SUNSCATTER_B_OVERRIDE_EN_COMMAND]          = {.idx_used = 0, .len = 1},
+    [SUNSCATTER_B_FAULT]                        = {.idx_used = 0, .len = 1},
+    [BLACKBODY_RTD_SENSOR_MEASUREMENT]          = {.idx_used = 0, .len = 5},
     [BLACKBODY_IRRADIANCE_SENSOR_1_MEASUREMENT] = {.idx_used = 0, .len = 4},
     [BLACKBODY_IRRADIANCE_SENSOR_2_MEASUREMENT] = {.idx_used = 0, .len = 4},
     [BLACKBODY_IRRADIANCE_RTD_BOARD_EN_COMMAND] = {.idx_used = 0, .len = 1},
-    [BLACKBODY_IRRADIANCE_RTD_BOARD_FAULT]	    = {.idx_used = 0, .len = 1},
-    [PV_CURVE_TRACER_PROFILE]	                = {.idx_used = 0, .len = 5}
+    [BLACKBODY_IRRADIANCE_RTD_BOARD_FAULT]      = {.idx_used = 0, .len = 1},
+    [PV_CURVE_TRACER_PROFILE]                   = {.idx_used = 0, .len = 5}
 };

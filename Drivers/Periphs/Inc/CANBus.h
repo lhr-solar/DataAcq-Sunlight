@@ -11,11 +11,11 @@
  * "queue.h" has information on FIFO operations
  */
 
-
 #include "stm32f4xx.h"
-#include <stdbool.h>
 #include "FreeRTOS.h"
 #include "queue.h"
+#include <stdbool.h>
+
 
 /**
  * Filter and HAL RX_FIFO configurations
@@ -127,7 +127,7 @@ struct CanLUTEntry {uint8_t idx_used : 1; uint8_t len : 7;};
  * @param mode CAN_MODE_NORMAL or CAN_MODE_LOOPBACK for operation mode
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_Init( uint32_t mode);
+HAL_StatusTypeDef CAN_Init(uint32_t mode);
 
 /** CAN Fetch Message
  * @brief Fetch a CAN message from the queue
