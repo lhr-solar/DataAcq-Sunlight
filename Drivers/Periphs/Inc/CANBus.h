@@ -117,6 +117,10 @@ typedef struct {
     CANPayload_t payload;
 } CANMSG_t;
 
+// Used to format the fields in the CAN metadata lookup table
+
+struct CanLUTEntry {uint8_t idx_used : 1; uint8_t len : 7;};
+
 /** CAN Config
  * @brief Initialize CAN, configure CAN filters/interrupts, and start CAN
  * 
@@ -145,5 +149,11 @@ BaseType_t CAN_FetchMessage(CANMSG_t *message);
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
 HAL_StatusTypeDef CAN_TransmitMessage(uint32_t StdId, uint8_t *TxData, uint8_t len);
+
+/**
+ * @brief Fetch metadata associated with an id
+ * @return True if valid entry, False if invalid
+ */
+bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry);
 
 #endif /* CAN_BUS_H */

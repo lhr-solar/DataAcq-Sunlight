@@ -11,7 +11,10 @@
 void DataReadingTask(void* argument){
     if (IMU_Init() != HAL_OK); //TODO: ERROR CHECKING HERE
     if (GPS_Init() == ERROR); //TODO: ERROR CHECKING HERE
-    //if ()
+    if (CAN_Init(CAN_MODE_LOOPBACK) != HAL_OK); //TODO: ERROR CHECKING HERE
+    xSemaphoreTake(InitSem, 0);
+    while(uxSemaphoreGetCount(InitSem) != 0);
+
     while(1) {
         CANMSG_t CANData;
         IMUData_t IMUData;

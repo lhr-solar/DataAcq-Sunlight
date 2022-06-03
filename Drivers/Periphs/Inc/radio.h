@@ -47,6 +47,12 @@ typedef struct{
  */
 ErrorStatus Ethernet_Init(void);
 
+/** Ethernet Queue Initialize
+ * @brief Initialize just the ethernet queue. 
+ *        Must be called before Ethernet_PutInQueue()
+ */
+void Ethernet_QueueInit(void);
+
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
  * 

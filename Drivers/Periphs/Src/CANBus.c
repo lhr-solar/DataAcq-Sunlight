@@ -20,17 +20,7 @@ uint32_t DroppedMessages = 0;   // for debugging purposes
  *        to every valid CAN message ID, and if the index is used.
  * @note  Entries are populated at the bottom
  */
-struct CanLUTEntry {uint8_t idx_used : 1; uint8_t len : 7;};
 static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID];
-
-/**
- * @brief Fetch metadata associated with an id
- * @return True if valid entry, False if invalid
- */
-static inline bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry) {
-    *entry = CanMetadataLUT[id];
-    return (entry->len != 0);
-}
 
 /** CAN Recieve
  * @brief Convert a raw CAN message to CANMSG_t and add to the RxFifo
@@ -173,6 +163,16 @@ HAL_StatusTypeDef CAN_TransmitMessage(
 
     return HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox);
 }
+
+/**
+ * @brief Fetch metadata associated with an id
+ * @return True if valid entry, False if invalid
+ */
+bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry) {
+    *entry = CanMetadataLUT[id];
+    return (entry->len != 0);
+}
+
 
 /**
  * CAN RxFifo Callbacks 

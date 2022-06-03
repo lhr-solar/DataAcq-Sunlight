@@ -30,7 +30,6 @@ static void Ethernet_ConnectToServer() {
  */
 ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
-    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
     servsocket = -1;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
@@ -42,6 +41,14 @@ ErrorStatus Ethernet_Init() {
     Ethernet_ConnectToServer();
 
     return SUCCESS;
+}
+
+/** Ethernet Queue Initialize
+ * @brief Initialize just the ethernet queue. 
+ *        Must be called before Ethernet_PutInQueue()
+ */
+void Ethernet_QueueInit() {
+    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
 }
 
 /** Ethernet PutInQueue
