@@ -51,12 +51,6 @@ extern UART_HandleTypeDef huart3;
 
 extern ETH_HandleTypeDef heth;
 extern TIM_HandleTypeDef htim1;
-
-// for debugging: dropped messages count
-extern uint32_t GPSDroppedMessages;
-extern uint32_t CANDroppedMessages;
-extern uint32_t EthDroppedMessages;
-extern uint32_t SDCDroppedMessages;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

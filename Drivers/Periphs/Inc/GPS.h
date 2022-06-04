@@ -45,4 +45,11 @@ ErrorStatus GPS_Init();
  */
 BaseType_t GPS_ReadData(GPSData_t *Data);
 
+/**
+ * @brief Fetch number of dropped GPS messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t GPS_FetchDroppedMsgCnt();
+
 #endif

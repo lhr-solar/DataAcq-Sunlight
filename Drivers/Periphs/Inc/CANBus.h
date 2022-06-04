@@ -164,4 +164,11 @@ HAL_StatusTypeDef CAN_TransmitMessage(uint32_t StdId, uint8_t *TxData, uint8_t l
  */
 bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry);
 
+/**
+ * @brief Fetch number of dropped CAN messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t CAN_FetchDroppedMsgCnt();
+
 #endif /* CAN_BUS_H */

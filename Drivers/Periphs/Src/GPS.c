@@ -94,6 +94,15 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
     return xQueueReceive(GPSRxQueue, Data, (TickType_t)0);
 }
 
+/**
+ * @brief Fetch number of dropped GPS messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t GPS_FetchDroppedMsgCnt() {
+    return GPSDroppedMessages;
+}
+
 // Callback for a completed UART Rx transfer.
 // Once the Rx transfer is complete, we can parse the input and 
 // push to the queue.

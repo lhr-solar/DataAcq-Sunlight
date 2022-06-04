@@ -84,4 +84,11 @@ BaseType_t Ethernet_SendMessage(void);
  */
 void Ethernet_EndConnection(void);
 
+/**
+ * @brief Fetch number of dropped Ethernet messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t Ethernet_FetchDroppedMsgCnt();
+
 #endif

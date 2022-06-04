@@ -82,4 +82,11 @@ FRESULT SDCard_CloseFileSystem();
  */
 FRESULT SDCard_OpenFileSystem();
 
+/**
+ * @brief Fetch number of dropped SD Card messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t SDCard_FetchDroppedMsgCnt();
+
 #endif

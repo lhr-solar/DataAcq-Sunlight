@@ -122,3 +122,12 @@ BaseType_t Ethernet_SendMessage() {
 void Ethernet_EndConnection(){
     if (servsocket >= 0) lwip_close(servsocket);
 }
+
+/**
+ * @brief Fetch number of dropped Ethernet messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t Ethernet_FetchDroppedMsgCnt() {
+    return EthDroppedMessages;
+}

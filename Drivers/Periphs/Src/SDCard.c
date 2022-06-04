@@ -160,6 +160,15 @@ FRESULT SDCard_OpenFileSystem(){
     return f_mount(&FatFs, "", 1); //1=mount now
 }
 
+/**
+ * @brief Fetch number of dropped SD Card messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t SDCard_FetchDroppedMsgCnt() {
+    return SDCDroppedMessages;
+}
+
 //STATIC FUNCTIONS FOR WRITING TO SD CARD WITH CORRECT FORMAT
 // Wrappers for snprintf() for each of the message data types
 // Each function takes a buffer to write to, the buffer size, 

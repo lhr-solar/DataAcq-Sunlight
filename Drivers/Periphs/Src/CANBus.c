@@ -180,6 +180,14 @@ bool CAN_FetchMetadata(CANId_t id, struct CanLUTEntry *entry) {
     return (entry->len != 0);
 }
 
+/**
+ * @brief Fetch number of dropped CAN messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t CAN_FetchDroppedMsgCnt() {
+    return CANDroppedMessages;
+}
 
 /**
  * CAN RxFifo Callbacks 
