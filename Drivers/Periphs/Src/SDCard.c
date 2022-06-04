@@ -20,6 +20,7 @@
 
 static FATFS FatFs;
 static QueueHandle_t SDCardQ; // information will be put on this
+enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
 static const char * const filenames_list[] = {
     "can.csv",
     "imu.csv",
@@ -29,7 +30,6 @@ uint32_t SDCDroppedMessages = 0;    // for debugging purposes
 static int SPrint_CAN(char *sdcard_write_buf, size_t bufsize, CANMSG_t *can, const char *time);
 static int SPrint_IMU(char *sdcard_write_buf, size_t bufsize, IMUData_t *imu, const char *time);
 static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, GPSData_t *gps, const char *time);
-static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size);
 
 /**
  * @brief Mounts the drive and initializes Queue
@@ -98,7 +98,6 @@ FRESULT SDCard_Sort_Write_Data(){
     // check if data from queue is from imu, gps, or can.
     // send data to corresponding file in sd card
     SDCard_t cardData;
-    enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
     static char message[SDCARD_WRITE_BUFSIZE];
     
     FIL file;
@@ -138,6 +137,42 @@ FRESULT SDCard_Sort_Write_Data(){
     printf("Write: %s", message);
     #endif
     return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
+}
+
+/**
+ * @brief Writes data to SD Card
+ * @param fil File object structure. Will be initialized if not already
+ * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
+ * @param message char array of data to write to SD Card
+ * @param size size of data to write to file
+ * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ * 
+ * TODO: optimize this; the open and close are a huge bottleneck
+ * TODO: move open to initialization; replace close() with sync()
+ */
+FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size) {
+    BYTE readBuf[size];
+    FRESULT fresult;
+    fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
+
+    #ifdef DEBUGGINGMODE
+  	printf("f_open error (%i)\r\n", fresult);
+    #endif
+    if (fresult != FR_OK) return fresult;
+
+    //Copy in a string
+    strncpy((char*)readBuf, message, strlen(message));
+    UINT bytesWrote;
+    fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
+
+    #ifdef DEBUGGINGMODE
+  	printf("f_write error (%i)\r\n", (int)fresult);
+    #endif
+    if (fresult != FR_OK) return fresult;
+
+    //close your file!
+    f_close(&fil);
+    return fresult;
 }
 
 /**
@@ -223,37 +258,3 @@ static int SPrint_GPS(char *sdcard_write_buf,
                     gps_str);
 }
 
-/**
- * @brief Writes data to SD Card
- * @param fil File object structure. Will be initialized if not already
- * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
- * @param message char array of data to write to SD Card
- * @param size size of data to write to file
- * @return FRESULT FR_OK if ok and other errors specified in ff.h
- * 
- * TODO: optimize this; the open and close are a huge bottleneck
- */
-static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size) {
-    BYTE readBuf[size];
-    FRESULT fresult;
-    fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
-
-    #ifdef DEBUGGINGMODE
-  	printf("f_open error (%i)\r\n", fresult);
-    #endif
-    if (fresult != FR_OK) return fresult;
-
-    //Copy in a string
-    strncpy((char*)readBuf, message, strlen(message));
-    UINT bytesWrote;
-    fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
-
-    #ifdef DEBUGGINGMODE
-  	printf("f_write error (%i)\r\n", (int)fresult);
-    #endif
-    if (fresult != FR_OK) return fresult;
-
-    //close your file!
-    f_close(&fil);
-    return fresult;
-}
