@@ -1,9 +1,16 @@
+/**
+ * @file SDCard.h
+ * @brief SD Card API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef SDCARD_H
 #define SDCARD_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h> //for va_list var arg functions
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "fatfs.h"
 #include "CANBus.h"
 #include "IMU.h"
@@ -74,5 +81,12 @@ FRESULT SDCard_CloseFileSystem();
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_OpenFileSystem();
+
+/**
+ * @brief Fetch number of dropped SD Card messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t SDCard_FetchDroppedMsgCnt();
 
 #endif

@@ -27,6 +27,7 @@
  *****************************************************************************/
 
 CAN_HandleTypeDef hcan1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* Definitions for threads */
@@ -62,26 +63,20 @@ void TransmitTask(void* argument){
     while (RecieveInitialized == 0);
     while (1) {
         CAN_TransmitMessage(CURRENT_DATA, tx, 4);
-        printf("broadcasting task\n");
+        // printf("broadcasting task\n\r");
         osDelay(1000);
     }
 }
 
-#define CAN_RX_QUEUE_SIZE 32
 void RecieveTask(void* argument){
-    QueueHandle_t canrxqueue = xQueueCreate(CAN_RX_QUEUE_SIZE, sizeof(CANMSG_t));
-    if (canrxqueue == NULL) {
-        Error_Handler();
-    }
-    if (CAN_Config(&hcan1, CAN_MODE_LOOPBACK, &canrxqueue) != HAL_OK) {
-        Error_Handler();
-    }
+    if (CAN_Init(CAN_MODE_LOOPBACK) != HAL_OK) Error_Handler();
+
     RecieveInitialized = 1;
 
     CANMSG_t message;
     while (1) {
         if (CAN_FetchMessage(&message) == pdTRUE) {
-            printf("CAN message (word): %.8lX\n", message.payload.data.w);
+            printf("CAN message (word): %.8lX\n\r", message.payload.data.w);
         }
         osDelay(200);
     }
@@ -110,7 +105,7 @@ int main(void)
   /* Init scheduler */
   printf("initializing os");
   osKernelInitialize();
-  printf("...\n");
+  printf("...\n\r");
 
   /* Create the thread(s) */
   /* creation of defaultTask */

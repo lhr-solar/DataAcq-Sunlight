@@ -1,16 +1,28 @@
+/**
+ * @file radio.h
+ * @brief Ethernet API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef RADIO_H
 #define RADIO_H
 
+/**
+ * @file radio.h
+ * @brief Ethernet API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #include "FreeRTOS.h"
-#include "sockets.h"
-#include "stm32f4xx.h"
 #include "queue.h"
-#include <stdint.h>
-#include <string.h>
 #include "CANBus.h"
-#include "lwip.h"
 #include "IMU.h"
 #include "GPS.h"
+#include <stdint.h>
 
 #define ETHERNET_QUEUESIZE 32
 
@@ -47,6 +59,12 @@ typedef struct{
  */
 ErrorStatus Ethernet_Init(void);
 
+/** Ethernet Queue Initialize
+ * @brief Initialize just the ethernet queue. 
+ *        Must be called before Ethernet_PutInQueue()
+ */
+void Ethernet_QueueInit(void);
+
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
  * 
@@ -65,5 +83,12 @@ BaseType_t Ethernet_SendMessage(void);
  * @brief Close ethernet connection
  */
 void Ethernet_EndConnection(void);
+
+/**
+ * @brief Fetch number of dropped Ethernet messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t Ethernet_FetchDroppedMsgCnt();
 
 #endif
