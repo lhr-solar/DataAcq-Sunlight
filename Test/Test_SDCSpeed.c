@@ -91,15 +91,9 @@ int main(void)
 // Length (in Bytes) of write during each test
 #define SDC_TEST_LEN                4096
 
-static const char TestString_256B[] = 
-    "00 01 02 03 04 05 06 07 08 09.\r\n"
-    "10 11 12 13 14 15 16 17 18 19.\r\n"
-    "20 21 22 23 24 25 26 27 28 29.\r\n"
-    "30 31 32 33 34 35 36 37 38 39.\r\n"
-    "40 41 42 43 44 45 46 47 48 49.\r\n"
-    "50 51 52 53 54 55 56 57 58 59.\r\n"
-    "60 61 62 63 64 65 66 67 68 69.\r\n"
-    "70 71 72 73 74 75 76 77 78 79.\r\n";
+// Small-length test string
+static const char TestString_32B[] = 
+    "00 01 02 03 04 05 06 07 08 09.\r\n";
 
 void SDCardTestTask(void *argument) {
   printf("Starting test\n\r");
@@ -111,12 +105,13 @@ void SDCardTestTask(void *argument) {
     printf("GetStatistics failed\n\r");
     goto DONE;
   }
+  printf("Creating testfile \"test.out\"\n\r");
+  FIL testfile;
+  f_open(&testfile, "test.out", FA_CREATE_ALWAYS);
 
   for (uint32_t i = 0; i < SDC_TEST_ITERS; i++) {
-    for (uint32_t j = 0; j < (SDC_TEST_LEN / 256); j++) {
-      FIL file;
-
-      SDCard_Write(file, "test.out", TestString_256B, 256);
+    for (uint32_t j = 0; j < (SDC_TEST_LEN / 32); j++) {
+      SDCard_Write(&testfile, TestString_32B, 32);
     }
   }
 

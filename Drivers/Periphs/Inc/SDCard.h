@@ -69,14 +69,13 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data);
 FRESULT SDCard_Sort_Write_Data();
 
 /**
- * @brief Writes data to SD Card
- * @param fil File object structure. Will be initialized if not already
- * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
- * @param message char array of data to write to SD Card
- * @param size size of data to write to file
+ * @brief Writes data to SD Card (Appends).
+ * @param fp pointer to an initialized/opened FIL struct
+ * @param buf buffer to write to SD Card
+ * @param len length to write
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size);
+FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len);
 
 /**
  * @brief Unmounts the drive

@@ -20,8 +20,9 @@
 
 static FATFS FatFs;
 static QueueHandle_t SDCardQ; // information will be put on this
-enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME};
-static const char * const filenames_list[] = {
+enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME, NUM_FILES};
+static FIL LogFiles[NUM_FILES];
+static const char * const filenames_list[NUM_FILES] = {
     "can.csv",
     "imu.csv",
     "gps.csv"};
@@ -32,12 +33,11 @@ static int SPrint_IMU(char *sdcard_write_buf, size_t bufsize, IMUData_t *imu, co
 static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, GPSData_t *gps, const char *time);
 
 /**
- * @brief Mounts the drive and initializes Queue
- * @param None
+ * @brief Mounts the drive, initializes Queue, and opens all logging files
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_Init() {
-    //mount the drive
+    // mount the drive
     SDCardQ = xQueueCreate(SDCARD_QUEUESIZE, sizeof(SDCard_t)); // creates the xQUEUE with the size of the fifo
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     #if DEBUGGINGMODE
@@ -45,12 +45,21 @@ FRESULT SDCard_Init() {
   	    printf("f_mount error (%i)\r\n", (int)fresult);
     }
     #endif
+
+    for (uint32_t i = 0; i < NUM_FILES; i++) {
+        fresult = f_open(&LogFiles[i], filenames_list[i], FA_WRITE | FA_OPEN_APPEND);
+        #if DEBUGGINGMODE
+        if (fresult != FR_OK) {
+            printf("f_open error %s (%d)\r\n", filesnames_list[i], (int)fresult);
+        }
+        #endif
+    }
+
     return fresult;
 }
 
 /**
  * @brief Reads how much memory is left in SD card-> Should be used for debugging purposes
- * @param None
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_GetStatistics() {
@@ -100,7 +109,6 @@ FRESULT SDCard_Sort_Write_Data(){
     SDCard_t cardData;
     static char message[SDCARD_WRITE_BUFSIZE];
     
-    FIL file;
     uint8_t fname_idx = 0;
     uint16_t bytes_written = -1;
 
@@ -136,42 +144,36 @@ FRESULT SDCard_Sort_Write_Data(){
     #ifdef DEBUGGINGMODE
     printf("Write: %s", message);
     #endif
-    return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
+    return SDCard_Write(&LogFiles[fname_idx], message, bytes_written);
 }
 
 /**
- * @brief Writes data to SD Card
- * @param fil File object structure. Will be initialized if not already
- * @param fileName Name of file to write to. Will be created if not existing. Appends data to end of file
- * @param message char array of data to write to SD Card
- * @param size size of data to write to file
+ * @brief Writes data to SD Card (Appends).
+ * @param fp pointer to an initialized/opened FIL struct
+ * @param buf buffer to write to SD Card
+ * @param len length to write
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  * 
  * TODO: optimize this; the open and close are a huge bottleneck
  * TODO: move open to initialization; replace close() with sync()
+ * TODO: see if we need to buffer writes to increase speed
  */
-FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, uint32_t size) {
-    BYTE readBuf[size];
+FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len) {
     FRESULT fresult;
-    fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
+
+    UINT bytes_written;
+    fresult = f_write(fp, buf, len, &bytes_written);
 
     #ifdef DEBUGGINGMODE
-  	printf("f_open error (%i)\r\n", fresult);
+    if (fresult != FR_OK || len != bytes_written) {
+        printf("f_write error (%i)\r\n", (int)fresult);
+        f_close(fp);
+        return fresult;
+    }
     #endif
-    if (fresult != FR_OK) return fresult;
-
-    //Copy in a string
-    strncpy((char*)readBuf, message, strlen(message));
-    UINT bytesWrote;
-    fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
-
-    #ifdef DEBUGGINGMODE
-  	printf("f_write error (%i)\r\n", (int)fresult);
-    #endif
-    if (fresult != FR_OK) return fresult;
 
     //close your file!
-    f_close(&fil);
+    fresult = f_sync(fp);
     return fresult;
 }
 
