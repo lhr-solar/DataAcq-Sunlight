@@ -1,3 +1,11 @@
+/**
+ * @file SDCard.h
+ * @brief SD Card API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef SDCARD_H
 #define SDCARD_H
 

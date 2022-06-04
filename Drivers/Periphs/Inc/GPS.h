@@ -1,3 +1,11 @@
+/**
+ * @file GPS.h
+ * @brief GPS API - PA6H
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef GPS_H
 #define GPS_H
 

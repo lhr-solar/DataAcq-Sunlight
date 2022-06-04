@@ -1,3 +1,11 @@
+/**
+ * @file SDCard.c
+ * @brief SD Card API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #include "SDCard.h"
 #include "fatfs.h"
 #include "main.h"

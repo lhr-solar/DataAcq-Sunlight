@@ -1,3 +1,11 @@
+/**
+ * @file CANBus.c
+ * @brief CAN API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef CAN_BUS_H
 #define CAN_BUS_H
 

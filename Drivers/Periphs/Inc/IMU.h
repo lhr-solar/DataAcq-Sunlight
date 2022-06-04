@@ -1,3 +1,11 @@
+/**
+ * @file IMU.c
+ * @brief Inertial Measurement Unit API - BNO055
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef IMU_H
 #define IMU_H
 

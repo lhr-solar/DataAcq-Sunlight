@@ -1,3 +1,11 @@
+/**
+ * @file radio.h
+ * @brief Ethernet API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef RADIO_H
 #define RADIO_H
 

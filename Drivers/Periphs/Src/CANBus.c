@@ -1,4 +1,10 @@
-// CAN Drivers
+/**
+ * @file CANBus.c
+ * @brief CAN API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
 
 #include "CANBus.h"
 #include "main.h"

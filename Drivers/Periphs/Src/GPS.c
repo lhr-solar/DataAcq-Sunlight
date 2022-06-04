@@ -1,3 +1,11 @@
+/**
+ * @file GPS.c
+ * @brief GPS API - PA6H
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #include "GPS.h"
 #include "main.h"
 #include "cmsis_os.h"
