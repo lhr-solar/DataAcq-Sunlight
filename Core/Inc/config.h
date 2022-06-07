@@ -7,7 +7,7 @@
  */
 
 // DEBUG configuration
-#define DEBUGGINGMODE               0       // set to 1 to enable debug statements, set to 0 or comment out to disable
+#define DEBUGGINGMODE               1       // set to 1 to enable debug statements, set to 0 or comment out to disable
 #define CAN_LOOPBACK                1       // set to 1 to test CAN interface in loopback mode
 
 // IP Address Configuration

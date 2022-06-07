@@ -11,9 +11,15 @@
 
 #include "Tasks.h"
 #include "radio.h"
+#include <stdio.h>
 
 void BroadcastingTask(void *argument){
     Ethernet_QueueInit();
+
+    #if DEBUGGINGMODE
+    printf("Broadcasting Task done initializing...\n\r");
+    #endif
+
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
 

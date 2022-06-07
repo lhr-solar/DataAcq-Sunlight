@@ -109,9 +109,11 @@ BaseType_t Ethernet_SendMessage() {
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
         if (bytes_sent < 0) {   // send failed
-            bytes_sent = 0;     // reset bytes_sent to 0 to signify error
-            Ethernet_ConnectToServer(); // reconnect to server if send failed
+            servsocket = -1;    // reset servsocket to -1 to signify error 
         }
+    }
+    else {
+        Ethernet_ConnectToServer(); // reconnect to server if send previously failed
     }
     return pdTRUE;
 }

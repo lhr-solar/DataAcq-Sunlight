@@ -17,6 +17,7 @@
 #include "radio.h"
 #include "config.h"
 #include <string.h>
+#include <stdio.h>
 
 #if CAN_LOOPBACK
     #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
@@ -28,8 +29,15 @@ void DataReadingTask(void* argument){
     if (IMU_Init() != HAL_OK);
     if (GPS_Init() == ERROR);
     if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
+
+    #if DEBUGGINGMODE
+    printf("Data Reading Task done initializing...\n\r");
+    #endif
+
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
+
+    
 
     while(1) {
         CANMSG_t CANData;

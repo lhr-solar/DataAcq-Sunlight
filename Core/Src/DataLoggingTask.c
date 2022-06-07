@@ -13,12 +13,18 @@
 #include "Tasks.h"
 #include "SDCard.h"
 #include "config.h"
+#include <stdio.h>
 
 #define MOUNTCYCLES 500
 
 void DataLoggingTask(void* argument){
     int cntr = 0;
     if (SDCard_Init() != FR_OK);
+
+    #if DEBUGGINGMODE
+    printf("Data Logging Task done initializing...\n\r");
+    #endif
+
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
 
