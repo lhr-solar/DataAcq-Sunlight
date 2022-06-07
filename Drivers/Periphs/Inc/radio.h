@@ -9,14 +9,6 @@
 #ifndef RADIO_H
 #define RADIO_H
 
-/**
- * @file radio.h
- * @brief Ethernet API
- * 
- * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
- * 
- */
-
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "CANBus.h"

@@ -10,6 +10,7 @@
 #include "fatfs.h"
 #include "main.h"
 #include "config.h"
+#include "LED.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,6 +107,9 @@ FRESULT SDCard_Sort_Write_Data(){
     uint16_t bytes_written = -1;
 
     if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return FR_DISK_ERR;
+    #ifdef DEBUGGINGMODE
+        LED_Toggle(ARRAY);
+    #endif
     // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
     switch (cardData.id) {
         case CAN_SDCard:

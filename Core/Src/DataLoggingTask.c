@@ -13,6 +13,7 @@
 #include "Tasks.h"
 #include "SDCard.h"
 #include "config.h"
+#include "LED.h"
 #include <stdio.h>
 
 #define MOUNTCYCLES 500

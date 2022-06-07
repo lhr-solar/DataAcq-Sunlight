@@ -16,6 +16,7 @@
 #include "SDCard.h"
 #include "radio.h"
 #include "config.h"
+#include "LED.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -36,9 +37,7 @@ void DataReadingTask(void* argument){
 
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
-
     
-
     while(1) {
         CANMSG_t CANData;
         IMUData_t IMUData;
@@ -46,6 +45,8 @@ void DataReadingTask(void* argument){
         SDCard_t SDCardData;
         EthernetMSG_t EthMessage;   
 
+        LED_Toggle(HEARTBEAT);
+        
         //Send GPS data and log in SD card
         if (GPS_ReadData(&GPSData) == pdTRUE) {
             memcpy(SDCardData.time, GPSData.time, sizeof(GPSData.time)); //assign timestamp

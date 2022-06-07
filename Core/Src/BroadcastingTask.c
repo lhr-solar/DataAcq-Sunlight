@@ -11,6 +11,7 @@
 
 #include "Tasks.h"
 #include "radio.h"
+#include "LED.h"
 #include <stdio.h>
 
 void BroadcastingTask(void *argument){
@@ -22,7 +23,6 @@ void BroadcastingTask(void *argument){
 
     xSemaphoreTake(InitSem, 0);
     while(uxSemaphoreGetCount(InitSem) != 0);
-
     // this can take awhile/not work 
     // so it's run after everything else is initialized
     Ethernet_Init();

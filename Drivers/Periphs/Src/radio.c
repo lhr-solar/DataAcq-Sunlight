@@ -11,6 +11,7 @@
 #include "lwip.h"
 #include "main.h"
 #include "config.h"
+#include "LED.h"
 #include <string.h>
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
@@ -98,6 +99,9 @@ BaseType_t Ethernet_SendMessage() {
     if (servsocket >= 0) {
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+        #if DEBUGGINGMODE
+        LED_Toggle(BPS);
+        #endif
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 

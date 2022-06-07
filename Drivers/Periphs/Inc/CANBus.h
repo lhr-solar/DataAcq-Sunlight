@@ -1,23 +1,18 @@
 /**
- * @file CANBus.c
- * @brief CAN API
+ * @file CANBus.h
+ * @brief CAN Drivers
  * 
+ * Initialize and configure a singular CANBus
+ * Currently set up for CAN1
+ * 
+ * Recieved CAN messages are placed in an external software FIFO.
+ * "queue.h" has information on FIFO operations
  * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
  * 
  */
 
 #ifndef CAN_BUS_H
 #define CAN_BUS_H
-
-// CAN Drivers
-
-/**
- * Initialize and configure a singular CANBus
- * Currently set up for CAN1
- * 
- * Recieved CAN messages are placed in an external software FIFO.
- * "queue.h" has information on FIFO operations
- */
 
 #include "stm32f4xx.h"
 #include "FreeRTOS.h"
