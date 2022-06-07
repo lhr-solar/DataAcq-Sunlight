@@ -21,13 +21,12 @@ The sunlight is the client while data acquisition is the server
 
 Usage
 
-``Ethernet_Init()`` is first called as a way to create the Queue and create a socket when a connection has been established.
-``Ethernet_ConnectToServer()`` is a static blocking function called inside ``Ethernet_Init()`` that is either called when connection
-first needs to be established or when connection is lost with data acquisition.  ``Ethernet_SendMessage()`` then collects data from the 
-Ethernet Queue and sends through Ethernet - if there is no connection, it calls ``Ethernet_ConnectToServer()``. ``Ethernet_SendMessage()`` returns pdFalse
-if the Queue is empty and pdTrue if the Queue is not empty. The struct EthernetMSG_t will hold the data packets of either information 
-regarding IMU, GPS, or CAN. The struct consists of an id enum, length, and a union of data. Since the data is in a union, there will be zero padding
-at the MSB.
+``Ethernet_Init()`` must be called first as a way to create the Ethernet Queue and create a socket when a connection has been established. 
+Within the function, ``Ethernet_Init()`` calls the blocking function ``Ethernet_ConnectToServer()`` which is responsible for setting the ``servsocket`` variable to the corresponding socket value. 
+After ``Ethernet_Init()`` has finished completing, ``Ethernet_SendMessage()`` is called repeatedly. ``Ethernet_SendMessage()`` is a blocking function which waits until there is data in the queue to send that data across ethernet.
+The data that is sent across Ethernet is in a struct called EthernetMSG_t which contains specific information of either IMU, GPS, or CAN type. 
+The struct consists of an id enum, length, and a union of data regardless of the type of data. 
+Since the data is in a union, there will be zero padding at the MSB.
 
 Additional Considerations
 
