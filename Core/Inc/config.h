@@ -8,7 +8,7 @@
 
 // DEBUG configuration
 #define DEBUGGINGMODE               1       // set to 1 to enable debug statements, set to 0 or comment out to disable
-#define CAN_LOOPBACK                1       // set to 1 to test CAN interface in loopback mode
+#define CAN_LOOPBACK                0       // set to 1 to test CAN interface in loopback mode
 
 // IP Address Configuration
 #define IP4_CLIENT_ADDRESS          169, 254, 48, 100

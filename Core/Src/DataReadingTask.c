@@ -3,6 +3,7 @@
  * 
  * Task in charge of collecting data from sensors (IMU, GPS) and CAN.
  * Data is added to the logging and broadcasting queues.
+ * @note Assumes that all lower level functions are initialized in main.c  
  * 
  * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
  * 
@@ -20,23 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#if CAN_LOOPBACK
-    #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
-#else
-    #define CURR_CAN_MODE       CAN_MODE_NORMAL
-#endif
-
 void DataReadingTask(void* argument){
-    if (IMU_Init() != HAL_OK);
-    if (GPS_Init() == ERROR);
-    if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
-
-    #if DEBUGGINGMODE
-    printf("Data Reading Task done initializing...\n\r");
-    #endif
-
-    xSemaphoreTake(InitSem, 0);
-    while(uxSemaphoreGetCount(InitSem) != 0);
     
     while(1) {
         CANMSG_t CANData;

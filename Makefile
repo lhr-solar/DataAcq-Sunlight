@@ -21,7 +21,10 @@ TARGET = Sunlight
 # debug build?
 DEBUG = 1
 # optimization
+OPT = -O3
+ifeq ($(DEBUG), 1)
 OPT = -Og
+endif
 
 # make flags
 MAKEFLAGS = -j

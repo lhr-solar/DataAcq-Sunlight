@@ -83,14 +83,18 @@ This initialization loads the IMU with hard coded calibration data so calibratio
 // Just used to wait for the IMU to power on.
 static void IMU_WaitForPower() {
     uint8_t config[2];
-
+    HAL_StatusTypeDef error __attribute__ ((unused));
     // Wait for the chip to power on
     // The CHIP_ID register (0x00) is set to a fixed value of 0xA0
     config[0] = 0;
     while(config[0] != 0xA0) {
-        HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
-        osDelay(50); //Allow time until next read should occur
+        error = HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
+        HAL_Delay(50); //Allow time until next read should occur
+        //printf("Error: %d\n\r", error);
     }
+    #if DEBUGGINGMODE
+    printf("Power Received\n\r");
+    #endif
 }
 
 /** 
@@ -109,6 +113,7 @@ HAL_StatusTypeDef IMU_Init(){
     // My recommendation, don't cut out anything here without extensive
     // testing.
 
+    osDelay(2000); //One reason to get a new IMU
     uint8_t config[2];
 
     //EDIT: Either this reset or the one below is unnecesary. 
@@ -129,12 +134,19 @@ HAL_StatusTypeDef IMU_Init(){
         SEND(config, 2);
         osDelay(50); // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
     }
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
 
     // Reset the chip. We kind of did this above, but we're doing it again to be sure
     config[0] = SYS_TRIGGER;
     config[1] = 0x20;
     error |=SEND(config, 2);
-    
+
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
+
     // Wait for the reset to complete
     osDelay(1000);
 
@@ -144,24 +156,45 @@ HAL_StatusTypeDef IMU_Init(){
     config[1] = 0;
     error |= SEND(config, 2);
 
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
+
     // Select the "normal" power mode. 
     // After reset, the IMU should already be in this normal mode
     config[0] = PWR_MODE;
     config[1] = 0;
     error |=SEND(config, 2);
 
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
+
     // Set the clock source. Run using internal 32kHz clock source
     config[0] = SYS_TRIGGER;
     config[1] = 0x00;
     error |=SEND(config, 2);
+
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
     
     //Read in m/s^2, Celcius, and degrees. pg 69 of ref manual for more options
     config[0] = UNIT_SEL;
     config[1] = 0;
     error |= SEND(config, 2); 
 
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    #endif
+
     // hard code calibration values
     error |= IMU_Calibrate();
+
+    #if DEBUGGINGMODE
+    printf("ERROR: %d\n\r", error);
+    printf("IMU Calibrated\n\r");
+    #endif
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
@@ -170,6 +203,10 @@ HAL_StatusTypeDef IMU_Init(){
     // TODO: experiencing difficulties with the IT version, but these might need to be blocking anyways, or at least need a check
     error |= SEND(config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer with FMC (quicker calibration)
     
+    #if DEBUGGINGMODE
+    printf("ERROR: %d", error);
+    #endif
+
     osDelay(20); // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
 
     // TODO: move this into a function that checks if we've uncalibrated. 

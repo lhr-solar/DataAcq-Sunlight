@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "config.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
 #include "IMU.h"
 #include "SDCard.h"
 #include "Tasks.h"
+#include "radio.h"
 #include "CANBus.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -40,7 +42,11 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 /* USER CODE END PD */
-
+#if CAN_LOOPBACK
+    #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
+#else
+    #define CURR_CAN_MODE       CAN_MODE_NORMAL
+#endif
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
@@ -154,7 +160,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  InitSem = xSemaphoreCreateCounting(NUM_TASKS_WITH_INITS, NUM_TASKS_WITH_INITS);
+  
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -175,7 +181,32 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
+
+  Ethernet_QueueInit();
+  #if DEBUGGINGMODE
+  printf("Ethernet Queue Initialized\n\r");
+  #endif
+
+  if (SDCard_Init() != FR_OK);
+  #if DEBUGGINGMODE
+  printf("SD Card Initialized\n\r");
+  #endif
+
+  if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
+  #if DEBUGGINGMODE
+  printf("CAN Initialized\n\r");
+  #endif
+
+  if (GPS_Init() == ERROR);
+  #if DEBUGGINGMODE
+  printf("GPS Initialized\n\r");
+  #endif
   
+  osDelay(2000);
+  if (IMU_Init() != HAL_OK);
+  #if DEBUGGINGMODE
+  printf("IMU Initialized\n\r");
+  #endif
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
