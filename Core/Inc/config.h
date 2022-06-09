@@ -51,4 +51,10 @@ static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
 
 #endif // LWIP_HDR_DEF_H
 
+#if DEBUGGINGMODE
+    #define printf(...)         printf(__VA_ARGS__)
+#else
+    #define printf(...)
+#endif
+
 #endif // CONFIG_H

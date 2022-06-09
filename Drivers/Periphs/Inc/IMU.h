@@ -12,6 +12,11 @@
 #include "main.h"
 #include <stdint.h>
 
+// Calibration enable (1)/disable (0)
+#define CALIB_GYRO              1
+#define CALIB_ACCEL             1
+#define CALIB_MAGNET            0           // warning: the magnetometer quite unreliable
+
 typedef struct {
     int16_t accel_x;
     int16_t accel_y;

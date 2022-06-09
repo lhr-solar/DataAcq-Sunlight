@@ -42,11 +42,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 /* USER CODE END PD */
-#if CAN_LOOPBACK
-    #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
-#else
-    #define CURR_CAN_MODE       CAN_MODE_NORMAL
-#endif
+
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
@@ -72,24 +68,13 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-osThreadId_t DataLoggingTaskHandle;
-osThreadAttr_t DataLoggingTask_attributes = {
-  .name = "Data Logging Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+osThreadId_t initTaskHandle;
+const osThreadAttr_t initTask_attributes = {
+  .name = "Initialization Task",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024
 };
-osThreadId_t DataReadingTaskHandle;
-osThreadAttr_t DataReadingTask_attributes = {
-  .name = "Data Reading Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
-osThreadId_t BroadcastingTaskHandle;
-osThreadAttr_t BroadcastingTask_attributes = {
-  .name = "Broadcasting Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -175,38 +160,12 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
   /* USER CODE BEGIN RTOS_THREADS */
-  DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
-  DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
-  BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
+  initTaskHandle = osThreadNew(InitializationTask, NULL, &initTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-
-  Ethernet_QueueInit();
-  #if DEBUGGINGMODE
-  printf("Ethernet Queue Initialized\n\r");
-  #endif
-
-  if (SDCard_Init() != FR_OK);
-  #if DEBUGGINGMODE
-  printf("SD Card Initialized\n\r");
-  #endif
-
-  if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
-  #if DEBUGGINGMODE
-  printf("CAN Initialized\n\r");
-  #endif
-
-  if (GPS_Init() == ERROR);
-  #if DEBUGGINGMODE
-  printf("GPS Initialized\n\r");
-  #endif
   
-  osDelay(2000);
-  if (IMU_Init() != HAL_OK);
-  #if DEBUGGINGMODE
-  printf("IMU Initialized\n\r");
-  #endif
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */

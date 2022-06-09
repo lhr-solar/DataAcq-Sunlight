@@ -74,11 +74,23 @@ The IMU requries some operation mode and a calibration for it to function.
 This initialization loads the IMU with hard coded calibration data so calibration is only needed once.
 */
 
-// Send data through I2C
-#define SEND(data, size) \
-    osDelay(50); \
-    HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY); \
-    osDelay(50)
+// Send and read data through I2C with delay
+// Use for repeated communication with the IMU
+// data is a pointer to a byte array, size is length of message, err is a HAL_StatusTypeDef variable
+
+#define SEND(data, size, err) \
+    do { \
+        osDelay(50); \
+        err = HAL_I2C_Master_Transmit(&hi2c1, ADDR, (data), (size), HAL_MAX_DELAY); \
+        osDelay(50); \
+    } while (0)
+
+#define READ(addr, data, size, err) \
+    do { \
+        osDelay(50); \
+        err = HAL_I2C_Mem_Read(&hi2c1, ADDR, (addr), I2C_MEMADD_SIZE_8BIT, (data), (size), HAL_MAX_DELAY); \
+        osDelay(50); \
+    } while (0)
 
 // Just used to wait for the IMU to power on.
 static void IMU_WaitForPower() {
@@ -88,13 +100,11 @@ static void IMU_WaitForPower() {
     // The CHIP_ID register (0x00) is set to a fixed value of 0xA0
     config[0] = 0;
     while(config[0] != 0xA0) {
-        error = HAL_I2C_Mem_Read(&hi2c1, ADDR, CHIP_ID, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
-        HAL_Delay(50); //Allow time until next read should occur
-        //printf("Error: %d\n\r", error);
+        READ(CHIP_ID, config, 1, error);
     }
-    #if DEBUGGINGMODE
+    
     printf("Power Received\n\r");
-    #endif
+    
 }
 
 /** 
@@ -119,33 +129,33 @@ HAL_StatusTypeDef IMU_Init(){
     //EDIT: Either this reset or the one below is unnecesary. 
     // Pull the reset pin low, then high to reset the IMU
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    for(volatile int i = 0; i < 10; i++);   // Give it a moment of time, WAS i<10
+    for(volatile int i = 0; i < 10; i++);   // Give it a moment of time
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
 
     IMU_WaitForPower();
 
     //EDIT: I dont believe this is necessary, since the IMU has a power on reset feature which starts the IMU in config mode
     // Verify our current mode. 
-    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, OPR_MODE, I2C_MEMADD_SIZE_8BIT, config, 1, HAL_MAX_DELAY);
+    READ(OPR_MODE, config, 1, error);
     if((config[0] & 0xF) != 0) {
         // Need to enter configuration mode first
         config[0] = OPR_MODE;
         config[1] = 0;
-        SEND(config, 2);
+        SEND(config, 2, error);
         osDelay(50); // Wait for 50 ms. This is well over the amount of time required for this, but whatever.
     }
-    #if DEBUGGINGMODE
+    
     printf("ERROR: %d\n\r", error);
-    #endif
+    
 
     // Reset the chip. We kind of did this above, but we're doing it again to be sure
     config[0] = SYS_TRIGGER;
     config[1] = 0x20;
-    error |=SEND(config, 2);
+    SEND(config, 2, error);
 
-    #if DEBUGGINGMODE
+    
     printf("ERROR: %d\n\r", error);
-    #endif
+    
 
     // Wait for the reset to complete
     osDelay(1000);
@@ -154,66 +164,60 @@ HAL_StatusTypeDef IMU_Init(){
     // The register map in this chip is split into multiple pages. Select page 0.
     config[0] = PAGE_ID;
     config[1] = 0;
-    error |= SEND(config, 2);
+    SEND(config, 2, error);
 
-    #if DEBUGGINGMODE
     printf("ERROR: %d\n\r", error);
-    #endif
 
     // Select the "normal" power mode. 
     // After reset, the IMU should already be in this normal mode
     config[0] = PWR_MODE;
     config[1] = 0;
-    error |=SEND(config, 2);
+    SEND(config, 2, error);
 
-    #if DEBUGGINGMODE
     printf("ERROR: %d\n\r", error);
-    #endif
 
     // Set the clock source. Run using internal 32kHz clock source
     config[0] = SYS_TRIGGER;
     config[1] = 0x00;
-    error |=SEND(config, 2);
+    SEND(config, 2, error);
 
-    #if DEBUGGINGMODE
     printf("ERROR: %d\n\r", error);
-    #endif
     
     //Read in m/s^2, Celcius, and degrees. pg 69 of ref manual for more options
     config[0] = UNIT_SEL;
     config[1] = 0;
-    error |= SEND(config, 2); 
+    SEND(config, 2, error); 
 
-    #if DEBUGGINGMODE
     printf("ERROR: %d\n\r", error);
-    #endif
 
     // hard code calibration values
     error |= IMU_Calibrate();
 
-    #if DEBUGGINGMODE
     printf("ERROR: %d\n\r", error);
     printf("IMU Calibrated\n\r");
-    #endif
 
     // Now configure for our operation mode
     // IMPORTANT: this needs to be the last configuration register written
     config[0] = OPR_MODE; //register address
     config[1] = 0xC; // The configuration mode (NDOF)   // TODO: think about lower-power modes
     // TODO: experiencing difficulties with the IT version, but these might need to be blocking anyways, or at least need a check
-    error |= SEND(config, 2); //Turn on Accelerometer, Gyroscope, and Magnetometer with FMC (quicker calibration)
+    SEND(config, 2, error); //Turn on Accelerometer, Gyroscope, and Magnetometer with FMC (quicker calibration)
     
-    #if DEBUGGINGMODE
-    printf("ERROR: %d", error);
-    #endif
+    printf("ERROR: %d\n\r", error);
 
     osDelay(20); // Wait for 20ms for the operating mode to change. This is well over the amount of time required, but whatever.
 
     // TODO: move this into a function that checks if we've uncalibrated. 
-    uint8_t calib_reg; 
+    const uint8_t calib_required = 
+            ((CALIB_GYRO ? 3 : 0) << 4) | 
+            ((CALIB_ACCEL ? 3 : 0) << 2) | 
+            (CALIB_MAGNET ? 3 : 0);
+    uint8_t calib_reg;
+    
     do{ //3C is gyro, accel ;;FF is sys, gyr, accel, magnet ;;x30 is just gyro
-        error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, CALIB_STAT, I2C_MEMADD_SIZE_8BIT, &calib_reg, 1, HAL_MAX_DELAY);
-    } while((calib_reg >> 6) != 3);
+        READ(CALIB_STAT, &calib_reg, 1, error);
+        printf("%.2X\n\r", calib_reg);
+    } while(calib_reg != calib_required);
         
     return error;
 }
@@ -243,10 +247,10 @@ HAL_StatusTypeDef IMU_GetCalibData(){
     uint8_t config[4];
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
-    error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
+    SEND(config, 2, error); // set IMU to configuration mode to extract calibration data
     
    //Read 22 contiguous bytes of calibration registers in the IMU. Load into calibration data struct fields
-    error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_OFFSET_X_LSB, I2C_MEMADD_SIZE_8BIT, IMUCalibData, sizeof(IMUCalibData), HAL_MAX_DELAY);
+    READ(ACC_OFFSET_X_LSB, IMUCalibData, sizeof(IMUCalibData), error);
     return error;
 }
 
@@ -264,12 +268,12 @@ HAL_StatusTypeDef IMU_Calibrate(){
     uint8_t config[2];
     config[0] = OPR_MODE; //register address
     config[1] = 0; // set to some configuration mode
-    error |= SEND(config, 2); // set IMU to configuration mode to extract calibration data
+    SEND(config, 2, error); // set IMU to configuration mode to extract calibration data
     
     for (uint8_t reg=0; reg < NUM_REGISTERS; reg++) {
         config[0] = ACC_OFFSET_X_LSB + reg;
         config[1]= IMUCalibData[reg];
-        error |=SEND(config, 2);
+        SEND(config, 2, error);
     }
 
     // TODO: think about switching to NDOF here
@@ -291,7 +295,7 @@ HAL_StatusTypeDef IMU_Debug(void){
     debug[1] = debug[0] | 0x01;
     debug[0] = SYS_TRIGGER;
 
-    error |=SEND(debug, 2);
+    SEND(debug, 2, error);
     if(error){
         printf("ERROR \n\r");
     }
@@ -315,7 +319,7 @@ HAL_StatusTypeDef IMU_Debug(void){
     // Switch to page 1 and read all 3 config registers. pg 77 for config register info. pg 26 for default values
     debug[0] = PAGE_ID;
     debug[1] = 1;
-    error |= SEND(debug, 2);
+    SEND(debug, 2, error);
 
     error |= HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_CONFIG, I2C_MEMADD_SIZE_8BIT, debug, 1, HAL_MAX_DELAY);
     printf("ACC Config: %X\n", debug[0]);

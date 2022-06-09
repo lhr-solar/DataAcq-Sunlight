@@ -88,6 +88,7 @@ int main(void)
 }
 
 void IMUTest(void* argument){
+    printf("starting...\n\r");
     //code taken from main.c in Core folder
     osDelay(2000);
     IMU_Init();

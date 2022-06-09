@@ -8,6 +8,8 @@
 
 extern SemaphoreHandle_t InitSem;
 
+void InitializationTask(void *argument);
+
 void DataReadingTask(void* argument);
 
 void DataLoggingTask(void* argument);

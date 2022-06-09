@@ -23,13 +23,14 @@
 
 void DataReadingTask(void* argument){
     
-    while(1) {
-        CANMSG_t CANData;
-        IMUData_t IMUData;
-        GPSData_t GPSData;
-        SDCard_t SDCardData;
-        EthernetMSG_t EthMessage;   
+    CANMSG_t CANData;
+    IMUData_t IMUData;
+    GPSData_t GPSData;
+    SDCard_t SDCardData;
+    EthernetMSG_t EthMessage;  
 
+    while(1) {
+        
         LED_Toggle(HEARTBEAT);
         
         //Send GPS data and log in SD card
