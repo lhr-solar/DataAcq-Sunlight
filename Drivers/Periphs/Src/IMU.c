@@ -229,7 +229,11 @@ HAL_StatusTypeDef IMU_Init(){
  */
 HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data){
     // Read 18 contiguous data registers within the IMU starting at 0x08 and stores data within struct fields
+    //wait 10ms before collecting data again
+    static int ms = portMAX_DELAY;
+    while (ms + 10 > xTaskGetTickCount());
     return HAL_I2C_Mem_Read(&hi2c1, ADDR, ACC_DATA_X_LSB, I2C_MEMADD_SIZE_8BIT, (uint8_t*)Data, 18, HAL_MAX_DELAY);
+    ms = xTaskGetTickCount();
 }
 
 /**
