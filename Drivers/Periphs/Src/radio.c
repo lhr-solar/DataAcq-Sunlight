@@ -29,13 +29,13 @@ static void Ethernet_ConnectToServer() {
         } while (servsocket < 0);
 
         #if DEBUGGINGMODE
-        printf("servsocket %d\n", servsocket);
+        debugprintf("servsocket %d\n", servsocket);
         #endif
 
         while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
 
         #if DEBUGGINGMODE
-        printf("done\n");
+        debugprintf("done\n");
         #endif
     }
 }

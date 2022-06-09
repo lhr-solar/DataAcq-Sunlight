@@ -78,7 +78,7 @@ ErrorStatus GPS_Init(){
         memcpy(&command_buf[len + 1], command_ending, sizeof(command_ending));
         // send
         #if DEBUGGINGMODE
-        printf("%s", command_buf);
+        debugprintf("%s", command_buf);
         #endif
 
         if (HAL_UART_Transmit(&huart1, (uint8_t *)command_buf, len + 6, 100) != HAL_OK) return ERROR;
@@ -114,7 +114,7 @@ static void GPS_Receive() {
     GPSData_t GPSData;
     memset(&GPSData, 0, sizeof(GPSData));
     #if DEBUGGINGMODE
-    printf("recieved:%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
+    debugprintf("recieved:%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
     #endif
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         uint16_t idx = 0;

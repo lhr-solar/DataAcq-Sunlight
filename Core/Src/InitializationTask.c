@@ -39,19 +39,19 @@ void InitializationTask(void *argument) {
     osDelay(1000);
 
     Ethernet_QueueInit();
-    printf("Ethernet Queue Initialized\n\r");   
+    debugprintf("Ethernet Queue Initialized\n\r");   
 
     if (SDCard_Init() != FR_OK);
-    printf("SD Card Initialized\n\r");  
+    debugprintf("SD Card Initialized\n\r");  
 
     if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
-    printf("CAN Initialized\n\r");  
+    debugprintf("CAN Initialized\n\r");  
 
     if (GPS_Init() == ERROR);
-    printf("GPS Initialized\n\r");
+    debugprintf("GPS Initialized\n\r");
 
     if (IMU_Init() != HAL_OK);
-    printf("IMU Initialized\n\r");
+    debugprintf("IMU Initialized\n\r");
 
     // Create tasks
     DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);

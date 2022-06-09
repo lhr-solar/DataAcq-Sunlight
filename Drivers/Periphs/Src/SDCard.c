@@ -43,7 +43,7 @@ FRESULT SDCard_Init() {
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     #if DEBUGGINGMODE
     if (fresult != FR_OK) {
-  	    printf("f_mount error (%i)\r\n", (int)fresult);
+  	    debugprintf("f_mount error (%i)\r\n", (int)fresult);
     }
     #endif
     return fresult;
@@ -139,7 +139,7 @@ FRESULT SDCard_Sort_Write_Data(){
 
     if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
     #ifdef DEBUGGINGMODE
-    printf("Write: %s", message);
+    debugprintf("Write: %s", message);
     #endif
     return SDCard_Write(file, filenames_list[fname_idx], message, bytes_written);
 }
@@ -243,7 +243,7 @@ static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, 
     fresult = f_open(&fil, fileName, FA_WRITE | FA_OPEN_APPEND);
 
     #ifdef DEBUGGINGMODE
-  	printf("f_open error (%i)\r\n", fresult);
+  	debugprintf("f_open error (%i)\r\n", fresult);
     #endif
     if (fresult != FR_OK) return fresult;
 
@@ -253,7 +253,7 @@ static FRESULT SDCard_Write(FIL fil, const char *fileName, const char *message, 
     fresult = f_write(&fil, readBuf, strlen(message), &bytesWrote);
 
     #ifdef DEBUGGINGMODE
-  	printf("f_write error (%i)\r\n", (int)fresult);
+  	debugprintf("f_write error (%i)\r\n", (int)fresult);
     #endif
     if (fresult != FR_OK) return fresult;
 
