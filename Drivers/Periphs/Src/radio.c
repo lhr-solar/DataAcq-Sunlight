@@ -28,15 +28,11 @@ static void Ethernet_ConnectToServer() {
             servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         } while (servsocket < 0);
 
-        #if DEBUGGINGMODE
         debugprintf("servsocket %d\n", servsocket);
-        #endif
 
         while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
 
-        #if DEBUGGINGMODE
         debugprintf("done\n");
-        #endif
     }
 }
 
@@ -100,7 +96,7 @@ BaseType_t Ethernet_SendMessage() {
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
         #if DEBUGGINGMODE
-        LED_Toggle(BPS);
+            LED_Toggle(BPS);
         #endif
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
