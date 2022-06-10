@@ -26,6 +26,8 @@
 #include "SDCard.h"
 #include "Tasks.h"
 #include "CANBus.h"
+#include <string.h>
+#include <inttypes.h>
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi5;
@@ -88,14 +90,39 @@ int main(void)
 // Number of iterations to run test
 #define SDC_TEST_ITERS              10
 
-// Length (in Bytes) of write during each test
+// Length (in Bytes) of writes during each test
 #define SDC_TEST_LEN                4096
 
-// Small-length test string
-static const char TestString_32B[] = 
-    "00 01 02 03 04 05 06 07 08 09.\r\n";
+// Length (in Bytes) of each write chunk
+#define SDC_WRITE_SIZE              32
+
+/**
+ * @brief Put a CRLF+NULL -terminated string into a buffer (numbers that count up)
+ * @note The numbers printed will keep counting up even between calls
+ * 
+ * @param buf string buffer
+ * @param len length of characters to write
+ * @param precision length of each 'word/number' to write
+ */
+static void PopulateWriteBuf(char *buf, uint32_t len, int precision) {
+  static uint32_t prev = 0;
+
+  uint32_t bufidx;
+  for (bufidx = 0;
+       bufidx < len - 2 - precision;
+       bufidx += (precision + 1)) {
+      sprintf(&buf[bufidx], "%.*" PRIx32 " ", 
+          precision, 
+          ((bufidx * prev) / (precision + 1)) % ~(-1 << (4 * precision)));
+    }
+  for (uint32_t i = bufidx - 1; i < len - 2; i++) buf[bufidx] = '.';
+  strcpy(&buf[len - 2], "\n\r");
+
+  prev += bufidx;
+}
 
 void SDCardTestTask(void *argument) {
+
   printf("Starting test\n\r");
   if (SDCard_Init() != FR_OK) {
     printf ("SD Card failed to initialize\n\r");
@@ -109,9 +136,12 @@ void SDCardTestTask(void *argument) {
   FIL testfile;
   f_open(&testfile, "test.out", FA_CREATE_ALWAYS);
 
+  char WriteBuf[SDC_WRITE_SIZE + 1];
+
   for (uint32_t i = 0; i < SDC_TEST_ITERS; i++) {
-    for (uint32_t j = 0; j < (SDC_TEST_LEN / 32); j++) {
-      SDCard_Write(&testfile, TestString_32B, 32);
+    for (uint32_t j = 0; j < (SDC_TEST_LEN / SDC_WRITE_SIZE); j++) {
+      PopulateWriteBuf(WriteBuf, SDC_WRITE_SIZE, 2);
+      SDCard_Write(&testfile, WriteBuf, 32);
     }
   }
 
