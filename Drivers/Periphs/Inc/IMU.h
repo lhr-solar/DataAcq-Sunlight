@@ -17,6 +17,9 @@
 #define CALIB_ACCEL             1
 #define CALIB_MAGNET            0           // warning: the magnetometer quite unreliable
 
+// Error code for indication IMU is not ready to read yet
+#define IMU_BUSY                0x04u
+
 typedef struct {
     int16_t accel_x;
     int16_t accel_y;
@@ -39,7 +42,7 @@ HAL_StatusTypeDef IMU_Init(void);
 /**
  * @brief Update struct with new information
  * @param *Data : struct used to collect IMU Data
- * @return HAL_StatusTypeDef - OK, ERROR, BUSY, or TIMEOUT
+ * @return HAL_OK on success, IMU_BUSY if called too soon after last call, HAL_StatusTypeDef != HAL_OK on error
  */
 HAL_StatusTypeDef IMU_GetMeasurements(IMUData_t *Data);
 
