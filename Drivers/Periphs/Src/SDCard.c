@@ -10,6 +10,7 @@
 #include "fatfs.h"
 #include "main.h"
 #include "config.h"
+#include "LED.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,19 +41,16 @@ FRESULT SDCard_Init() {
     // mount the drive
     SDCardQ = xQueueCreate(SDCARD_QUEUESIZE, sizeof(SDCard_t)); // creates the xQUEUE with the size of the fifo
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
-    #if DEBUGGINGMODE
     if (fresult != FR_OK) {
-  	    printf("f_mount error (%i)\r\n", (int)fresult);
+  	    debugprintf("f_mount error (%i)\r\n", (int)fresult);
     }
-    #endif
 
     for (uint32_t i = 0; i < NUM_FILES; i++) {
         fresult = f_open(&LogFiles[i], filenames_list[i], FA_WRITE | FA_OPEN_APPEND);
-        #if DEBUGGINGMODE
+
         if (fresult != FR_OK) {
-            printf("f_open error %s (%d)\r\n", filesnames_list[i], (int)fresult);
+            debugprintf("f_open error %s (%d)\r\n", filesnames_list[i], (int)fresult);
         }
-        #endif
     }
 
     return fresult;
@@ -113,6 +111,9 @@ FRESULT SDCard_Sort_Write_Data(){
     uint16_t bytes_written = -1;
 
     if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return FR_DISK_ERR;
+    #ifdef DEBUGGINGMODE
+        LED_Toggle(ARRAY);
+    #endif
     // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
     switch (cardData.id) {
         case CAN_SDCard:
@@ -141,9 +142,9 @@ FRESULT SDCard_Sort_Write_Data(){
     }
 
     if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
-    #ifdef DEBUGGINGMODE
-    printf("Write: %s", message);
-    #endif
+
+    debugprintf("Write: %s", message);
+
     return SDCard_Write(&LogFiles[fname_idx], message, bytes_written);
 }
 
@@ -164,15 +165,12 @@ FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len) {
     UINT bytes_written;
     fresult = f_write(fp, buf, len, &bytes_written);
 
-    #ifdef DEBUGGINGMODE
     if (fresult != FR_OK || len != bytes_written) {
-        printf("f_write error (%i)\r\n", (int)fresult);
+        debugprintf("f_write error (%i)\r\n", (int)fresult);
         f_close(fp);
         return fresult;
     }
-    #endif
 
-    //close your file!
     fresult = f_sync(fp);
     return fresult;
 }

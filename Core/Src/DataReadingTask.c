@@ -3,6 +3,7 @@
  * 
  * Task in charge of collecting data from sensors (IMU, GPS) and CAN.
  * Data is added to the logging and broadcasting queues.
+ * @note Assumes that all lower level functions are initialized in main.c  
  * 
  * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
  * 
@@ -16,28 +17,21 @@
 #include "SDCard.h"
 #include "radio.h"
 #include "config.h"
+#include "LED.h"
 #include <string.h>
-
-#if CAN_LOOPBACK
-    #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
-#else
-    #define CURR_CAN_MODE       CAN_MODE_NORMAL
-#endif
+#include <stdio.h>
 
 void DataReadingTask(void* argument){
-    if (IMU_Init() != HAL_OK);
-    if (GPS_Init() == ERROR);
-    if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
-    xSemaphoreTake(InitSem, 0);
-    while(uxSemaphoreGetCount(InitSem) != 0);
+    
+    CANMSG_t CANData;
+    IMUData_t IMUData;
+    GPSData_t GPSData;
+    SDCard_t SDCardData;
+    EthernetMSG_t EthMessage;  
 
     while(1) {
-        CANMSG_t CANData;
-        IMUData_t IMUData;
-        GPSData_t GPSData;
-        SDCard_t SDCardData;
-        EthernetMSG_t EthMessage;   
-
+        printf("a");
+        
         //Send GPS data and log in SD card
         if (GPS_ReadData(&GPSData) == pdTRUE) {
             memcpy(SDCardData.time, GPSData.time, sizeof(GPSData.time)); //assign timestamp

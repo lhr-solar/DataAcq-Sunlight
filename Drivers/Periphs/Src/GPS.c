@@ -15,17 +15,21 @@
 #include <stdlib.h>
 
 #define GPS_BUFSIZE     100
-#define NAME            0
-#define TIME            1
-#define STATUS          2
-#define LATITUDE        3
-#define NS              4
-#define LONGITUDE       5
-#define EW              6
-#define SPEEDINKNOTS    7
-#define COURSEINDEGREES 8
-#define DATE            9
-#define MAGNETICVAR     10    
+
+enum GPSFields {
+    NAME = 0,
+    TIME,
+    STATUS,
+    LATITUDE,
+    NS,
+    LONGITUDE,
+    EW,
+    SPEEDINKNOTS,
+    COURSEINDEGREES,
+    DATE,
+    MAGNETICVAR,
+    NUMFIELDS
+};
 
 char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
@@ -48,7 +52,7 @@ ErrorStatus GPS_Init(){
      * The checksum is the XOR of every character between the '$' and the '*':
      * Ex. 0x32 = 'P' ^ 'M' ^ 'T' ^ 'K' ^ '1' ^ '0' ^ '1'
      */
-    char *init_commands[] = {
+    const char * const init_commands[] = {
         "PMTK104", //This starts in cold start
         "PMTK220,1000", //This sends data every 1 second
         "PMTK251,9600", //This sets baud rate to 9600 b/s
@@ -73,9 +77,7 @@ ErrorStatus GPS_Init(){
         memcpy(&command_buf[1], init_commands[i], len);
         memcpy(&command_buf[len + 1], command_ending, sizeof(command_ending));
         // send
-        #if DEBUGGINGMODE
-        printf("%s", command_buf);
-        #endif
+        debugprintf("%s", command_buf);
 
         if (HAL_UART_Transmit(&huart1, (uint8_t *)command_buf, len + 6, 100) != HAL_OK) return ERROR;
         osDelay(500);
@@ -109,12 +111,13 @@ uint32_t GPS_FetchDroppedMsgCnt() {
 static void GPS_Receive() {
     GPSData_t GPSData;
     memset(&GPSData, 0, sizeof(GPSData));
+    debugprintf("recieved:%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         uint16_t idx = 0;
         uint8_t field = 0;
         while (GPSRxDataBuf[idx] != '\0'){
             int structidx = 0;
-            while (GPSRxDataBuf[idx] != ','){
+            while (GPSRxDataBuf[idx] != ',' && field < NUMFIELDS){
                 switch(field){
                     case NAME:
                     break;

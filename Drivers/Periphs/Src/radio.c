@@ -11,6 +11,7 @@
 #include "lwip.h"
 #include "main.h"
 #include "config.h"
+#include "LED.h"
 #include <string.h>
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
@@ -27,15 +28,11 @@ static void Ethernet_ConnectToServer() {
             servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         } while (servsocket < 0);
 
-        #if DEBUGGINGMODE
-        printf("servsocket %d\n", servsocket);
-        #endif
+        debugprintf("servsocket %d\n", servsocket);
 
         while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
 
-        #if DEBUGGINGMODE
-        printf("done\n");
-        #endif
+        debugprintf("done\n");
     }
 }
 
@@ -98,6 +95,9 @@ BaseType_t Ethernet_SendMessage() {
     if (servsocket >= 0) {
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+        #if DEBUGGINGMODE
+            LED_Toggle(BPS);
+        #endif
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 
@@ -109,9 +109,11 @@ BaseType_t Ethernet_SendMessage() {
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
         if (bytes_sent < 0) {   // send failed
-            bytes_sent = 0;     // reset bytes_sent to 0 to signify error
-            Ethernet_ConnectToServer(); // reconnect to server if send failed
+            servsocket = -1;    // reset servsocket to -1 to signify error 
         }
+    }
+    else {
+        Ethernet_ConnectToServer(); // reconnect to server if send previously failed
     }
     return pdTRUE;
 }

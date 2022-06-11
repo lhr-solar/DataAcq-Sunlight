@@ -7,8 +7,8 @@
  */
 
 // DEBUG configuration
-#define DEBUGGINGMODE               0       // set to 1 to enable debug statements, set to 0 or comment out to disable
-#define CAN_LOOPBACK                1       // set to 1 to test CAN interface in loopback mode
+#define DEBUGGINGMODE               1       // set to 1 to enable debug statements, set to 0 or comment out to disable
+#define CAN_LOOPBACK                0       // set to 1 to test CAN interface in loopback mode
 
 // IP Address Configuration
 #define IP4_CLIENT_ADDRESS          169, 254, 48, 100
@@ -50,5 +50,11 @@ static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
 #define CFG_IP4_SETADDR(ipaddr, ipu32) do {(ipaddr)->addr = PP_HTONL(lwip_makeu32_func(ipu32));} while (0)
 
 #endif // LWIP_HDR_DEF_H
+
+#if DEBUGGINGMODE
+    #define debugprintf(...)        printf(__VA_ARGS__)
+#else
+    #define debugprintf(...)        
+#endif
 
 #endif // CONFIG_H

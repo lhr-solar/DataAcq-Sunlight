@@ -19,12 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "config.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
 #include "IMU.h"
 #include "SDCard.h"
 #include "Tasks.h"
+#include "radio.h"
 #include "CANBus.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -57,33 +59,20 @@ SPI_HandleTypeDef hspi5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
-SemaphoreHandle_t InitSem;
-
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
-osThreadId_t DataLoggingTaskHandle;
-osThreadAttr_t DataLoggingTask_attributes = {
-  .name = "Data Logging Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+osThreadId_t initTaskHandle;
+const osThreadAttr_t initTask_attributes = {
+  .name = "Initialization Task",
+  .priority = (osPriority_t) osPriorityHigh,
+  .stack_size = 1024
 };
-osThreadId_t DataReadingTaskHandle;
-osThreadAttr_t DataReadingTask_attributes = {
-  .name = "Data Reading Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
-osThreadId_t BroadcastingTaskHandle;
-osThreadAttr_t BroadcastingTask_attributes = {
-  .name = "Broadcasting Task",
-  .priority = (osPriority_t) osPriorityHigh, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
-};
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -154,7 +143,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-  InitSem = xSemaphoreCreateCounting(NUM_TASKS_WITH_INITS, NUM_TASKS_WITH_INITS);
+  
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -169,13 +158,12 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
   /* USER CODE BEGIN RTOS_THREADS */
-  DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
-  DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
-  BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
+  initTaskHandle = osThreadNew(InitializationTask, NULL, &initTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   
+
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -519,8 +507,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* init code for LWIP */
-  MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
@@ -579,7 +565,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: debugprintf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
