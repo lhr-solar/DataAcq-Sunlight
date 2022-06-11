@@ -13,13 +13,16 @@
 #include "Tasks.h"
 #include "radio.h"
 #include "LED.h"
+#include "config.h"
 #include <stdio.h>
 
 void BroadcastingTask(void *argument){
     
     Ethernet_Init();
+    debugprintf("Ethernet: connected to server\n\r");
 
     while (1){
+        printf("c");
         Ethernet_SendMessage();
     }
 }

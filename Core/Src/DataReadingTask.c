@@ -30,8 +30,7 @@ void DataReadingTask(void* argument){
     EthernetMSG_t EthMessage;  
 
     while(1) {
-        
-        LED_Toggle(HEARTBEAT);
+        printf("a");
         
         //Send GPS data and log in SD card
         if (GPS_ReadData(&GPSData) == pdTRUE) {

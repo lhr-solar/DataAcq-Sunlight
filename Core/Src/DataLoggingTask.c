@@ -23,11 +23,9 @@ void DataLoggingTask(void* argument){
     int cntr = 0;
 
     while (1){
+        printf("b");
+
         if (SDCard_Sort_Write_Data() == FR_OK) cntr++; //increment counter if data was written
-        if (cntr > MOUNTCYCLES) {
-            if (SDCard_CloseFileSystem() != FR_OK);
-            cntr = 0;
-            if (SDCard_OpenFileSystem() != FR_OK);
-        }
+        else debugprintf("SDC write error\n\r");
     }
 }
