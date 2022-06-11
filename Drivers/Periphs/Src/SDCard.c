@@ -16,19 +16,32 @@
 #include <string.h>
 #include <inttypes.h>
 
+#define SDC_ID_ENUM_TO_IDX(x)       (x-1)   // x is of type SDCardID_t
+typedef struct {
+    const char fname[15];
+    FIL file;
+    int (* sprint)(char *, size_t, void *, const char *);
+    char writebuf[SDCARD_WRITE_BUFSIZE];
+    uint32_t bufidx;
+} logfile_t;
+
+static int SPrint_CAN(char *sdcard_write_buf, size_t bufsize, void *can, const char *time);
+static int SPrint_IMU(char *sdcard_write_buf, size_t bufsize, void *imu, const char *time);
+static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, void *gps, const char *time);
+
+// Globals
 static FATFS FatFs;
-static QueueHandle_t SDCardQ; // information will be put on this
-enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME, NUM_FILES};
-static FIL LogFiles[NUM_FILES];
-static const char * const filenames_list[NUM_FILES] = {
-    "can.csv",
-    "imu.csv",
-    "gps.csv"};
+static QueueHandle_t SDCardQ;
+
+static logfile_t LogFiles[SDC_ID_ENUM_TO_IDX(LARGEST_SDC_ID)] = {
+    [SDC_ID_ENUM_TO_IDX(IMU_SDCard)] = {.fname = "imu.csv", .sprint = SPrint_IMU, .bufidx = 0},
+    [SDC_ID_ENUM_TO_IDX(GPS_SDCard)] = {.fname = "gps.csv", .sprint = SPrint_GPS, .bufidx = 0},
+    [SDC_ID_ENUM_TO_IDX(CAN_SDCard)] = {.fname = "can.csv", .sprint = SPrint_CAN, .bufidx = 0}
+};
+
 uint32_t SDCDroppedMessages = 0;    // for debugging purposes
 
-static int SPrint_CAN(char *sdcard_write_buf, size_t bufsize, CANMSG_t *can, const char *time);
-static int SPrint_IMU(char *sdcard_write_buf, size_t bufsize, IMUData_t *imu, const char *time);
-static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, GPSData_t *gps, const char *time);
+
 
 /**
  * @brief Mounts the drive, initializes Queue, and opens all logging files
@@ -42,11 +55,12 @@ FRESULT SDCard_Init() {
   	    debugprintf("f_mount error (%i)\r\n", (int)fresult);
     }
 
-    for (uint32_t i = 0; i < NUM_FILES; i++) {
-        fresult = f_open(&LogFiles[i], filenames_list[i], FA_WRITE | FA_OPEN_APPEND);
+    for (uint32_t i = 0; i < SDC_ID_ENUM_TO_IDX(LARGEST_SDC_ID); i++) {
+        fresult = f_open(&LogFiles[i].file, LogFiles[i].fname, FA_WRITE | FA_OPEN_APPEND);
 
         if (fresult != FR_OK) {
-            debugprintf("f_open error %s (%d)\r\n", filenames_list[i], (int)fresult);
+            debugprintf("f_open error %s (%d)\r\n", LogFiles[i].fname, (int)fresult);
+            break;
         }
     }
 
@@ -93,8 +107,10 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data) {
 }
 
 /**
- * @brief Formats data to be written to SD card based on type of data input. 
- * NOTE: Non-Blocking - Returns error if there is no data 
+ * @brief Formats data and writes to SD card based on type of data input. 
+ *        Data is buffered and written in large chunks. 
+ *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
+ * @note: Non-Blocking - Returns error if there is no data 
  * @param none
  * @return FRESULT FR_OK if ok, FR_DISK_ERR if SD queue is empty, and other errors specified in ff.h
  */
@@ -102,45 +118,26 @@ FRESULT SDCard_Sort_Write_Data(){
     // check if data from queue is from imu, gps, or can.
     // send data to corresponding file in sd card
     SDCard_t cardData;
-    static char message[SDCARD_WRITE_BUFSIZE];
-    
-    uint8_t fname_idx = 0;
-    uint16_t bytes_written = -1;
+    FRESULT success = FR_OK;
 
     if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return SDC_QUEUE_EMPTY;
+    if (((uint32_t)cardData.id) >= LARGEST_SDC_ID) return FR_DISK_ERR;
 
-    // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
-    switch (cardData.id) {
-        case CAN_SDCard:
-            fname_idx = CAN_FNAME;
-            bytes_written = SPrint_CAN(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData.data.CANData,
-                                       cardData.time);
-            break;
-        case IMU_SDCard:
-            fname_idx = IMU_FNAME;
-            bytes_written = SPrint_IMU(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData.data.IMUData,
-                                       cardData.time);
-            break;
-        case GPS_SDCard:
-            fname_idx = GPS_FNAME;
-            bytes_written = SPrint_GPS(message, 
-                                       SDCARD_WRITE_BUFSIZE, 
-                                       &cardData.data.GPSData,
-                                       cardData.time);
-            break;
-        default:
-            break;
+    logfile_t *log_file = &LogFiles[SDC_ID_ENUM_TO_IDX(cardData.id)];
+
+    if (log_file->bufidx >= SDCARD_WRITE_BUFSIZE - SDCARD_MAX_MSGSIZE) {
+        // flush buffer
+        success = SDCard_Write(&log_file->file, log_file->writebuf, log_file->bufidx);
+        log_file->bufidx = 0;
     }
 
-    if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
-
-    // debugprintf("Write: %s (%dB)", message, (int)bytes_written);
-
-    return SDCard_Write(&LogFiles[fname_idx], message, bytes_written);
+    log_file->bufidx += log_file->sprint(
+            log_file->writebuf + log_file->bufidx, 
+            SDCARD_WRITE_BUFSIZE - log_file->bufidx,
+            &cardData.data,
+            cardData.time);
+    
+    return success;
 }
 
 /**
@@ -175,11 +172,11 @@ FRESULT SDCard_SyncLogFiles() {
 
     FRESULT fresult;
 
-    for (uint32_t i = 0; i < NUM_FILES; i++) {
-        fresult = f_sync(&LogFiles[i]);
+    for (uint32_t i = 0; i < SDC_ID_ENUM_TO_IDX(LARGEST_SDC_ID); i++) {
+        fresult = f_sync(&LogFiles[i].file);
 
         if (fresult != FR_OK) {
-            debugprintf("f_open error %s (%d)\r\n", filenames_list[i], (int)fresult);
+            debugprintf("f_open error %s (%d)\r\n", LogFiles[i].fname, (int)fresult);
             return fresult;
         }
     }
@@ -225,50 +222,51 @@ uint32_t SDCard_FetchDroppedMsgCnt() {
 
 static int SPrint_CAN(char *sdcard_write_buf, 
                       size_t bufsize, 
-                      CANMSG_t *can, 
+                      void *can, 
                       const char *time) {
     return snprintf(sdcard_write_buf, 
                     bufsize, 
-                    "%.9s,%.3" PRIx16 ",%" PRIu8 ",%" PRIx64 "\r\n", 
+                    "%.9s,%.3" PRIx16 ",%" PRIu8 ",%" PRIx64 "\n", 
                     time,
-                    can->id, 
-                    can->payload.idx, 
-                    *(uint64_t *)can->payload.data.bytes);
+                    ((CANMSG_t *)can)->id, 
+                    ((CANMSG_t *)can)->payload.idx, 
+                    *(uint64_t *)(((CANMSG_t *)can)->payload.data.bytes));
 }
 
 static int SPrint_IMU(char *sdcard_write_buf, 
                       size_t bufsize, 
-                      IMUData_t *imu, 
+                      void *imu, 
                       const char *time) {
     return snprintf(sdcard_write_buf, 
                     bufsize, 
                     "%.9s,%" PRId16 ",%" PRId16 ",%" PRId16 
                     ",%" PRId16 ",%" PRId16 ",%" PRId16 
-                    ",%" PRId16 ",%" PRId16 ",%" PRId16 "\r\n",
+                    ",%" PRId16 ",%" PRId16 ",%" PRId16 "\n",
                     time,
-                    imu->accel_x,
-                    imu->accel_y,
-                    imu->accel_z,
-                    imu->mag_x,
-                    imu->mag_y,
-                    imu->mag_z,
-                    imu->gyr_x,
-                    imu->gyr_y,
-                    imu->gyr_z);
+                    ((IMUData_t *)imu)->accel_x,
+                    ((IMUData_t *)imu)->accel_y,
+                    ((IMUData_t *)imu)->accel_z,
+                    ((IMUData_t *)imu)->mag_x,
+                    ((IMUData_t *)imu)->mag_y,
+                    ((IMUData_t *)imu)->mag_z,
+                    ((IMUData_t *)imu)->gyr_x,
+                    ((IMUData_t *)imu)->gyr_y,
+                    ((IMUData_t *)imu)->gyr_z);
 }
 
 static int SPrint_GPS(char *sdcard_write_buf, 
                       size_t bufsize, 
-                      GPSData_t *gps, 
+                      void *gps, 
                       const char *time) {
-    char gps_str[sizeof(GPSData_t) + 1];
-    memcpy(gps_str, gps, sizeof(GPSData_t));
-    gps_str[sizeof(GPSData_t)] = '\0';
+    int len = snprintf(sdcard_write_buf, 
+                          bufsize, 
+                          "%.9s,", time);
+    for (uint32_t i = 0; i < sizeof(GPSData_t); i++) {
+        char letter = ((char *)gps)[i];
+        sdcard_write_buf[i + len] = (letter) ? letter : ' '; // replace NULL with ' '
+    }
+    strcpy(sdcard_write_buf, "\n");
 
-    return snprintf(sdcard_write_buf, 
-                    bufsize, 
-                    "%.9s,%s\r\n",
-                    time,
-                    gps_str);
+    return len + sizeof(GPSData_t) + 1; // +1 for \n character
 }
 

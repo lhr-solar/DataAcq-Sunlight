@@ -17,8 +17,9 @@
 #include "GPS.h"
 
 // writes will be performed in chunks less than/approximately this size
-#define SDCARD_WRITE_BUFSIZE        128
+#define SDCARD_WRITE_BUFSIZE        512
 #define SDCARD_SYNC_PERIOD          50      // sync period (milliseconds)
+#define SDCARD_MAX_MSGSIZE          128     // set this to equal or greater than the max message size 
 #define SDCARD_QUEUESIZE            32
 
 // Error code for SDCard queue empty
@@ -29,9 +30,13 @@ typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 
     // one for gps, one for imu, one for CAN
+    
+    // NOTE: MUST START FROM 0x1
     IMU_SDCard = 0x1,
     GPS_SDCard = 0x2,
-    CAN_SDCard = 0x3
+    CAN_SDCard = 0x3,
+
+    LARGEST_SDC_ID
 } SDCardID_t;
 
 typedef union { 
@@ -69,8 +74,10 @@ FRESULT SDCard_GetStatistics();
 BaseType_t SDCard_PutInQueue(SDCard_t* data);
 
 /**
- * @brief Formats data to be written to SD card based on type of data input. 
- * NOTE: Non-Blocking - Returns error if there is no data 
+ * @brief Formats data and writes to SD card based on type of data input. 
+ *        Data is buffered and written in large chunks. 
+ *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
+ * @note: Non-Blocking - Returns error if there is no data 
  * @param none
  * @return FRESULT FR_OK if ok, FR_DISK_ERR if SD queue is empty, and other errors specified in ff.h
  */
