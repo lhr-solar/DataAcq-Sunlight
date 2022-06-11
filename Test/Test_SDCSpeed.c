@@ -42,7 +42,7 @@ UART_HandleTypeDef huart3;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
 osThreadId_t SDCardTestHandle;
@@ -91,10 +91,10 @@ int main(void)
 #define SDC_TEST_ITERS              10
 
 // Length (in Bytes) of writes during each test
-#define SDC_TEST_LEN                4096
+#define SDC_TEST_LEN                65536
 
 // Length (in Bytes) of each write chunk
-#define SDC_WRITE_SIZE              32
+#define SDC_WRITE_SIZE              2048
 
 /**
  * @brief Put a CRLF+NULL -terminated string into a buffer (numbers that count up)
@@ -104,21 +104,22 @@ int main(void)
  * @param len length of characters to write
  * @param precision length of each 'word/number' to write
  */
-static void PopulateWriteBuf(char *buf, uint32_t len, int precision) {
+static char *PopulateWriteBuf(char *buf, uint32_t len, int precision) {
   static uint32_t prev = 0;
 
   uint32_t bufidx;
   for (bufidx = 0;
-       bufidx < len - 2 - precision;
+       bufidx < len - 1 - precision;
        bufidx += (precision + 1)) {
       sprintf(&buf[bufidx], "%.*" PRIx32 " ", 
           precision, 
-          ((bufidx * prev) / (precision + 1)) % ~(-1 << (4 * precision)));
+          ((bufidx + prev) / (precision + 1)) % ~(-1 << (4 * precision)));
     }
-  for (uint32_t i = bufidx - 1; i < len - 2; i++) buf[bufidx] = '.';
-  strcpy(&buf[len - 2], "\n\r");
+  for (uint32_t i = bufidx - 1; i < len - 1; i++) buf[bufidx] = '.';
+  strcpy(&buf[len - 1], "\n");
 
   prev += bufidx;
+  return buf;
 }
 
 void SDCardTestTask(void *argument) {
@@ -134,15 +135,45 @@ void SDCardTestTask(void *argument) {
   }
   printf("Creating testfile \"test.out\"\n\r");
   FIL testfile;
-  f_open(&testfile, "test.out", FA_CREATE_ALWAYS);
+  f_open(&testfile, "test.out", FA_WRITE | FA_CREATE_ALWAYS);
 
   char WriteBuf[SDC_WRITE_SIZE + 1];
+  FRESULT success;
+
+  TickType_t itticktimes[SDC_TEST_ITERS];
+  TickType_t totalticktime = xTaskGetTickCount();
 
   for (uint32_t i = 0; i < SDC_TEST_ITERS; i++) {
+    itticktimes[i] = xTaskGetTickCount();
     for (uint32_t j = 0; j < (SDC_TEST_LEN / SDC_WRITE_SIZE); j++) {
       PopulateWriteBuf(WriteBuf, SDC_WRITE_SIZE, 2);
-      SDCard_Write(&testfile, WriteBuf, 32);
+      success = SDCard_Write(&testfile, WriteBuf, 32);
+      if (success != FR_OK) {
+        goto DONE;
+      }
     }
+    itticktimes[i] = xTaskGetTickCount() - itticktimes[i];
+  }
+  totalticktime = xTaskGetTickCount() - totalticktime;
+
+  f_sync(&testfile);
+
+  printf("Results:\n\r");
+  printf("Total time for %d*%d=%dB written: %dms\n\r", 
+      SDC_TEST_ITERS, SDC_TEST_LEN, 
+      SDC_TEST_ITERS * SDC_TEST_LEN, 
+      (int)(totalticktime * portTICK_PERIOD_MS));
+  printf("Average time per iteration (%dB total write length, %d iterations): %dms\n\r", 
+      SDC_TEST_LEN, 
+      SDC_TEST_ITERS, 
+      (int)((totalticktime + (SDC_TEST_ITERS / 2)) / SDC_TEST_ITERS));
+  printf("Average write times (%dB per write chunk, %d writes):\n\r", 
+      SDC_WRITE_SIZE, 
+      SDC_TEST_LEN / SDC_WRITE_SIZE);
+  for (int i = 0; i < SDC_TEST_ITERS; i++) {
+    printf("%3d: %dus\n\r", 
+        i + 1,
+        (int)((1000*(itticktimes[i]+((SDC_TEST_LEN/SDC_WRITE_SIZE)/2)))/(SDC_TEST_LEN/SDC_WRITE_SIZE)));
   }
 
   DONE:

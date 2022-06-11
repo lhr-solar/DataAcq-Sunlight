@@ -49,7 +49,7 @@ FRESULT SDCard_Init() {
         fresult = f_open(&LogFiles[i], filenames_list[i], FA_WRITE | FA_OPEN_APPEND);
 
         if (fresult != FR_OK) {
-            debugprintf("f_open error %s (%d)\r\n", filesnames_list[i], (int)fresult);
+            debugprintf("f_open error %s (%d)\r\n", filenames_list[i], (int)fresult);
         }
     }
 
@@ -171,7 +171,7 @@ FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len) {
         return fresult;
     }
 
-    fresult = f_sync(fp);
+    // fresult = f_sync(fp);
     return fresult;
 }
 
