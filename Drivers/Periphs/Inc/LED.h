@@ -13,13 +13,21 @@
 
 #include "stm32f4xx.h"
 
-typedef enum {HEARTBEAT = GPIO_PIN_7, 
-            BPS         = GPIO_PIN_8, 
-            DASHBOARD   = GPIO_PIN_9, 
-            MOTOR       = GPIO_PIN_10, 
-            MPPT0       = GPIO_PIN_11, 
-            MPPT1       = GPIO_PIN_12, 
-            ARRAY       = GPIO_PIN_13
+typedef enum {
+    // LED labels on the pcb
+    HEARTBEAT   = GPIO_PIN_7, 
+    BPS         = GPIO_PIN_8, 
+    DASHBOARD   = GPIO_PIN_9, 
+    MOTOR       = GPIO_PIN_10, 
+    MPPT0       = GPIO_PIN_11, 
+    MPPT1       = GPIO_PIN_12, 
+    ARRAY       = GPIO_PIN_13,
+
+    // Actual uses/definitions for each LED
+    DR_TASK     = BPS,          // data reading task led
+    DL_TASK     = DASHBOARD,    // data logging task led
+    BC_TASK     = MOTOR,        // broadcasting task led
+    SDC_SYNC    = ARRAY
 } LED_t;
 
 /** LED Turn On

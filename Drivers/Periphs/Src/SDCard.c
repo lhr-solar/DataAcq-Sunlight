@@ -16,9 +16,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define SDCARD_WRITE_BUFSIZE        128
-#define SDCARD_QUEUESIZE            32
-
 static FATFS FatFs;
 static QueueHandle_t SDCardQ; // information will be put on this
 enum filenames_idx {CAN_FNAME = 0, IMU_FNAME, GPS_FNAME, NUM_FILES};
@@ -110,10 +107,8 @@ FRESULT SDCard_Sort_Write_Data(){
     uint8_t fname_idx = 0;
     uint16_t bytes_written = -1;
 
-    if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return FR_DISK_ERR;
-    #ifdef DEBUGGINGMODE
-        LED_Toggle(ARRAY);
-    #endif
+    if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return SDC_QUEUE_EMPTY;
+
     // check ID of qdata for type of message, adjust message once we know what kind of message we are dealing with
     switch (cardData.id) {
         case CAN_SDCard:
@@ -143,21 +138,18 @@ FRESULT SDCard_Sort_Write_Data(){
 
     if (bytes_written < 0) return FR_DISK_ERR;  // note: the error value is arbitrary
 
-    debugprintf("Write: %s", message);
+    // debugprintf("Write: %s (%dB)", message, (int)bytes_written);
 
     return SDCard_Write(&LogFiles[fname_idx], message, bytes_written);
 }
 
 /**
- * @brief Writes data to SD Card (Appends).
+ * @brief Writes data to SD Card (Appends). 
+ *        !!! DOES NOT SYNC DATA !!! You must call f_sync() or f_close() to save.
  * @param fp pointer to an initialized/opened FIL struct
  * @param buf buffer to write to SD Card
  * @param len length to write
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
- * 
- * TODO: optimize this; the open and close are a huge bottleneck
- * TODO: move open to initialization; replace close() with sync()
- * TODO: see if we need to buffer writes to increase speed
  */
 FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len) {
     FRESULT fresult;
@@ -168,10 +160,32 @@ FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len) {
     if (fresult != FR_OK || len != bytes_written) {
         debugprintf("f_write error (%i)\r\n", (int)fresult);
         f_close(fp);
-        return fresult;
     }
 
-    // fresult = f_sync(fp);
+    return fresult;
+}
+
+/**
+ * @brief Sync all open log files
+ * 
+ * @return FRESULT FR_OK if ok, or errors in ff.h
+ */
+FRESULT SDCard_SyncLogFiles() {
+    LED_On(SDC_SYNC);
+
+    FRESULT fresult;
+
+    for (uint32_t i = 0; i < NUM_FILES; i++) {
+        fresult = f_sync(&LogFiles[i]);
+
+        if (fresult != FR_OK) {
+            debugprintf("f_open error %s (%d)\r\n", filenames_list[i], (int)fresult);
+            return fresult;
+        }
+    }
+
+    LED_Off(SDC_SYNC);
+
     return fresult;
 }
 

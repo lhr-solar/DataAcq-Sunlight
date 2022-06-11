@@ -6,9 +6,10 @@
  * @brief Configuration parameters for Sunlight
  */
 
-// DEBUG configuration
+// DEBUG Configuration
 #define DEBUGGINGMODE               1       // set to 1 to enable debug statements, set to 0 or comment out to disable
 #define CAN_LOOPBACK                0       // set to 1 to test CAN interface in loopback mode
+#define HEARTBEAT_PERIOD            200     // period of heartbeat led (in # OS ticks)
 
 // IP Address Configuration
 #define IP4_CLIENT_ADDRESS          169, 254, 48, 100

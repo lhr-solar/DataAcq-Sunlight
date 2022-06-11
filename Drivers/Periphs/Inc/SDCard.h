@@ -16,6 +16,15 @@
 #include "IMU.h"
 #include "GPS.h"
 
+// writes will be performed in chunks less than/approximately this size
+#define SDCARD_WRITE_BUFSIZE        128
+#define SDCARD_SYNC_PERIOD          50      // sync period (milliseconds)
+#define SDCARD_QUEUESIZE            32
+
+// Error code for SDCard queue empty
+// set to not conflict with FRESULT codes
+#define SDC_QUEUE_EMPTY                 42
+
 typedef enum{
     // this is where you have different types for the different messages that you might have 
     // for instance one for can 
@@ -36,7 +45,6 @@ typedef struct {
     SDCardID_t id;
 	SDCardData_t data;
 } SDCard_t;
-
 
 /**
  * @brief Mounts the drive and intializes the queue
@@ -62,9 +70,9 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data);
 
 /**
  * @brief Formats data to be written to SD card based on type of data input. 
- * NOTE: Blocking - Waits for data to be in queue before writing
+ * NOTE: Non-Blocking - Returns error if there is no data 
  * @param none
- * @return FRESULT FR_OK if ok and other errors specified in ff.h
+ * @return FRESULT FR_OK if ok, FR_DISK_ERR if SD queue is empty, and other errors specified in ff.h
  */
 FRESULT SDCard_Sort_Write_Data();
 
@@ -76,6 +84,13 @@ FRESULT SDCard_Sort_Write_Data();
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
 FRESULT SDCard_Write(FIL *fp, const char *buf, size_t len);
+
+/**
+ * @brief Sync all open log files
+ * 
+ * @return FRESULT FR_OK if ok, or errors in ff.h
+ */
+FRESULT SDCard_SyncLogFiles();
 
 /**
  * @brief Unmounts the drive

@@ -28,6 +28,7 @@
 #include "Tasks.h"
 #include "radio.h"
 #include "CANBus.h"
+#include "LED.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -59,11 +60,11 @@ SPI_HandleTypeDef hspi5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityLow,
+/* Starting task handles */
+osThreadId_t heartbeatTaskHandle;
+const osThreadAttr_t heartbeatTask_attributes = {
+  .name = "Heartbeat Task",
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
 osThreadId_t initTaskHandle;
@@ -85,7 +86,7 @@ static void MX_I2C2_Init(void);
 static void MX_SPI5_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-void StartDefaultTask(void *argument);
+void HeartbeatTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -155,9 +156,9 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
+  heartbeatTaskHandle = osThreadNew(HeartbeatTask, NULL, &heartbeatTask_attributes);
   initTaskHandle = osThreadNew(InitializationTask, NULL, &initTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
@@ -498,22 +499,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+// Heartbeat
+void HeartbeatTask(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    LED_Toggle(HEARTBEAT);
+    osDelay(HEARTBEAT_PERIOD);
   }
-  /* USER CODE END 5 */
 }
 
  /**

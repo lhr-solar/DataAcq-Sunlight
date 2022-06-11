@@ -17,15 +17,27 @@
 #include "LED.h"
 #include <stdio.h>
 
-#define MOUNTCYCLES 500
+#define MOUNTCYCLES 100
 
 void DataLoggingTask(void* argument){
-    int cntr = 0;
+    FRESULT success;
+    TickType_t ticks = xTaskGetTickCount();
 
     while (1){
-        printf("b");
+        success = SDCard_Sort_Write_Data();
+        if (success == FR_OK) {
+            
+        }
+        else if (success == SDC_QUEUE_EMPTY) {
+            taskYIELD();
+        }
+        else {
+            debugprintf("SDC write error\n\r");
+        }
 
-        if (SDCard_Sort_Write_Data() == FR_OK) cntr++; //increment counter if data was written
-        else debugprintf("SDC write error\n\r");
+        if ((xTaskGetTickCount() - (ticks / portTICK_PERIOD_MS)) >= SDCARD_SYNC_PERIOD) {
+            SDCard_SyncLogFiles();
+            ticks = xTaskGetTickCount();
+        }
     }
 }

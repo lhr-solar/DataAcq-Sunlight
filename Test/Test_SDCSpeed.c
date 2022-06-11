@@ -147,7 +147,7 @@ void SDCardTestTask(void *argument) {
     itticktimes[i] = xTaskGetTickCount();
     for (uint32_t j = 0; j < (SDC_TEST_LEN / SDC_WRITE_SIZE); j++) {
       PopulateWriteBuf(WriteBuf, SDC_WRITE_SIZE, 2);
-      success = SDCard_Write(&testfile, WriteBuf, 32);
+      success = SDCard_Write(&testfile, WriteBuf, SDC_WRITE_SIZE);
       if (success != FR_OK) {
         goto DONE;
       }

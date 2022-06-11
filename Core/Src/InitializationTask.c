@@ -18,20 +18,20 @@
 osThreadId_t DataLoggingTaskHandle;
 osThreadAttr_t DataLoggingTask_attributes = {
   .name = "Data Logging Task",
-  .priority = (osPriority_t) osPriorityNormal, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024
 };
 osThreadId_t DataReadingTaskHandle;
 osThreadAttr_t DataReadingTask_attributes = {
   .name = "Data Reading Task",
-  .priority = (osPriority_t) osPriorityNormal, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024
 };
 osThreadId_t BroadcastingTaskHandle;
 osThreadAttr_t BroadcastingTask_attributes = {
   .name = "Broadcasting Task",
-  .priority = (osPriority_t) osPriorityBelowNormal, //Will determine priorities later
-  .stack_size = 1024 //arbitrary value might need to make it larger or smaller
+  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 1024
 };
 
 void InitializationTask(void *argument) {
