@@ -39,7 +39,7 @@ static logfile_t LogFiles[SDC_ID_ENUM_TO_IDX(LARGEST_SDC_ID)] = {
     [SDC_ID_ENUM_TO_IDX(CAN_SDCard)] = {.fname = "can.csv", .sprint = SPrint_CAN, .bufidx = 0}
 };
 
-uint32_t SDCDroppedMessages = 0;    // for debugging purposes
+static uint32_t SDCDroppedMessages = 0;    // for debugging purposes
 
 
 
@@ -112,7 +112,7 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data) {
  *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
  * @note: Non-Blocking - Returns error if there is no data 
  * @param none
- * @return FRESULT FR_OK if ok, FR_DISK_ERR if SD queue is empty, and other errors specified in ff.h
+ * @return FRESULT FR_OK if ok, SD_QUEUE_EMPTY if queue empty, and other errors specified in ff.h 
  */
 FRESULT SDCard_Sort_Write_Data(){
     // check if data from queue is from imu, gps, or can.

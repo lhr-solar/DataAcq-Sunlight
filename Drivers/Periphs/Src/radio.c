@@ -17,7 +17,7 @@
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
 static int servsocket;
-uint32_t EthDroppedMessages = 0;    // for debugging purposes
+static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking

@@ -64,7 +64,7 @@ UART_HandleTypeDef huart3;
 osThreadId_t heartbeatTaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
   .name = "Heartbeat Task",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
 osThreadId_t initTaskHandle;

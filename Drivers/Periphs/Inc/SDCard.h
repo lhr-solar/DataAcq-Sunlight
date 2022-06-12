@@ -19,7 +19,7 @@
 // writes will be performed in chunks less than/approximately this size
 #define SDCARD_WRITE_BUFSIZE        512
 #define SDCARD_SYNC_PERIOD          50      // sync period (milliseconds)
-#define SDCARD_MAX_MSGSIZE          128     // set this to equal or greater than the max message size 
+#define SDCARD_MAX_MSGSIZE          (sizeof(SDCard_t) + 11) // 11 is a result of length 9 time string + '\n' + '\0'
 #define SDCARD_QUEUESIZE            32
 
 // Error code for SDCard queue empty
@@ -79,7 +79,7 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data);
  *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
  * @note: Non-Blocking - Returns error if there is no data 
  * @param none
- * @return FRESULT FR_OK if ok, FR_DISK_ERR if SD queue is empty, and other errors specified in ff.h
+ * @return FRESULT FR_OK if ok, SD_QUEUE_EMPTY if queue empty, and other errors specified in ff.h 
  */
 FRESULT SDCard_Sort_Write_Data();
 

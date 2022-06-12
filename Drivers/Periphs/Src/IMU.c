@@ -95,7 +95,7 @@ This initialization loads the IMU with hard coded calibration data so calibratio
 // Just used to wait for the IMU to power on.
 static void IMU_WaitForPower() {
     uint8_t config[2];
-    HAL_StatusTypeDef error __attribute__ ((unused));
+    HAL_StatusTypeDef error __unused;
     // Wait for the chip to power on
     // The CHIP_ID register (0x00) is set to a fixed value of 0xA0
     config[0] = 0;
@@ -103,7 +103,7 @@ static void IMU_WaitForPower() {
         READ(CHIP_ID, config, 1, error);
     }
     
-    debugprintf("Power Received\n\r");
+    debugprintf("IMU Power Received\n\r");
     
 }
 

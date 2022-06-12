@@ -17,8 +17,6 @@
 #include "LED.h"
 #include <stdio.h>
 
-#define MOUNTCYCLES 100
-
 void DataLoggingTask(void* argument){
     FRESULT success;
     TickType_t ticks = xTaskGetTickCount();

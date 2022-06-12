@@ -20,7 +20,7 @@ static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
-uint32_t CANDroppedMessages = 0;   // for debugging purposes
+static uint32_t CANDroppedMessages = 0;   // for debugging purposes
 
 /**
  * @brief Lookup table containing the lengths (in bytes) of corresponding 

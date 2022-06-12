@@ -30,7 +30,7 @@ osThreadAttr_t DataReadingTask_attributes = {
 osThreadId_t BroadcastingTaskHandle;
 osThreadAttr_t BroadcastingTask_attributes = {
   .name = "Broadcasting Task",
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 1024
 };
 

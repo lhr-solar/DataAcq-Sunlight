@@ -35,7 +35,7 @@ char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
 static uint8_t GPSRxByte;
 static QueueHandle_t GPSRxQueue;
-uint32_t GPSDroppedMessages = 0;    // for debugging purposes
+static uint32_t GPSDroppedMessages = 0;    // for debugging purposes
 
 /** GPSInit
  * @brief Initialize GPS, configure GPS
