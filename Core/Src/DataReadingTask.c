@@ -1,58 +1,73 @@
+/**
+ * @file DataReadingTask.c
+ * 
+ * Task in charge of collecting data from sensors (IMU, GPS) and CAN.
+ * Data is added to the logging and broadcasting queues.
+ * @note Assumes that all lower level functions are initialized in main.c  
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ * TODO: error check
+ */
+
 #include "Tasks.h"
 #include "IMU.h"
 #include "GPS.h"
 #include "CANBus.h"
 #include "SDCard.h"
 #include "radio.h"
-
-//This function reads from IMU, CAN, and GPS data structures, copies their current values, and sends them both through ethernet 
-// (and to be saved on SD card when SD card code is finished).
+#include "config.h"
+#include "LED.h"
+#include <string.h>
+#include <stdio.h>
 
 void DataReadingTask(void* argument){
-    while(1) {
-        CANMSG_t CANData;
-        IMUData_t IMUData;
-        GPSData_t GPSData;
-        SDCard_t SDCardData;
-        EthernetMSG_t EthMessage;   
+    
+    CANMSG_t CANData;
+    IMUData_t IMUData;
+    GPSData_t GPSData;
+    SDCard_t SDCardData;
+    EthernetMSG_t EthMessage;  
 
+    while(1) {
+        
         //Send GPS data and log in SD card
-        if (GPS_ReadData(&GPSData) != pdFALSE) {
+        if (GPS_ReadData(&GPSData) == pdTRUE) {
             memcpy(SDCardData.time, GPSData.time, sizeof(GPSData.time)); //assign timestamp
             EthMessage.id= GPS;
             EthMessage.length = sizeof(GPSData);
             EthMessage.data.GPSData = GPSData;
-            Ethernet_PutInQueue(&EthMessage);// TODO: Add error handling on Ethernet_PutInQueue()
+            Ethernet_PutInQueue(&EthMessage);
 
             SDCardData.id = GPS_SDCard;
             SDCardData.data.GPSData = GPSData;
-            SDCard_PutInQueue(&SDCardData); // TODO: Add error handling 
+            SDCard_PutInQueue(&SDCardData);
         }
-        else {} // TODO: error handling for GPS_ReadData()
+        else {}
 
         // Send IMU data and log in SD card
-        if (IMU_GetMeasurements(&IMUData) != HAL_ERROR){
+        if (IMU_GetMeasurements(&IMUData) == HAL_OK){
             EthMessage.id = IMU;
             EthMessage.length = sizeof(IMUData); 
             EthMessage.data.IMUData = IMUData;
-            Ethernet_PutInQueue(&EthMessage);// TODO: Add error handling on Ethernet_PutInQueue()
+            Ethernet_PutInQueue(&EthMessage);
 
             SDCardData.id = IMU_SDCard;
             SDCardData.data.IMUData = IMUData;
-            SDCard_PutInQueue(&SDCardData); // TODO: add error handling    
+            SDCard_PutInQueue(&SDCardData);
         } 
-        else {} // TODO: error handling for IMU_GetMeasurements()
+        else {}
 
-        // retrive and send as many CAN EthMessages as possible
-        while (CAN_FetchMessage(&CANData) != pdFALSE) { 
+        // retreive and send as many CAN EthMessages as possible
+        while (CAN_FetchMessage(&CANData) == pdTRUE) { 
             EthMessage.id= CAN;
             EthMessage.length = sizeof(CANData);
             EthMessage.data.CANData = CANData;
-            Ethernet_PutInQueue(&EthMessage); // TODO: Add error handling on Ethernet_PutInQueue()
+            Ethernet_PutInQueue(&EthMessage);
             
             SDCardData.id = CAN_SDCard;
             SDCardData.data.CANData = CANData;
-            SDCard_PutInQueue(&SDCardData); // TODO: add error handling
+            SDCard_PutInQueue(&SDCardData);
         }
     }
 }

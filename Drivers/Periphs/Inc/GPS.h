@@ -1,17 +1,21 @@
+/**
+ * @file GPS.h
+ * @brief GPS API - PA6H
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #ifndef GPS_H
 #define GPS_H
 
-#include <stdlib.h>
-#include <stdint.h>
+#include "stm32f4xx.h"
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "main.h"
-#include <string.h>
+#include <stdint.h>
 
-#define GPS_RX_QUEUE_SIZE 8
-
-#define GPS_BUFSIZE     100
-extern char GPSRxDataBuf[GPS_BUFSIZE];
+#define GPS_RX_QUEUE_SIZE   8
+#define GPS_BUFSIZE         100
 
 typedef struct{
     char time[9]; //2 hr, 2 min, 2 sec, 3 ms
@@ -40,5 +44,12 @@ ErrorStatus GPS_Init();
  * @return pdTRUE if GPS message was successfully fetched from queue, pdFALSE if queue is empty
  */
 BaseType_t GPS_ReadData(GPSData_t *Data);
+
+/**
+ * @brief Fetch number of dropped GPS messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t GPS_FetchDroppedMsgCnt();
 
 #endif

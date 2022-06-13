@@ -1,25 +1,41 @@
+/**
+ * @file GPS.c
+ * @brief GPS API - PA6H
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #include "GPS.h"
-#include <stdio.h>
+#include "main.h"
 #include "cmsis_os.h"
+#include "config.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define GPS_BUFSIZE     100
-#define NAME            0
-#define TIME            1
-#define STATUS          2
-#define LATITUDE        3
-#define NS              4
-#define LONGITUDE       5
-#define EW              6
-#define SPEEDINKNOTS    7
-#define COURSEINDEGREES 8
-#define DATE            9
-#define MAGNETICVAR     10    
+
+enum GPSFields {
+    NAME = 0,
+    TIME,
+    STATUS,
+    LATITUDE,
+    NS,
+    LONGITUDE,
+    EW,
+    SPEEDINKNOTS,
+    COURSEINDEGREES,
+    DATE,
+    MAGNETICVAR,
+    NUMFIELDS
+};
 
 char GPSRxDataBuf[GPS_BUFSIZE];
 static uint8_t GPSBufIdx = 0;
 static uint8_t GPSRxByte;
 static QueueHandle_t GPSRxQueue;
-uint32_t GPSDroppedMessages = 0;    // for debugging purposes
+static uint32_t GPSDroppedMessages = 0;    // for debugging purposes
 
 /** GPSInit
  * @brief Initialize GPS, configure GPS
@@ -36,7 +52,7 @@ ErrorStatus GPS_Init(){
      * The checksum is the XOR of every character between the '$' and the '*':
      * Ex. 0x32 = 'P' ^ 'M' ^ 'T' ^ 'K' ^ '1' ^ '0' ^ '1'
      */
-    char *init_commands[] = {
+    const char * const init_commands[] = {
         "PMTK104", //This starts in cold start
         "PMTK220,1000", //This sends data every 1 second
         "PMTK251,9600", //This sets baud rate to 9600 b/s
@@ -61,7 +77,8 @@ ErrorStatus GPS_Init(){
         memcpy(&command_buf[1], init_commands[i], len);
         memcpy(&command_buf[len + 1], command_ending, sizeof(command_ending));
         // send
-        printf("%s", command_buf);
+        debugprintf("%s", command_buf);
+
         if (HAL_UART_Transmit(&huart1, (uint8_t *)command_buf, len + 6, 100) != HAL_OK) return ERROR;
         osDelay(500);
     }
@@ -79,18 +96,28 @@ BaseType_t GPS_ReadData(GPSData_t *Data){
     return xQueueReceive(GPSRxQueue, Data, (TickType_t)0);
 }
 
+/**
+ * @brief Fetch number of dropped GPS messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t GPS_FetchDroppedMsgCnt() {
+    return GPSDroppedMessages;
+}
+
 // Callback for a completed UART Rx transfer.
 // Once the Rx transfer is complete, we can parse the input and 
 // push to the queue.
 static void GPS_Receive() {
     GPSData_t GPSData;
     memset(&GPSData, 0, sizeof(GPSData));
+    debugprintf("recieved:%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         uint16_t idx = 0;
         uint8_t field = 0;
         while (GPSRxDataBuf[idx] != '\0'){
             int structidx = 0;
-            while (GPSRxDataBuf[idx] != ','){
+            while (GPSRxDataBuf[idx] != ',' && field < NUMFIELDS){
                 switch(field){
                     case NAME:
                     break;

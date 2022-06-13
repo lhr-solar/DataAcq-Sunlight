@@ -1,10 +1,23 @@
+/**
+ * @file radio.c
+ * @brief Ethernet API
+ * 
+ * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
+ * 
+ */
+
 #include "radio.h"
 #include "sockets.h"
+#include "lwip.h"
+#include "main.h"
 #include "config.h"
+#include "LED.h"
+#include <string.h>
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
 static int servsocket;
+static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking
@@ -14,9 +27,12 @@ static void Ethernet_ConnectToServer() {
         do {
             servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         } while (servsocket < 0);
-        printf("servsocket %d\n", servsocket);
+
+        debugprintf("servsocket %d\n", servsocket);
+
         while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
-        printf("done\n");
+
+        debugprintf("done\n");
     }
 }
 
@@ -30,7 +46,6 @@ static void Ethernet_ConnectToServer() {
  */
 ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
-    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
     servsocket = -1;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
@@ -44,6 +59,14 @@ ErrorStatus Ethernet_Init() {
     return SUCCESS;
 }
 
+/** Ethernet Queue Initialize
+ * @brief Initialize just the ethernet queue. 
+ *        Must be called before Ethernet_PutInQueue()
+ */
+void Ethernet_QueueInit() {
+    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
+}
+
 /** Ethernet PutInQueue
  * @brief Put data in Ethernet Queue
  * 
@@ -51,7 +74,11 @@ ErrorStatus Ethernet_Init() {
  * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
  */
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
-    return xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
+    BaseType_t success = xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
+    if (success == errQUEUE_FULL) {
+        EthDroppedMessages++;
+    }
+    return success;
 }
 
 /** Ethernet Send Message
@@ -68,6 +95,9 @@ BaseType_t Ethernet_SendMessage() {
     if (servsocket >= 0) {
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+        #if DEBUGGINGMODE
+            LED_Toggle(BPS);
+        #endif
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
 
@@ -79,9 +109,11 @@ BaseType_t Ethernet_SendMessage() {
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
         if (bytes_sent < 0) {   // send failed
-            bytes_sent = 0;     // reset bytes_sent to 0 to signify error
-            Ethernet_ConnectToServer(); // reconnect to server if send failed
+            servsocket = -1;    // reset servsocket to -1 to signify error 
         }
+    }
+    else {
+        Ethernet_ConnectToServer(); // reconnect to server if send previously failed
     }
     return pdTRUE;
 }
@@ -91,4 +123,13 @@ BaseType_t Ethernet_SendMessage() {
  */
 void Ethernet_EndConnection(){
     if (servsocket >= 0) lwip_close(servsocket);
+}
+
+/**
+ * @brief Fetch number of dropped Ethernet messages due to queue overfilling.
+ *        Included for debug purposes
+ * @return Number of dropped messages
+ */
+uint32_t Ethernet_FetchDroppedMsgCnt() {
+    return EthDroppedMessages;
 }

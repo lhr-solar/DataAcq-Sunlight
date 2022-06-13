@@ -19,7 +19,7 @@ const osThreadAttr_t defaultTask_attributes = {
 osThreadId_t GPSTestHandle;
 const osThreadAttr_t GPSTest_attributes = {
   .name = "GPSTest",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh,
   .stack_size = 1024
 };
 
@@ -51,7 +51,6 @@ int main(void)
 void GPSTest(void* argument){
     GPSData_t Data;
 
-    GPS_StartReading();
     if (GPS_Init(&huart1) == ERROR) printf("ERROR\n\r");
     
     printf("GPS initialized\n\r");
