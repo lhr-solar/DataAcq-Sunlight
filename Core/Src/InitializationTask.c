@@ -8,6 +8,7 @@
 #include "Tasks.h"
 #include "radio.h"
 #include "CANBus.h"
+#include "LED.h"
 
 #if CAN_LOOPBACK
     #define CURR_CAN_MODE       CAN_MODE_LOOPBACK
@@ -35,27 +36,39 @@ osThreadAttr_t BroadcastingTask_attributes = {
 };
 
 void InitializationTask(void *argument) {
+    bool sd_init_success = true;
+
     // Initialize peripherals
     osDelay(1000);
 
     Ethernet_QueueInit();
     debugprintf("Ethernet Queue Initialized\n\r");   
 
-    if (SDCard_Init() != FR_OK);
+    if (SDCard_Init() != FR_OK) {
+        sd_init_success = false;
+    }
     debugprintf("SD Card Initialized\n\r");  
 
-    if (CAN_Init(CURR_CAN_MODE) != HAL_OK);
-    debugprintf("CAN Initialized\n\r");  
+    if (CAN_Init(CURR_CAN_MODE) != HAL_OK) {
+        LED_On(INIT_FAIL);
+    }
+    debugprintf("CAN Initialized\n\r");
 
-    if (GPS_Init() == ERROR);
+    if (GPS_Init() == ERROR) {
+        LED_On(INIT_FAIL);
+    }
     debugprintf("GPS Initialized\n\r");
 
-    if (IMU_Init() != HAL_OK);
+    if (IMU_Init() != HAL_OK) {
+        LED_On(INIT_FAIL);
+    }
     debugprintf("IMU Initialized\n\r");
 
     // Create tasks
+    if (sd_init_success) {
+        DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
+    }
     DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
-    DataLoggingTaskHandle = osThreadNew(DataLoggingTask, NULL, &DataLoggingTask_attributes);
     BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
 
     // Exit

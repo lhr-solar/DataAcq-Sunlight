@@ -64,7 +64,7 @@ UART_HandleTypeDef huart3;
 osThreadId_t heartbeatTaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
   .name = "Heartbeat Task",
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
 osThreadId_t initTaskHandle;
@@ -505,7 +505,7 @@ void HeartbeatTask(void *argument)
   for(;;)
   {
     LED_Toggle(HEARTBEAT);
-    osDelay(HEARTBEAT_PERIOD);
+    osDelay(HEARTBEAT_PERIOD / 2);
   }
 }
 

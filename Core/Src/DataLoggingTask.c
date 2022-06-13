@@ -31,6 +31,7 @@ void DataLoggingTask(void* argument){
         }
         else {
             debugprintf("SDC write error\n\r");
+            vTaskSuspend(NULL);
         }
 
         if ((xTaskGetTickCount() - (ticks / portTICK_PERIOD_MS)) >= SDCARD_SYNC_PERIOD) {

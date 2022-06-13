@@ -27,6 +27,7 @@ typedef enum {
     DR_TASK     = BPS,          // data reading task led
     DL_TASK     = DASHBOARD,    // data logging task led
     BC_TASK     = MOTOR,        // broadcasting task led
+    INIT_FAIL   = MPPT0,        // turns on if CAN/GPS/IMU initialization fails
     SDC_SYNC    = ARRAY
 } LED_t;
 
