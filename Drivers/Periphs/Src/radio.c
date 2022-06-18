@@ -30,19 +30,20 @@ static void Ethernet_ConnectToServer() {
 
         debugprintf("servsocket %d\n\r", servsocket);
 
-        int connect_status = -1, connect_cnt = 0;
+        int connect_status = -1;
         do {
-            connect_cnt++;
+            // connect_cnt++;
             connect_status = lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr));
 
-            if (connect_cnt == CONNECT_TRIES) {
-                connect_cnt = 0;
-                osDelay(200);
-            }
+            // if (connect_cnt == CONNECT_TRIES) {
+            //     connect_cnt = 0;
+            //     osDelay(200);
+            // }
         } while (connect_status < 0);
 
         debugprintf("done\n\r");
     }
+    LED_On(ETH_CONNECT);
 }
 
 /** Ethernet Initialize
@@ -64,7 +65,6 @@ ErrorStatus Ethernet_Init() {
     sLocalAddr.sin_port = htons(SERVER_PORT);
 
     Ethernet_ConnectToServer();
-    LED_On(ETH_CONNECT);
 
     return SUCCESS;
 }
@@ -93,7 +93,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
- *        wait until there is data in the queue to send it across
+ *        wait until there is a valid connection to the server
  * 
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
@@ -107,7 +107,6 @@ BaseType_t Ethernet_SendMessage() {
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
-
         // copy data from dataptr into raw ethernet message array
         // the struct word-aligns the first two bytes (id and length), so this is necessary
         memcpy(&raw_ethmsg[2],
@@ -123,7 +122,7 @@ BaseType_t Ethernet_SendMessage() {
     }
     else {
         Ethernet_ConnectToServer(); // reconnect to server if send previously failed
-        LED_On(ETH_CONNECT);
+        
     }
     return pdTRUE;
 }
@@ -133,6 +132,7 @@ BaseType_t Ethernet_SendMessage() {
  */
 void Ethernet_EndConnection(){
     if (servsocket >= 0) lwip_close(servsocket);
+    servsocket = -1;
     debugprintf("Ethernet Disconnected\n\r");
     LED_Off(ETH_CONNECT);
 }
