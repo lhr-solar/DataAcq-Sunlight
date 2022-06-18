@@ -68,6 +68,7 @@ static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx
         CANDroppedMessages++;
         return HAL_ERROR;
     }
+    debugprintf("CANID: %d, CANidx: %d, CAN Payload: %d", canmessage.id, canmessage.payload.idx, canmessage.payload.data);
     return HAL_OK;
 }
 
