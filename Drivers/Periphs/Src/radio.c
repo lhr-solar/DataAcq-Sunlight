@@ -30,7 +30,16 @@ static void Ethernet_ConnectToServer() {
 
         debugprintf("servsocket %d\n", servsocket);
 
-        while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
+        int connect_status = -1, connect_cnt = 0;
+        do {
+            connect_cnt++;
+            connect_status = lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr));
+
+            if (connect_cnt == CONNECT_TRIES) {
+                connect_cnt = 0;
+                osDelay(200);
+            }
+        } while (connect_status < 0);
 
         debugprintf("done\n");
     }

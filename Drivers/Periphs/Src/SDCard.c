@@ -226,11 +226,12 @@ static int SPrint_CAN(char *sdcard_write_buf,
                       const char *time) {
     return snprintf(sdcard_write_buf, 
                     bufsize, 
-                    "%.9s,%.3" PRIx16 ",%" PRIu8 ",%" PRIx64 "\n", 
+                    "%.9s,%03" PRIx16 ",%" PRIu16 ",%08" PRIx32 "%08" PRIx32 "\n", 
                     time,
                     ((CANMSG_t *)can)->id, 
                     ((CANMSG_t *)can)->payload.idx, 
-                    *(uint64_t *)(((CANMSG_t *)can)->payload.data.bytes));
+                    *(uint32_t *)&((CANMSG_t *)can)->payload.data.bytes[4],
+                    *(uint32_t *)((CANMSG_t *)can)->payload.data.bytes);
 }
 
 static int SPrint_IMU(char *sdcard_write_buf, 
