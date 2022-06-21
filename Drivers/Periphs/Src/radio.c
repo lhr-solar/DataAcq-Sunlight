@@ -18,31 +18,25 @@ static QueueHandle_t EthernetQ; // information will be put on this and all you d
 static struct sockaddr_in sLocalAddr;
 static int servsocket;
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
+extern int errno;
 
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking
  */
 static void Ethernet_ConnectToServer() {
-    if (servsocket < 0) {
+    while (servsocket < 0) {
         do {
             servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         } while (servsocket < 0);
 
         debugprintf("servsocket %d\n\r", servsocket);
 
-        int connect_status = -1;
-        do {
-            // connect_cnt++;
-            connect_status = lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr));
-
-            // if (connect_cnt == CONNECT_TRIES) {
-            //     connect_cnt = 0;
-            //     osDelay(200);
-            // }
-        } while (connect_status < 0);
-
-        debugprintf("done\n\r");
+        if (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0) {
+            lwip_close(servsocket);
+            servsocket = -1;
+        }
     }
+    debugprintf("Ethernet connected.\n\r");
     LED_On(ETH_CONNECT);
 }
 
@@ -103,6 +97,11 @@ BaseType_t Ethernet_SendMessage() {
 
     int bytes_sent = 0;
     if (servsocket >= 0) {
+        if (errno != 0) {
+            lwip_close(servsocket);
+            servsocket = -1;
+        }
+
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
         raw_ethmsg[0] = eth_rx.id;
@@ -113,16 +112,16 @@ BaseType_t Ethernet_SendMessage() {
                &eth_rx.data, 
                eth_rx.length);
 
-        bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
-        if (bytes_sent < 0) {   // send failed
+        bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, MSG_DONTWAIT);
+        if (bytes_sent < 0 || errno != 0) {   // send failed
+            lwip_close(servsocket);
             servsocket = -1;    // reset servsocket to -1 to signify error 
-            debugprintf("Ethernet Disconnected\n\r");
-            LED_Off(ETH_CONNECT);
         }
     }
     else {
+        debugprintf("Ethernet Disconnected\n\r");
+        LED_Off(ETH_CONNECT);
         Ethernet_ConnectToServer(); // reconnect to server if send previously failed
-        
     }
     return pdTRUE;
 }
