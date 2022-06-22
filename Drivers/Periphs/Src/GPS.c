@@ -122,6 +122,7 @@ static void GPS_Receive() {
                     case NAME:
                     break;
                     case TIME:
+                        if (GPSRxDataBuf[idx] == '.') break;
                         GPSData.time[structidx] = GPSRxDataBuf[idx];
                         structidx++;
                         break;
