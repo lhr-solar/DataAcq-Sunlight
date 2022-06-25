@@ -113,17 +113,23 @@
 #define CHECKSUM_CHECK_ICMP6 0
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-#define LWIP_UDP                  0
-#define MEM_SIZE                  16000
+#define LWIP_UDP                              0
+#define LWIP_SO_LINGER                        1
+
+// Memory configurations
+#define MEM_SIZE                              16000
+#define MEMP_NUM_TCP_SEG                      64
+#define MEMP_NUM_TCP_PCB                      5
+
 
 // Comment out the following to enable/disable all LWIP error messages
-// #define LWIP_DEBUG 1
-// #define NETIF_DEBUG LWIP_DBG_ON
-// #define DHCP_DEBUG LWIP_DBG_ON
-// #define UDP_DEBUG  LWIP_DBG_ON
-// #define MEMP_DEBUG LWIP_DBG_ON
-// #define MEM_DEBUG LWIP_DBG_ON
-// #define ICMP_DEBUG LWIP_DBG_ON
+#define LWIP_DEBUG 1
+#define NETIF_DEBUG LWIP_DBG_ON
+#define DHCP_DEBUG LWIP_DBG_ON
+#define UDP_DEBUG  LWIP_DBG_ON
+#define MEMP_DEBUG LWIP_DBG_ON
+#define MEM_DEBUG LWIP_DBG_ON
+#define ICMP_DEBUG LWIP_DBG_ON
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

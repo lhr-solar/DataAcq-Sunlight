@@ -52,10 +52,16 @@ static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
 
 #endif // LWIP_HDR_DEF_H
 
+#define __FILENAME__        (__builtin_strrchr(__FILE__, '/') + 1)
 
 
 #if DEBUGGINGMODE
-    #define debugprintf(...)        printf(__VA_ARGS__)
+    #define debugprintf(...)                            \
+        do {                                            \
+            printf("%s:%d \t", __FILENAME__, __LINE__); \
+            printf(__VA_ARGS__);                        \
+        } while (0)
+        
 #else
     #define debugprintf(...)        
 #endif

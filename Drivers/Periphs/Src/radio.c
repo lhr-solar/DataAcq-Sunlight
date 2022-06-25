@@ -16,6 +16,7 @@
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
+static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static int servsocket;
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 extern int errno;
@@ -31,12 +32,14 @@ static void Ethernet_ConnectToServer() {
 
         debugprintf("servsocket %d\n\r", servsocket);
 
+        // set linger to 0 - this makes sure closed sockets are freed immediately
+        lwip_setsockopt(servsocket, SOL_SOCKET, SO_LINGER, &soLinger, sizeof(soLinger));
+
         if (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0) {
-            lwip_close(servsocket);
-            servsocket = -1;
+            Ethernet_EndConnection();
         }
     }
-    debugprintf("Ethernet connected.\n\r");
+    debugprintf("Ethernet connected\n\r");
     LED_On(ETH_CONNECT);
 }
 
@@ -98,8 +101,7 @@ BaseType_t Ethernet_SendMessage() {
     int bytes_sent = 0;
     if (servsocket >= 0) {
         if (errno != 0) {
-            lwip_close(servsocket);
-            servsocket = -1;
+            Ethernet_EndConnection();
         }
 
         // pull message from queue to send over ethernet
@@ -114,13 +116,10 @@ BaseType_t Ethernet_SendMessage() {
 
         bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, MSG_DONTWAIT);
         if (bytes_sent < 0 || errno != 0) {   // send failed
-            lwip_close(servsocket);
-            servsocket = -1;    // reset servsocket to -1 to signify error 
+            Ethernet_EndConnection();
         }
     }
     else {
-        debugprintf("Ethernet Disconnected\n\r");
-        LED_Off(ETH_CONNECT);
         Ethernet_ConnectToServer(); // reconnect to server if send previously failed
     }
     return pdTRUE;
@@ -129,11 +128,13 @@ BaseType_t Ethernet_SendMessage() {
 /** Ethernet End Connection
  * @brief Close ethernet connection
  */
-void Ethernet_EndConnection(){
-    if (servsocket >= 0) lwip_close(servsocket);
-    servsocket = -1;
-    debugprintf("Ethernet Disconnected\n\r");
-    LED_Off(ETH_CONNECT);
+void Ethernet_EndConnection() {
+    if (servsocket >= 0) {
+        lwip_close(servsocket);
+        servsocket = -1;
+        debugprintf("Ethernet Disconnected\n\r");
+        LED_Off(ETH_CONNECT);
+    }
 }
 
 /**
