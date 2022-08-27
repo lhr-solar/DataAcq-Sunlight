@@ -7,9 +7,9 @@
  */
 
 // DEBUG Configuration
-#define DEBUGGINGMODE               1       // set to 1 to enable debug statements, set to 0 or comment out to disable
+#define DEBUGGINGMODE               0       // set to 1 to enable debug statements, set to 0 or comment out to disable
 #define CAN_LOOPBACK                0       // set to 1 to test CAN interface in loopback mode
-#define HEARTBEAT_PERIOD            200     // period of heartbeat led (in # OS ticks)
+#define HEARTBEAT_PERIOD            500     // period of heartbeat led (in # OS ticks)
 
 // IP Address Configuration
 #define IP4_CLIENT_ADDRESS          169, 254, 48, 100
@@ -52,10 +52,30 @@ static inline u32_t lwip_makeu32_func(u32_t a, u32_t b, u32_t c, u32_t d) {
 
 #endif // LWIP_HDR_DEF_H
 
+#define __FILENAME__        (__builtin_strrchr(__FILE__, '/') + 1)
+
+
 #if DEBUGGINGMODE
-    #define debugprintf(...)        printf(__VA_ARGS__)
+    #define debugprintf(...)                            \
+        do {                                            \
+            printf("%s:%d \t", __FILENAME__, __LINE__); \
+            printf(__VA_ARGS__);                        \
+        } while (0)
+        
 #else
     #define debugprintf(...)        
+#endif
+
+#if DEBUGGINGMODE
+#pragma message "Debugging mode is on!"
+#endif
+
+#if CAN_LOOPBACK
+#pragma message "CAN is in loopback mode!"
+#endif
+
+#if DEBUGGINGMODE == 0 && CAN_LOOPBACK == 1
+#error "CAN must be in normal mode if debugging is off"
 #endif
 
 #endif // CONFIG_H

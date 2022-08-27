@@ -16,24 +16,31 @@
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
+static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static int servsocket;
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
+extern int errno;
 
 /** Ethernet ConnectToServer
  * @brief Waits until server connection is established - blocking
  */
 static void Ethernet_ConnectToServer() {
-    if (servsocket < 0) {
+    while (servsocket < 0) {
         do {
             servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         } while (servsocket < 0);
 
-        debugprintf("servsocket %d\n", servsocket);
+        debugprintf("servsocket %d\n\r", servsocket);
 
-        while (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0);
+        // set linger to 0 - this makes sure closed sockets are freed immediately
+        lwip_setsockopt(servsocket, SOL_SOCKET, SO_LINGER, &soLinger, sizeof(soLinger));
 
-        debugprintf("done\n");
+        if (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0) {
+            Ethernet_EndConnection();
+        }
     }
+    debugprintf("Ethernet connected\n\r");
+    LED_On(ETH_CONNECT);
 }
 
 /** Ethernet Initialize
@@ -83,7 +90,7 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
 
 /** Ethernet Send Message
  * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
- *        wait until there is data in the queue to send it across
+ *        wait until there is a valid connection to the server
  * 
  * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
  */
@@ -93,23 +100,23 @@ BaseType_t Ethernet_SendMessage() {
 
     int bytes_sent = 0;
     if (servsocket >= 0) {
+        if (errno != 0) {
+            Ethernet_EndConnection();
+        }
+
         // pull message from queue to send over ethernet
         if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
-        #if DEBUGGINGMODE
-            LED_Toggle(BPS);
-        #endif
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
-
         // copy data from dataptr into raw ethernet message array
         // the struct word-aligns the first two bytes (id and length), so this is necessary
         memcpy(&raw_ethmsg[2],
                &eth_rx.data, 
                eth_rx.length);
 
-        bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, 0);
-        if (bytes_sent < 0) {   // send failed
-            servsocket = -1;    // reset servsocket to -1 to signify error 
+        bytes_sent = lwip_send(servsocket, &raw_ethmsg, eth_rx.length + 2, MSG_DONTWAIT);
+        if (bytes_sent < 0 || errno != 0) {   // send failed
+            Ethernet_EndConnection();
         }
     }
     else {
@@ -121,8 +128,13 @@ BaseType_t Ethernet_SendMessage() {
 /** Ethernet End Connection
  * @brief Close ethernet connection
  */
-void Ethernet_EndConnection(){
-    if (servsocket >= 0) lwip_close(servsocket);
+void Ethernet_EndConnection() {
+    if (servsocket >= 0) {
+        lwip_close(servsocket);
+        servsocket = -1;
+        debugprintf("Ethernet Disconnected\n\r");
+        LED_Off(ETH_CONNECT);
+    }
 }
 
 /**

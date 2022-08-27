@@ -24,7 +24,8 @@
 #include "GPS.h"
 #include <stdint.h>
 
-#define ETHERNET_QUEUESIZE 16
+#define ETHERNET_QUEUESIZE  16
+#define CONNECT_TRIES       10
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 

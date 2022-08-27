@@ -111,7 +111,7 @@ uint32_t GPS_FetchDroppedMsgCnt() {
 static void GPS_Receive() {
     GPSData_t GPSData;
     memset(&GPSData, 0, sizeof(GPSData));
-    debugprintf("recieved:%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
+    debugprintf("%.*s\n\r", GPS_BUFSIZE, GPSRxDataBuf);
     if (strncmp(GPSRxDataBuf, "$GPRMC", sizeof("$GPRMC")-1) == 0) {
         uint16_t idx = 0;
         uint8_t field = 0;
@@ -122,6 +122,7 @@ static void GPS_Receive() {
                     case NAME:
                     break;
                     case TIME:
+                        if (GPSRxDataBuf[idx] == '.') break;
                         GPSData.time[structidx] = GPSRxDataBuf[idx];
                         structidx++;
                         break;

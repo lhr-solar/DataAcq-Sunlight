@@ -11,6 +11,7 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #define CAN_QUEUESIZE  32
 /**
@@ -56,11 +57,18 @@ static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx
         memcpy(canmessage.payload.data.bytes, rx_data, metadata.len);
     }
 
+    debugprintf("ID:%03x: idx:%01" PRIx16 " %08" PRIx32 "%08" PRIx32 "\n\r", 
+        canmessage.id,
+        canmessage.payload.idx,
+        *((uint32_t *)&canmessage.payload.data.bytes[4]), 
+        *((uint32_t *)canmessage.payload.data.bytes));
+
     // Add message to FIFO
     if (xQueueSendToBackFromISR(RxQueue, &canmessage, NULL) == errQUEUE_FULL) {
         CANDroppedMessages++;
         return HAL_ERROR;
     }
+    
     return HAL_OK;
 }
 
