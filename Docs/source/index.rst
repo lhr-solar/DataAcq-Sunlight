@@ -3,10 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. Documentation must be written in reStructuredText
+.. https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
+
 Welcome to Sunlight's documentation!
 ====================================
 
-   Sunlight is the telemetry system for Gary (our vehicle). Sunlight's purpose is to provide us with information about Gary's
+   Sunlight is the telemetry system for our vehicle. Sunlight's purpose is to provide us with information about the
    electrical system in real-time during the 2022 Formula Sun Grand Prix (FSGP) race. This information will be used to
    inform our race strategy and help us create more refined strategies for future races.
 
@@ -23,7 +26,6 @@ Welcome to Sunlight's documentation!
    :maxdepth: 2
    :caption: Software
 
-   Software/apps
    Software/drivers
    Software/tasks
 

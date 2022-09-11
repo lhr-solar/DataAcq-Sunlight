@@ -6,99 +6,196 @@ Controller Area Network :term:`(CAN) <CAN Bus>`
 ===============================================
 
 Purpose
+-------
+
+CAN drivers are used to record the state of the car through messages sent over CAN Bus.
+The controls, array, and battery protection systems all send status and configuration 
+messages using CAN, which are then recorded by Sunlight and logged/broadcast.
 
 Usage
+-----
+
+``CAN_init()`` should be called before any CANBus usage. ``CAN_init()`` has a parameter, 
+``mode``, which can be used to specify loopback vs normal operation. With the current 
+software organization, this can be configured in ``config.h`` (``CAN_LOOPBACK``).
+CAN messages are received with interrupts/callbacks, and placed into a FreeRTOS Queue. 
+Message byte lengths and formatting is specified by a lookup table at the bottom of ``CANBus.c`` 
+(``CanMetadataLUT``), with all CAN IDs listed in an enum ``CANId_t``. This enum and the 
+lookup table must be updated with any CAN ID changes. CAN data is stored in a ``CANMSG_t`` 
+struct containing the CAN ID and the CAN message payload, and can be retrieved from the 
+queue by calling ``CAN_FetchMessage()``.
+
+A very basic transmit function ``CAN_TransmitMessage`` exists currently for testing purposes 
+only.
 
 Additional Considerations
+-------------------------
+
+CAN is currently configured to use ``RX_FIFO0`` and the CAN1 interface. If another CAN 
+HW interface is added, use CAN3 (not CAN2).
 
 Ethernet
 ========
 
 Purpose
+-------
 
-The Ethernet drivers are sending GPS, CAN, and IMU data to the data acquisition team
-The sunlight is the client while data acquisition is the server
+The Ethernet drivers send GPS, CAN, and IMU data to the data acquisition team.
+The Sunlight operates as a Telnet client and data acquisition operates as a Telnet server.
 
 Usage
+-----
 
+``Ethernet_Init()`` must be called first before using any Ethernet sending function. This init 
+function is blocking and waits until a valid connection with a server is established. A separate 
+``Ethernet_QueueInit()`` initializes the Ethernet send queue. Both initialization functions must 
+be called, but the separate queue init function allows for messages to be pushed to the send queue 
+before a valid client-server connection can be established.
 
+``Ethernet_PutInQueue()`` adds messages to the send queue, and ``Ethernet_SendMessage()`` attempts 
+to send one message from the queue over Ethernet. If a send fails, Ethernet will enter a blocking 
+'wait for server connection' state until a connection is re-established.
+
+Messages in the send queue are structured in a ``EthernetMSG_t`` struct containing an ``EthernetData_t`` 
+union, which contains the raw data for each of CAN, IMU, and GPS. Each Ethernet message struct contains 
+an ID specifying the message type (CAN/IMU/GPS) and a length field, which is the length in bytes of the 
+whole message.
+
+The IP used by Sunlight and the server IP are configured in ``config.h``.
 
 Additional Considerations
+-------------------------
 
+The ID and length fields of the ``EthernetMSG_t`` struct are required since the receiving end must be 
+notified of the length and type of an incoming message to parse. The ``EthernetMSG_t`` struct is very 
+large since the data union must fit the large GPS data string. Thus, the Ethernet send queue size must 
+not be very large.
 
+Ethernet contains code specifically for robustness if the connection is lost.
 
 Inertial Measurement Unit (IMU)
 ===============================
 
 Purpose
+-------
 
-The IMU drivers use a accelerometer, gyroscope, and magnetometer to collect data of the car's movement. 
-This data can be used to calculate measurements such as acceleration and yaw when the car is turning.
+The IMU drivers collect data from the IMU on Sunlight, which contains accelerometer, gyroscope, and magnetometer data.
 
 Usage
+-----
 
-``IMU_Init()`` should be called. Then ``IMU_Calibrate()`` is called within IMU_Init(). This puts data into the calibration registers that was 
-collected by calibrating the IMU by moving the module(on the board). The peripheral is initialized to collect data using all three measurment 
-units. Later on, we can decide whether we actually need to collect data using everything (we can disable some to save power, such as 
-the magnetometer). The struct ``IMUData_t`` will hold all the data on the car's motion. Then the ``IMU_UpdateMeasurements(*Data IMUData_t *Data)`` 
-function is called to update all the data collected. All three functions: ``IMU_Init()``, ``IMU_Calibrate()``, and 
-``IMU_UpdateMeasurements(*Data IMUData_t *Data)`` return whether or not the I2C transmit and receive were successful or not.
+``IMU_Init()`` will initialize the IMU driver. The initialization sequence includes a calibration sequence 
+which calibrates the accelerometer and gyroscope only. The current board design makes the magnetometer 
+extremely unreliable to calibrate. ``IMU_GetMeasurements()`` fetches measurements from the IMU. ``IMU_Calibrate()`` 
+sends hard coded calibration values to avoid the delay of calibration, but this may not be necessary as 
+magnetometer calibration is ignored.
+
+IMU communicates over I2C.
 
 Additional Considerations
+-------------------------
 
-The units can be initialized in many different ways. The way it is initialized now just collects the data. They can also be initialized 
-in a way where calculations are done after the data is collected. If it turns out we need to use that method of initialization instead, 
-the header file will have to be changed to include the register addresses of where that data is located and the struct will have to be 
-changed as well. Refer to the data sheet for more info on different types of initializations. ``IMU_Calibrate()`` uses calibration data that 
-was collected in a clean environment (i.e not in a car with power signals and shaky movements). This data is stored in ``IMUCalibData[]``. 
-The function ``IMU_GetCalibData()`` is used when the car is not in motion to manually shake the board and record the calibration 
-values to hardcode in ``IMUCalibData[]``. If the data is bad with this method, one other implementation is to put the module in the car, 
-and hope it calibrates through the random movements of the car.
+``IMU_Init()`` is very finely tuned with timings and commands. Do not modify anything unless you know what you're doing.
 
 Global Positioning System GPS
 =============================
+
 Purpose
-    The purpose of these drivers is to detect the location of the car so it can be used in race strategy to determine
-    where it should go next.
+-------
+
+The GPS drivers interface with the GPS chip on Sunlight, which contains location and heading information about the car.
 
 Usage
-    First the ``GPS_Init(GPSData_t *Data)`` must be called. It will initialize the peripheral using the commands described in the 
-    ``char *init_commands[]`` variable. Descriptions of these commands are available in the 
-    `datasheet <https://www.digikey.com/htmldatasheets/production/1641571/0/0/1/pa6h-gps-module-command-set.html>`__. 
-    These commands can change the speed of communication, frequency of communication, type of data to send, and startup sequence to run.
-    It sends data to us at fixed intervals so the function callback ``GPS_Receive()`` handles that. ``GPS_ReadData()`` collects the data 
-    from the queue and returns an error code if it could fetch the message or not.
+-----
+
+First ``GPS_Init()`` must be called. It will initialize the peripheral using the commands described in the 
+``char *init_commands[]`` variable. Descriptions of these commands are available in the 
+`datasheet <https://www.digikey.com/htmldatasheets/production/1641571/0/0/1/pa6h-gps-module-command-set.html>`__. 
+These commands can change the speed of communication, frequency of communication, type of data to send, and startup sequence to run.
+Data is recieved by the interrupt-based ``GPS_Receive()``, which recieves full 'sentences' (see datasheet), parses for valid information, 
+and pushes to a queue. ``GPS_ReadData()`` fetches GPS data from the queue, formatted in a ``GPSData_t`` struct. Each GPS data field is 
+a ``char`` array (string).
+
+GPS data contains a 'time' field which can is currently used to add timestamps to all data on the system.
+
+The GPS communicates over UART at a configurable baud rate.
 
 Additional Considerations
-    This units initialization should be changed if it turns out we are not receiving correct data. Also, the parsing in the callback will
-    have to change if we are initializing to send us different data.
+-------------------------
+
+Be careful when changing commands in the command list. A baud rate change for the GPS means that the UART driver must also be changed. 
+The antenna must be plugged in to recieve an accurate location.
 
 SD Card
 =======
 
 Purpose
-The SD Card is used to collect data in the event that it could not be sent to the data acquisition system over ethernet. This means that
-data is logged periodically and can be parsed later.
+-------
+
+The SD Card is used to log data as a backup for broadcasting over Ethernet.
 
 Usage
-``SDCard_Init()`` mounts the SD card and should be called before any other function. ``SDCard_GetStatistics()`` should be used when debugging
-and not in the main loop (unless to check if there is not enough data left). ``SDCard_PutInQueue()`` should be used by the thread placing
-data in the queue while ``SDCard_Sort_Write_Data()`` will take the data from the queue or return an error if there is no data. The error
-does not pertain to an empty queue. ``SDCard_t`` contains the data that will be written to the card. The ``id`` detects which file will
-be written to. The timestamp should be sampled from the GPS drivers and should be accurate to around a second. In order to prevent data
-loss in the event of a shutdown sequence it might be necessary to mount and unmount the SD Card periodically. This can be done with the 
-functions ``SDCard_OpenFileSystem()`` & ``SDCard_CloseFileSystem()``.
+-----
+
+The SD card driver implements a buffered logging system on top of FatFS. Init/Queue functionality and union-based SD card data 
+is similar to Ethernet. 
+
+Call ``SDCard_PutInQueue`` to queue up messages to be written. ``SDCard_Sort_Write_Data()`` will actually perform writes, but 
+data is buffered first in an array and written in chunks when the buffer is filled. ``SDCard_SyncLogFiles()`` must be called 
+to actually save files to the SD card.
+
+Log files are split between IMU/GPS/CAN in CSV files ("IMU.csv", "GPS.csv", "CAN.csv").
 
 Additional Considerations
-It would be interesting to consider sending Data Acquisition a message if the SD Card gets close to becoming full. The helper functions in
-this driver are dependent on the length of the time string being exactly 9 characters. We should also try calculating how fast the SD
-card fills up so we can find an appropriately sized one.
+-------------------------
+
+An LED (``SDC_SYNC``) will blink every time an actual SD write is being performed. Removing the SD card when the LED is blinking 
+may cause data corruption.
+
+Currently there is no good way to ensure that the SD card is properly synced upon system shutdown.
+
+The SD card + FATFS has an internal log buffer (``SDCard.c``) and an internal filesystem buffer (in FATFS). ``SDCard_Write()`` 
+can be used to flush the internal log buffer by writing actual data to the SD card, but the filesystem buffer must be separately 
+written using ``SDCard_SyncLogFiles()``. Data loss will occur if either buffer is not flushed before shutdown.
 
 Real Time Clock (RTC)
 =====================
 
+RTC is not currently used (and there are no drivers).
+
+LED
+===
+
 Purpose
+-------
+
+blinky lights
 
 Usage
+-----
+
+``On`` -> On
+
+``Off`` -> Off
+
+``Toggle`` -> Toggle
 
 Additional Considerations
+-------------------------
+
+A heartbeat task in ``main.c`` uses the LED drivers to blink the ``HEARTBEAT`` 
+LED at a rate specified in ``config.h``.
+
+
+.. Driver Doc Template
+.. ===================
+
+.. Purpose
+.. -------
+
+.. Usage
+.. -----
+
+.. Additional Considerations
+.. -------------------------
+

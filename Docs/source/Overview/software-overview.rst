@@ -23,8 +23,8 @@ The drivers interface with the external hardware and is above the HAL. The Sunli
 - `IMU BNO055 <https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bno055-ds000.pdf>`_
 - `RTC PCF8523T <https://www.nxp.com/docs/en/data-sheet/PCF8523.pdf>`_
 - `GPS MTK3339 <https://www.adafruit.com/product/790>`_
-- Ethernet
-- SD Card
+- `Ethernet <https://www.nongnu.org/lwip/2_1_x/index.html>`_
+- `SD Card <http://elm-chan.org/fsw/ff/00index_e.html>`_
 - :term:`CAN <CAN Bus>`
 
 RTOS
