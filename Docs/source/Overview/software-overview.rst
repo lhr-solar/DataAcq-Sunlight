@@ -33,6 +33,10 @@ RTOS
 The :term:`RTOS` uses a scheduler to run multiple threads. Running these threads creates “pseudo-concurrency”.
 We use `freeRTOS <https://www.freertos.org/>`_
 
+The RTOS uses a `priority based preemptive scheduler <https://en.wikipedia.org/wiki/Fixed-priority_pre-emptive_scheduling>`_. 
+
+Info about RTOS concepts in can be found in the `freeRTOS documentation page <https://www.freertos.org/implementation/a00002.html>`_
+
 Tasks
 =====
 

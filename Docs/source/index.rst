@@ -28,6 +28,7 @@ Welcome to Sunlight's documentation!
 
    Software/drivers
    Software/tasks
+   Software/miscellaneous-info
 
 .. toctree::
    :hidden:

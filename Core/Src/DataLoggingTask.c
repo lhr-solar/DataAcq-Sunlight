@@ -2,7 +2,7 @@
  * @file DataLoggingTask.c
  * 
  * Task in charge of logging data to the SD card as an offline backup 
- * to the data sent over ethernet to Data Acquisition.
+ * for the data sent over ethernet to Data Acquisition.
  * Data is added to the logging queue by the Data Reading Task.    
  * @note Assumes that all lower level functions are initialized in main.c     
  * 

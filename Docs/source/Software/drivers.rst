@@ -2,6 +2,8 @@
 Drivers
 ********
 
+.. _can-ref:
+
 Controller Area Network :term:`(CAN) <CAN Bus>`
 ===============================================
 
@@ -33,6 +35,8 @@ Additional Considerations
 
 CAN is currently configured to use ``RX_FIFO0`` and the CAN1 interface. If another CAN 
 HW interface is added, use CAN3 (not CAN2).
+
+.. _eth-ref:
 
 Ethernet
 ========
@@ -73,6 +77,8 @@ not be very large.
 
 Ethernet contains code specifically for robustness if the connection is lost.
 
+.. _imu-ref:
+
 Inertial Measurement Unit (IMU)
 ===============================
 
@@ -97,8 +103,10 @@ Additional Considerations
 
 ``IMU_Init()`` is very finely tuned with timings and commands. Do not modify anything unless you know what you're doing.
 
-Global Positioning System GPS
-=============================
+.. _gps-ref:
+
+Global Positioning System (GPS)
+===============================
 
 Purpose
 -------
@@ -125,6 +133,8 @@ Additional Considerations
 
 Be careful when changing commands in the command list. A baud rate change for the GPS means that the UART driver must also be changed. 
 The antenna must be plugged in to recieve an accurate location.
+
+.. _sdc-ref:
 
 SD Card
 =======
