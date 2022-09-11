@@ -2,14 +2,16 @@
 Tasks
 ******
 
+.. _init-task-ref:
+
 Initialization Task
 ===================
 
 Purpose
 -------
 
-The initialization task runs driver init functions and spawns the `Data Logging Task`_, 
-`Data Reading Task`_, and `Broadcasting Task`_. 
+The initialization task runs driver init functions and spawns the `Data Logging Task`, 
+`Data Reading Task`, and `Broadcasting Task`. 
 
 Functionality
 -------------
@@ -22,7 +24,7 @@ Peripherals are initialized in this order (see :doc:`Drivers <drivers>` for more
 4. :ref:`GPS <gps-ref>`
 5. :ref:`IMU <imu-ref>` 
 
-followed by the `Data Logging Task`_, `Data Reading Task`_, and `Broadcasting Task`_. 
+followed by the `Data Logging Task`, `Data Reading Task`, and `Broadcasting Task`. 
 
 The initialization task then kills itself.
 
@@ -48,6 +50,8 @@ Ethernet driver initialization to stall while waiting for a connetion without de
 initialization of other peripherals.
 
 The order that peripherals are initialized may determine whether initialization will consistently succeed.
+
+.. _read-task-ref:
 
 Data Reading Task
 =================
@@ -83,13 +87,15 @@ Priority
 Shared Resources
 ----------------
 
-| **SD Card Queue** - Shared with `Data Logging Task`_
-| **Ethernet Queue** - Shared with `Broadcasting Task`_
+| **SD Card Queue** - Shared with `Data Logging Task`
+| **Ethernet Queue** - Shared with `Broadcasting Task`
 
 Timing Requirements
 -------------------
 
 Must run with frequency greater than the average frequency of incoming CAN messages.
+
+.. _log-task-ref:
 
 Data Logging Task
 =================
@@ -122,17 +128,19 @@ Priority
 Shared Resources
 ----------------
 
-| **SD Card Queue** - Shared with `Data Reading Task`_
+| **SD Card Queue** - Shared with `Data Reading Task`
 
 Timing Requirements
 -------------------
 
-Must be able to execute with the same or higher frequency than data being collected by the `Data Reading Task`_
+Must be able to execute with the same or higher frequency than data being collected by the `Data Reading Task`
 
 Yields
 ------
 
 Yields if SD card queue is empty.
+
+.. _broadcast-task-ref:
 
 Broadcasting Task
 =================
@@ -170,12 +178,14 @@ Shared Resources
 Timing Requirements
 -------------------
 
-Must be able to execute with the same or higher frequency than data being collected by the `Data Reading Task`_
+Must be able to execute with the same or higher frequency than data being collected by the `Data Reading Task`
 
 Yields
 ------
 
 Yields if Ethernet queue is empty.
+
+.. _heartbeat-task-ref:
 
 Heartbeat Task
 ==============
