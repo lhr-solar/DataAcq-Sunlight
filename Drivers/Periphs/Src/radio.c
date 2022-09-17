@@ -18,26 +18,21 @@ static QueueHandle_t EthernetQ; // information will be put on this and all you d
 static struct sockaddr_in sLocalAddr;
 static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static int servsocket;
+static int clientfd;
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 extern int errno;
 
-/** Ethernet ConnectToServer
- * @brief Waits until server connection is established - blocking
+/** Ethernet waitForClient
+ * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
-static void Ethernet_ConnectToServer() {
-    while (servsocket < 0) {
-        do {
-            servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        } while (servsocket < 0);
+void Ethernet_WaitForClient(){
+    if (clientfd >= 0) return;
 
-        debugprintf("servsocket %d\n\r", servsocket);
-
-        // set linger to 0 - this makes sure closed sockets are freed immediately
-        lwip_setsockopt(servsocket, SOL_SOCKET, SO_LINGER, &soLinger, sizeof(soLinger));
-
-        if (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0) {
-            Ethernet_EndConnection();
-        }
+    struct sockaddr_in client_addr;
+    int addrlen = sizeof(client_addr);
+    while (1) {
+        clientfd = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+        if (clientfd >= 0) break;
     }
     debugprintf("Ethernet connected\n\r");
     LED_On(ETH_CONNECT);
@@ -54,6 +49,7 @@ static void Ethernet_ConnectToServer() {
 ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     servsocket = -1;
+    clientfd = -1;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
     sLocalAddr.sin_family = AF_INET;
@@ -61,7 +57,7 @@ ErrorStatus Ethernet_Init() {
     sLocalAddr.sin_addr.s_addr = htonl(lwip_makeu32_func(IP4_SERVER_ADDRESS));
     sLocalAddr.sin_port = htons(SERVER_PORT);
 
-    Ethernet_ConnectToServer();
+    Ethernet_WaitForClient();
 
     return SUCCESS;
 }
@@ -120,7 +116,7 @@ BaseType_t Ethernet_SendMessage() {
         }
     }
     else {
-        Ethernet_ConnectToServer(); // reconnect to server if send previously failed
+        Ethernet_WaitForClient(); // reconnect to client if send previously failed
     }
     return pdTRUE;
 }
