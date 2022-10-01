@@ -131,6 +131,10 @@ FRESULT SDCard_Sort_Write_Data(){
         log_file->bufidx = 0;
     }
 
+    // copy string output to buffer and increment the buffer index by 
+    // the number of bytes copied. 'sprint' is a function pointer to a 
+    // print function with similar signature to 'sprintf' which datatype-specific 
+    // formatting.
     log_file->bufidx += log_file->sprint(
             log_file->writebuf + log_file->bufidx, 
             SDCARD_WRITE_BUFSIZE - log_file->bufidx,

@@ -58,7 +58,7 @@ void DataReadingTask(void* argument){
         } 
         else {}
 
-        // retreive and send as many CAN EthMessages as possible
+        // retrieve and send as many CAN Messages as possible
         while (CAN_FetchMessage(&CANData) == pdTRUE) { 
             EthMessage.id= CAN;
             EthMessage.length = sizeof(CANData);
