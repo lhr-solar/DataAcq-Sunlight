@@ -145,13 +145,9 @@ BaseType_t CAN_FetchMessage(CANMSG_t *message);
 /** CAN Transmit Message
  * @brief Transmit message over CAN
  * @note This is really basic and does not check for a full transmit Mailbox
- * 
- * @param StdId Message ID (Standard)
- * @param TxData Data to transmit
- * @param len Length of data (Bytes) to transmit (MAX 8B)
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_TransmitMessage(uint32_t StdId, uint8_t *TxData, uint8_t len);
+HAL_StatusTypeDef CAN_TransmitMessage();
 
 /**
  * @brief Fetch metadata associated with an id

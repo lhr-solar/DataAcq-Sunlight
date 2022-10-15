@@ -12,4 +12,6 @@ void DataLoggingTask(void* argument);
 
 void BroadcastingTask(void* argument);
 
+void CANSendingTask(void* argument);
+
 #endif

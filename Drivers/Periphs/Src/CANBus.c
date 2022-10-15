@@ -21,6 +21,7 @@ static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
+static QueueHandle_t TxQueue;
 static uint32_t CANDroppedMessages = 0;   // for debugging purposes
 
 /**
@@ -104,6 +105,7 @@ static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
  */
 HAL_StatusTypeDef CAN_Init(uint32_t mode) {
     RxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
+    TxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
     HAL_StatusTypeDef configstatus = MX_CAN1_Init(mode);
     if (configstatus != HAL_OK) return configstatus;
 
@@ -152,31 +154,39 @@ BaseType_t CAN_FetchMessage(CANMSG_t *message) {
     return xQueueReceive(RxQueue, message, (TickType_t)0);
 }
 
+/** CAN PutInQueue
+ * @brief Put data in Tx Queue
+ * 
+ * @param msg Data to place in queue
+ * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
+ */
+BaseType_t CAN_PutInQueue(CANMSG_t* msg) {
+    BaseType_t success = xQueueSendToBack(TxQueue, msg, (TickType_t)0);
+    if (success == errQUEUE_FULL) {
+        CANDroppedMessages++;
+    }
+    return success;
+}
 
 /** CAN Transmit Message
  * @brief Transmit message over CAN
  * @note This is really basic and does not check for a full transmit Mailbox
- * 
- * @param StdId Message ID (Standard)
- * @param TxData Data to transmit
- * @param len Length of data (Bytes) to transmit (MAX 8B)
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_TransmitMessage(
-        uint32_t StdId,
-        uint8_t *TxData,
-        uint8_t len) {
-
+HAL_StatusTypeDef CAN_TransmitMessage() {
     CAN_TxHeaderTypeDef txheader;
-
     // ExtID and extended mode are unused/not configured
-    txheader.StdId = StdId;
+    CANMSG_t CAN_tx;
+
+    if (xQueueReceive(TxQueue, &CAN_tx, (TickType_t)0) != pdTRUE) return HAL_ERROR;
+
+    txheader.StdId = CAN_tx.id;
     txheader.RTR = CAN_RTR_DATA;
     txheader.IDE = CAN_ID_STD;
-    txheader.DLC = len;
+    txheader.DLC = CanMetadataLUT[CAN_tx.id].len;
     txheader.TransmitGlobalTime = DISABLE;
 
-    return HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox);
+    return HAL_CAN_AddTxMessage(&hcan1, &txheader, CAN_tx.payload.data.bytes, &TxMailbox);
 }
 
 /**
