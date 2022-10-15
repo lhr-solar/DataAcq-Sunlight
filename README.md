@@ -7,7 +7,7 @@ Development is done in a Linux environment to build and flash the Sunlight code.
 ### Cloning the Repository
 The most common way to clone repos is to use the HTTPS link, but the most secure way is to clone with SSH. The submodules use SSH, so you must generate and add an SSH key to your GitHub account. Follow the instructions in this tutorial. If this is your first time doing this, you can start at the [Generating a new SSH key and adding it to the ssh-agent](https://docs.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) step, but reading everything is beneficial.
 
-Once you're able to use Git with SSH, go to the green "Code" button of the repo, and click "Use SSH" to get the URL. Copy the `git@hithub.com:repo-name` link. Then, enter the following command to the terminal but with the correct URL:
+Once you're able to use Git with SSH, go to the green "Code" button of the repo, and click "Use SSH" to get the URL. Copy the `git@github.com:repo-name` link. Then, enter the following command to the terminal but with the correct URL:
 
 ```
 git clone  git@github.com:repo-name
