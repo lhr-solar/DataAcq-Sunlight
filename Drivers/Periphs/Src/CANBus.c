@@ -21,6 +21,7 @@ static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
+static QueueHandle_t TxQueue;
 static uint32_t CANDroppedMessages = 0;   // for debugging purposes
 
 /**
@@ -104,6 +105,7 @@ static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
  */
 HAL_StatusTypeDef CAN_Init(uint32_t mode) {
     RxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
+    TxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
     HAL_StatusTypeDef configstatus = MX_CAN1_Init(mode);
     if (configstatus != HAL_OK) return configstatus;
 
@@ -176,7 +178,12 @@ HAL_StatusTypeDef CAN_TransmitMessage(
     txheader.DLC = len;
     txheader.TransmitGlobalTime = DISABLE;
 
-    return HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox);
+    if(HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox) == HAL_OK){
+        return xQueueSendToBack(TxQueue, &txheader, (TickType_t)0); 
+    }
+    else{
+        return HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox)
+    }
 }
 
 /**
