@@ -1,11 +1,3 @@
-/**
- * @file radio.h
- * @brief Ethernet API
- * 
- * @copyright Copyright (c) 2022 UT Longhorn Racing Solar
- * 
- */
-
 #ifndef RADIO_H
 #define RADIO_H
 
@@ -17,11 +9,10 @@
  * 
  */
 
-#include "FreeRTOS.h"
-#include "queue.h"
 #include "CANBus.h"
 #include "IMU.h"
 #include "GPS.h"
+#include "SemQueue.h"
 #include <stdint.h>
 
 #define ETHERNET_QUEUESIZE  16
@@ -63,8 +54,10 @@ ErrorStatus Ethernet_Init(void);
 /** Ethernet Queue Initialize
  * @brief Initialize just the ethernet queue. 
  *        Must be called before Ethernet_PutInQueue()
+ * 
+ * @param queue_reader Task Handle of the sole reader of the queue
  */
-void Ethernet_QueueInit(void);
+void Ethernet_QueueInit(TaskHandle_t queue_reader);
 
 /** Ethernet Put in queue
  * @brief Put data in Ethernet Queue
@@ -75,10 +68,10 @@ void Ethernet_QueueInit(void);
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg);
 
 /** Ethernet Send Message
- * @brief Send data from Ethernet Fifo across ethernet.
- * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
+ * @brief Send data from Ethernet Fifo across ethernet. 
+ *        Blocking: This will wait until the queue is nonempty and there is a valid connection to the server
  */
-BaseType_t Ethernet_SendMessage(void);
+void Ethernet_SendMessage(void);
 
 /** Ethernet End Connection
  * @brief Close ethernet connection

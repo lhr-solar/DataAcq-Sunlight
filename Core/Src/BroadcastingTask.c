@@ -22,8 +22,6 @@ void BroadcastingTask(void *argument){
     debugprintf("Connected to server\n\r");
 
     while (1){
-        if (Ethernet_SendMessage() == pdFALSE) {
-            taskYIELD();
-        };
+        Ethernet_SendMessage();
     }
 }

@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 void DataLoggingTask(void* argument){
+
     FRESULT success;
     TickType_t ticks = xTaskGetTickCount();
 
@@ -26,15 +27,12 @@ void DataLoggingTask(void* argument){
         if (success == FR_OK) {
             
         }
-        else if (success == SDC_QUEUE_EMPTY) {
-            taskYIELD();
-        }
         else {
-            debugprintf("SDC write error\n\r");
+            debugprintf("SDC write error: %d\n\r", success);
             vTaskSuspend(NULL);
         }
 
-        if ((xTaskGetTickCount() - (ticks / portTICK_PERIOD_MS)) >= SDCARD_SYNC_PERIOD) {
+        if ((xTaskGetTickCount() - ticks) >= pdMS_TO_TICKS(SDCARD_SYNC_PERIOD)) {
             SDCard_SyncLogFiles();
             ticks = xTaskGetTickCount();
         }

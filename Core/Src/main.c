@@ -20,7 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "config.h"
-#include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "fatfs.h"
 #include "lwip.h"
 #include "IMU.h"
@@ -61,18 +62,8 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* Starting task handles */
-osThreadId_t heartbeatTaskHandle;
-const osThreadAttr_t heartbeatTask_attributes = {
-  .name = "Heartbeat Task",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
-};
-osThreadId_t initTaskHandle;
-const osThreadAttr_t initTask_attributes = {
-  .name = "Initialization Task",
-  .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 1024
-};
+TaskHandle_t HeartbeatTaskHandle = NULL;
+TaskHandle_t InitTaskHandle = NULL;
 
 /* USER CODE BEGIN PV */
 
@@ -158,8 +149,21 @@ int main(void)
   /* Create the thread(s) */
 
   /* USER CODE BEGIN RTOS_THREADS */
-  heartbeatTaskHandle = osThreadNew(HeartbeatTask, NULL, &heartbeatTask_attributes);
-  initTaskHandle = osThreadNew(InitializationTask, NULL, &initTask_attributes);
+  BaseType_t task_success __attribute__((unused));
+  task_success = xTaskCreate(HeartbeatTask,
+                             "Heartbeat Task",
+                             512,
+                             NULL,
+                             TASK_PRIORITY_VERY_LOW,
+                             &HeartbeatTaskHandle
+                             );
+  task_success = xTaskCreate(InitializationTask,
+                             "Initialization Task",
+                             INITIALIZATION_TASK_STACK_SIZE,
+                             NULL,
+                             INITIALIZATION_TASK_PRIORITY,
+                             &InitTaskHandle
+                             );
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -168,9 +172,10 @@ int main(void)
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
-  osKernelStart();
+  vTaskStartScheduler();
 
   /* We should never get here as control is now taken by the scheduler */
+  /* Will only get here if there is insufficient RAM */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -502,10 +507,11 @@ static void MX_GPIO_Init(void)
 // Heartbeat
 void HeartbeatTask(void *argument)
 {
+  const TickType_t delay_ticks = pdMS_TO_TICKS(HEARTBEAT_PERIOD / 2);
   for(;;)
   {
     LED_Toggle(HEARTBEAT);
-    osDelay(HEARTBEAT_PERIOD / 2);
+    vTaskDelay(delay_ticks);
   }
 }
 

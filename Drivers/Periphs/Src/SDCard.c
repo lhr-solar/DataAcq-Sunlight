@@ -11,6 +11,7 @@
 #include "main.h"
 #include "config.h"
 #include "LED.h"
+#include "SemQueue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,7 @@ static int SPrint_GPS(char *sdcard_write_buf, size_t bufsize, void *gps, const c
 
 // Globals
 static FATFS FatFs;
-static QueueHandle_t SDCardQ;
+static SemaphoreQueue_t SDCardQ;
 
 static logfile_t LogFiles[SDC_ID_ENUM_TO_IDX(LARGEST_SDC_ID)] = {
     [SDC_ID_ENUM_TO_IDX(IMU_SDCard)] = {.fname = "imu.csv", .sprint = SPrint_IMU, .bufidx = 0},
@@ -45,11 +46,15 @@ static uint32_t SDCDroppedMessages = 0;    // for debugging purposes
 
 /**
  * @brief Mounts the drive, initializes Queue, and opens all logging files
+ * @param queue_reader Task Handle of the sole reader of the queue
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_Init() {
+FRESULT SDCard_Init(TaskHandle_t queue_reader) {
+    // queue initialization
+    SDCardQ.owner = queue_reader;
+    SDCardQ.handle = xQueueCreate(SDCARD_QUEUESIZE, sizeof(SDCard_t)); // creates the xQUEUE with the size of the fifo
+    
     // mount the drive
-    SDCardQ = xQueueCreate(SDCARD_QUEUESIZE, sizeof(SDCard_t)); // creates the xQUEUE with the size of the fifo
     FRESULT fresult = f_mount(&FatFs, "", 1); //1=mount now
     if (fresult != FR_OK) {
   	    debugprintf("f_mount error (%i)\r\n", (int)fresult);
@@ -99,7 +104,7 @@ FRESULT SDCard_GetStatistics() {
  * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
  */
 BaseType_t SDCard_PutInQueue(SDCard_t* data) {
-    BaseType_t success = xQueueSendToBack(SDCardQ, data, (TickType_t)0);
+    BaseType_t success = SemQueueSendToBack(&SDCardQ, data);
     if (success == errQUEUE_FULL) {
         SDCDroppedMessages++;
     }
@@ -109,10 +114,10 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data) {
 /**
  * @brief Formats data and writes to SD card based on type of data input. 
  *        Data is buffered and written in large chunks. 
+ *        Blocking: This will wait until the queue is nonempty
  *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
- * @note: Non-Blocking - Returns error if there is no data 
- * @param none
- * @return FRESULT FR_OK if ok, SD_QUEUE_EMPTY if queue empty, and other errors specified in ff.h 
+ * 
+ * @return FRESULT Filesystem errors specified in ff.h 
  */
 FRESULT SDCard_Sort_Write_Data(){
     // check if data from queue is from imu, gps, or can.
@@ -120,7 +125,7 @@ FRESULT SDCard_Sort_Write_Data(){
     SDCard_t cardData;
     FRESULT success = FR_OK;
 
-    if (xQueueReceive(SDCardQ, &cardData, (TickType_t)1) != pdTRUE) return SDC_QUEUE_EMPTY;
+    SemQueueRecieve(&SDCardQ, &cardData, false);
     if (((uint32_t)cardData.id) >= LARGEST_SDC_ID) return FR_DISK_ERR;
 
     logfile_t *log_file = &LogFiles[SDC_ID_ENUM_TO_IDX(cardData.id)];

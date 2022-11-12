@@ -14,7 +14,8 @@
 #include "LED.h"
 #include <string.h>
 
-static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
+static SemaphoreQueue_t EthernetQ;
+
 static struct sockaddr_in sLocalAddr;
 static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static int servsocket;
@@ -69,9 +70,12 @@ ErrorStatus Ethernet_Init() {
 /** Ethernet Queue Initialize
  * @brief Initialize just the ethernet queue. 
  *        Must be called before Ethernet_PutInQueue()
+ * 
+ * @param queue_reader Task Handle of the sole reader of the queue
  */
-void Ethernet_QueueInit() {
-    EthernetQ = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
+void Ethernet_QueueInit(TaskHandle_t queue_reader) {
+    EthernetQ.owner = queue_reader;
+    EthernetQ.handle = xQueueCreate(ETHERNET_QUEUESIZE, sizeof(EthernetMSG_t)); // creates the xQUEUE with the size of the fifo
 }
 
 /** Ethernet PutInQueue
@@ -81,7 +85,7 @@ void Ethernet_QueueInit() {
  * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
  */
 BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
-    BaseType_t success = xQueueSendToBack(EthernetQ, msg, (TickType_t)0);
+    BaseType_t success = SemQueueSendToBack(&EthernetQ, msg);
     if (success == errQUEUE_FULL) {
         EthDroppedMessages++;
     }
@@ -89,12 +93,10 @@ BaseType_t Ethernet_PutInQueue(EthernetMSG_t* msg) {
 }
 
 /** Ethernet Send Message
- * @brief Send data from Ethernet Fifo across ethernet. Blocking: This will
- *        wait until there is a valid connection to the server
- * 
- * @return BaseType_t - pdFalse if Ethernet Queue is empty, pdTrue if Ethernet Queue is not full
+ * @brief Send data from Ethernet Fifo across ethernet. 
+ *        Blocking: This will wait until the queue is nonempty and there is a valid connection to the server
  */
-BaseType_t Ethernet_SendMessage() {
+void Ethernet_SendMessage() {
     EthernetMSG_t eth_rx;
     uint8_t raw_ethmsg[sizeof(EthernetMSG_t)];
 
@@ -104,8 +106,8 @@ BaseType_t Ethernet_SendMessage() {
             Ethernet_EndConnection();
         }
 
-        // pull message from queue to send over ethernet
-        if (xQueueReceive(EthernetQ, &eth_rx, (TickType_t)0) != pdTRUE) return pdFALSE;
+        // pull message from queue to send over ethernet (blocks until message available)
+        SemQueueRecieve(&EthernetQ, &eth_rx, false);
         raw_ethmsg[0] = eth_rx.id;
         raw_ethmsg[1] = eth_rx.length;
         // copy data from dataptr into raw ethernet message array
@@ -122,7 +124,6 @@ BaseType_t Ethernet_SendMessage() {
     else {
         Ethernet_ConnectToServer(); // reconnect to server if send previously failed
     }
-    return pdTRUE;
 }
 
 /** Ethernet End Connection

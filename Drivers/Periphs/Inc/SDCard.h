@@ -9,22 +9,17 @@
 #ifndef SDCARD_H
 #define SDCARD_H
 
-#include "FreeRTOS.h"
-#include "queue.h"
 #include "fatfs.h"
 #include "CANBus.h"
 #include "IMU.h"
 #include "GPS.h"
+#include <stdbool.h>
 
 // writes will be performed in chunks less than/approximately this size
 #define SDCARD_WRITE_BUFSIZE        512
 #define SDCARD_SYNC_PERIOD          50      // sync period (milliseconds)
 #define SDCARD_MAX_MSGSIZE          (sizeof(SDCard_t) + 11) // 11 is a result of length 9 time string + '\n' + '\0'
 #define SDCARD_QUEUESIZE            32
-
-// Error code for SDCard queue empty
-// set to not conflict with FRESULT codes
-#define SDC_QUEUE_EMPTY                 42
 
 typedef enum{
     // this is where you have different types for the different messages that you might have 
@@ -52,11 +47,11 @@ typedef struct {
 } SDCard_t;
 
 /**
- * @brief Mounts the drive and intializes the queue
- * @param None
+ * @brief Mounts the drive, initializes Queue, and opens all logging files
+ * @param queue_reader Task Handle of the sole reader of the queue
  * @return FRESULT FR_OK if ok and other errors specified in ff.h
  */
-FRESULT SDCard_Init();
+FRESULT SDCard_Init(TaskHandle_t queue_reader);
 
 /**
  * @brief Reads how much memory is left in SD Card. Should be used for debugging purposes
@@ -76,10 +71,10 @@ BaseType_t SDCard_PutInQueue(SDCard_t* data);
 /**
  * @brief Formats data and writes to SD card based on type of data input. 
  *        Data is buffered and written in large chunks. 
+ *        Blocking: This will wait until the queue is nonempty
  *        !!! DOES NOT SYNC DATA !!! You must call SDCard_SyncLogFiles() to save.
- * @note: Non-Blocking - Returns error if there is no data 
- * @param none
- * @return FRESULT FR_OK if ok, SD_QUEUE_EMPTY if queue empty, and other errors specified in ff.h 
+ * 
+ * @return FRESULT Filesystem errors specified in ff.h 
  */
 FRESULT SDCard_Sort_Write_Data();
 
