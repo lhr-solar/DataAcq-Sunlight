@@ -17,6 +17,7 @@
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
 static int servsocket;
+static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 extern int errno;
 
@@ -28,9 +29,18 @@ void Ethernet_WaitForClient(){
 
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
-    while (1) {
-        servsocket = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
-        if (servsocket >= 0) break;
+    while (servsocket < 0) {
+        do{
+            servsocket = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+        }
+        while (servsocket < 0);
+
+        // set linger to 0 - this makes sure closed sockets are freed immediately
+        lwip_setsockopt(servsocket, SOL_SOCKET, SO_LINGER, &soLinger, sizeof(soLinger));
+
+        if (lwip_connect(servsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0) {
+            Ethernet_EndConnection();
+        }
     }
     debugprintf("Ethernet connected\n\r");
     LED_On(ETH_CONNECT);
