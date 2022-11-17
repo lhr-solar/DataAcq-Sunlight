@@ -34,12 +34,6 @@ osThreadAttr_t BroadcastingTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 1024
 };
-osThreadId_t CANSendingTaskHandle;
-osThreadAttr_t CANSendingTask_attributes = {
-  .name = "CANSending Task",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 1024
-};
 
 void InitializationTask(void *argument) {
     bool sd_init_success = true;
@@ -76,7 +70,6 @@ void InitializationTask(void *argument) {
     }
     DataReadingTaskHandle = osThreadNew(DataReadingTask, NULL, &DataReadingTask_attributes);
     BroadcastingTaskHandle = osThreadNew(BroadcastingTask, NULL, &BroadcastingTask_attributes);
-    CANSendingTaskHandle = osThreadNew(CANSendingTask, NULL, &CANSendingTask_attributes);
 
     // Exit
     osThreadExit();
