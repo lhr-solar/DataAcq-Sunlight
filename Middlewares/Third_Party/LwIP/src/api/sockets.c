@@ -415,7 +415,7 @@ tryget_socket_unconn_nouse(int fd)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("tryget_socket_unconn(%d): invalid\n", fd));
     return NULL;
   }
-  return &sockets[s];
+  return &sockets[s]; //address of socket in global array of available sockets
 }
 
 struct lwip_sock *
@@ -464,7 +464,7 @@ tryget_socket(int fd)
     if (sock->conn) {
       return sock;
     }
-    done_socket(sock);
+    done_socket(sock); 
   }
   return NULL;
 }
@@ -629,7 +629,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
-  sock = get_socket(s);
+  sock = get_socket(s); //returns address of lwip_sock or NULL if error
   if (!sock) {
     return -1;
   }

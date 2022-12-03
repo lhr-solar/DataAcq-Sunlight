@@ -16,7 +16,8 @@
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
-static int servsocket;
+static int servsocket; //used as socket index for global socket array
+static int lsocket;
 static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 extern int errno;
@@ -24,14 +25,14 @@ extern int errno;
 /** Ethernet waitForClient
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
-void Ethernet_WaitForClient(){
+static Ethernet_WaitForClient(){
     if (servsocket >= 0) return;
 
     struct sockaddr_in client_addr;
     int addrlen = sizeof(client_addr);
     while (servsocket < 0) {
         do{
-            servsocket = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen);
+            servsocket = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen); //if successful, returns sock
         }
         while (servsocket < 0);
 
@@ -58,11 +59,23 @@ ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     servsocket = -1;
 
+    lsocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    if(lsocket < 0) return 0;
+
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
     sLocalAddr.sin_family = AF_INET;
     sLocalAddr.sin_len = sizeof(sLocalAddr);
     sLocalAddr.sin_addr.s_addr = htonl(lwip_makeu32_func(IP4_SERVER_ADDRESS));
     sLocalAddr.sin_port = htons(SERVER_PORT);
+
+    if(lwip_bind(lsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0){
+        lwip_close(lsocket);
+        return ERROR;
+    }
+    if (lwip_listen(lsocket, 20) != 0){
+        lwip_close(lsocket);
+        return ERROR;
+    }
 
     Ethernet_WaitForClient();
 
