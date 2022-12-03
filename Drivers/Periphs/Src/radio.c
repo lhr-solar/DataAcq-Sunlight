@@ -25,7 +25,7 @@ extern int errno;
 /** Ethernet waitForClient
  * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
-static Ethernet_WaitForClient(){
+static void Ethernet_WaitForClient(){
     if (servsocket >= 0) return;
 
     struct sockaddr_in client_addr;
