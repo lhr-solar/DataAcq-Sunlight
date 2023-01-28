@@ -12,9 +12,9 @@
 #define HEARTBEAT_PERIOD            500     // period of heartbeat led (in # OS ticks)
 
 // IP Address Configuration
-#define IP4_CLIENT_ADDRESS          169, 254, 48, 100
-#define IP4_SERVER_ADDRESS          169, 254, 48, 219
-#define IP4_NETMASK                 255, 255, 0, 0
+#define IP4_CLIENT_ADDRESS          192, 168, 1, 221
+#define IP4_SERVER_ADDRESS          192, 168, 1, 224
+#define IP4_NETMASK                 255, 255, 255, 0
 #define IP4_GATEWAY                 0, 0, 0, 0
 #define SERVER_PORT                 65432
 
