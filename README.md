@@ -92,3 +92,25 @@ Approvers:
 2. Clark Poon
 3. Chase Block
 4. Rishi Ponnekanti
+
+### Radio Setup
+Sunlight has a static IP of (192.168.1.221)
+Computer plugged into Endpoint (192.168.1.222)
+Sunlight plugged into Gateway (192.168.1.223)
+Set computer to a static IP of (192.168.1.224)
+All using port 65432.
+
+Config of Radio 884-5105:
+IP:192.168.1.222
+Network Type: Point-To-Point
+Modem Mode: Endpoint
+Call Book: 1->EndPoint Serial Number->8845003
+
+Cofig of Radio 884-5003:
+IP:192.168.1.223
+Network Type: Point-To-Point
+Modem Mode: Gateway
+Call Book: 1->EndPoint Serial Number->8845105
+
+Both match the settings below:
+![image](https://user-images.githubusercontent.com/89665539/216782825-0ffa80d5-61da-48d3-9d89-15e158f3f728.png)
