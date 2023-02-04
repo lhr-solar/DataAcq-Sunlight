@@ -68,6 +68,28 @@ OpenOCD is another debugger program that is open source and compatible with the 
 **Note:** If you get an error message for Permission denied, try giving openocd read/write permissions using chmod: ```chmod 764 openocd```
 https://linuxcommand.org/lc3_lts0090.php
 
+## Radio Setup
+* Sunlight has a static IP of (192.168.1.221)
+* Computer plugged into Endpoint (192.168.1.222)
+* Sunlight plugged into Gateway (192.168.1.223)
+* Set computer to a static IP of (192.168.1.224)
+* All using port 65432.
+
+* Config of Radio 884-5105:
+    - IP:192.168.1.222
+    - Network Type: Point-To-Point
+    - Modem Mode: Endpoint
+    - Call Book: 1->EndPoint Serial Number->8845003
+
+* Config of Radio 884-5003:
+    - IP:192.168.1.223
+    - Network Type: Point-To-Point
+    - Modem Mode: Gateway
+    - Call Book: 1->EndPoint Serial Number->8845105
+
+Both match the settings below:
+![image](https://user-images.githubusercontent.com/89665539/216782825-0ffa80d5-61da-48d3-9d89-15e158f3f728.png)
+
 ## Rules
 * Make sure to have fun!
 * Commit frequently into your own branches. 
@@ -92,25 +114,3 @@ Approvers:
 2. Clark Poon
 3. Chase Block
 4. Rishi Ponnekanti
-
-### Radio Setup
-Sunlight has a static IP of (192.168.1.221)
-Computer plugged into Endpoint (192.168.1.222)
-Sunlight plugged into Gateway (192.168.1.223)
-Set computer to a static IP of (192.168.1.224)
-All using port 65432.
-
-Config of Radio 884-5105:
-IP:192.168.1.222
-Network Type: Point-To-Point
-Modem Mode: Endpoint
-Call Book: 1->EndPoint Serial Number->8845003
-
-Cofig of Radio 884-5003:
-IP:192.168.1.223
-Network Type: Point-To-Point
-Modem Mode: Gateway
-Call Book: 1->EndPoint Serial Number->8845105
-
-Both match the settings below:
-![image](https://user-images.githubusercontent.com/89665539/216782825-0ffa80d5-61da-48d3-9d89-15e158f3f728.png)
