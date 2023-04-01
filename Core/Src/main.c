@@ -120,11 +120,13 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  HAL_Delay(500);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  HAL_Delay(1000);
+  MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
   MX_I2C1_Init();
   MX_I2C2_Init();
   MX_SPI5_Init();

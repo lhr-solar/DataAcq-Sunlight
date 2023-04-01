@@ -15,9 +15,12 @@
 #include "LED.h"
 #include "config.h"
 #include <stdio.h>
+#include "cmsis_os.h"
+
 
 void BroadcastingTask(void *argument){
     
+    osDelay(1000);
     Ethernet_Init();
     debugprintf("Connected to server\n\r");
 
