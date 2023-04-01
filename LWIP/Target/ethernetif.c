@@ -653,11 +653,13 @@ void ethernetif_set_link(void* argument)
     {
       /* network cable is connected */
       netif_set_link_up(link_arg->netif);
+      debugprintf("netif set link up");
     }
     else if(netif_is_link_up(link_arg->netif) && (!regvalue))
     {
       /* network cable is dis-connected */
       netif_set_link_down(link_arg->netif);
+      debugprintf("netif set link down");
     }
 
     /* Suspend thread for 200 ms */

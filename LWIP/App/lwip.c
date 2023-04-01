@@ -80,15 +80,18 @@ void MX_LWIP_Init(void)
   {
     /* When the netif is fully configured this function must be called */
     netif_set_up(&gnetif);
+    debugprintf("netif set up");
   }
   else
   {
     /* When the netif link is down this function must be called */
     netif_set_down(&gnetif);
+    debugprintf("netif set down");
   }
 
   /* Set the link callback function, this function is called on change of link status*/
   netif_set_link_callback(&gnetif, ethernetif_update_config);
+  debugprintf("netif set link callback");
 
   /* create a binary semaphore used for informing ethernetif of frame reception */
   Netif_LinkSemaphore = osSemaphoreNew(1, 1, NULL);
@@ -109,6 +112,7 @@ void MX_LWIP_Init(void)
 
   // Set static IP address
   netif_set_addr(&gnetif, &ipaddr, &netmask, &gw);
+  debugprintf("netif set static ip address");
 
 /* USER CODE BEGIN 3 */
 
