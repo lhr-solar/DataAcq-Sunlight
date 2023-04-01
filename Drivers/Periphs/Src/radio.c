@@ -52,7 +52,6 @@ static void Ethernet_ConnectToServer() {
  *                     SUCCESS if socket was created successfully
  */
 ErrorStatus Ethernet_Init() {
-    MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     servsocket = -1;
 
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));

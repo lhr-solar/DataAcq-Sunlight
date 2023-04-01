@@ -513,7 +513,7 @@ void ethernetif_input(void* argument)
   struct netif *netif = (struct netif *) argument;
 
   for( ;; )
-  {
+  { 
     if (osSemaphoreAcquire(s_xSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
     {
       do
@@ -641,12 +641,12 @@ void ethernetif_set_link(void* argument)
 {
   uint32_t regvalue = 0;
   struct link_str *link_arg = (struct link_str *)argument;
-
+  debugprintf("ETHERNETIF_SET_LINK THREAD ACTIVATE\n\r");
   for(;;)
   {
-    /* Read PHY_BSR*/
+    /* Read PHY_BSR*/ 
     HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue);
-
+    debugprintf("PHY_BSR: %x\n\r", (unsigned int)regvalue);
     regvalue &= PHY_LINKED_STATUS;
 
     /* Check whether the netif link down and the PHY link is up */
@@ -654,13 +654,13 @@ void ethernetif_set_link(void* argument)
     {
       /* network cable is connected */
       netif_set_link_up(link_arg->netif);
-      debugprintf("netif set link up");
+      debugprintf("netif set link up\n\r");
     }
     else if(netif_is_link_up(link_arg->netif) && (!regvalue))
     {
       /* network cable is dis-connected */
       netif_set_link_down(link_arg->netif);
-      debugprintf("netif set link down");
+      debugprintf("netif set link down\n\r");
     }
 
     /* Suspend thread for 200 ms */
@@ -710,6 +710,8 @@ void ethernetif_update_config(struct netif *netif)
 
       /* Read the result of the auto-negotiation */
       HAL_ETH_ReadPHYRegister(&heth, PHY_SR, &regvalue);
+      debugprintf("PHY_SR: %x\n\r", (unsigned int)regvalue);
+
 
       /* Configure the MAC with the Duplex Mode fixed by the auto-negotiation process */
       if((regvalue & PHY_DUPLEX_STATUS) != (uint32_t)RESET)
