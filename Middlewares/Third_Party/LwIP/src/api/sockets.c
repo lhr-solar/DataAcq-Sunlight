@@ -38,6 +38,7 @@
  */
 
 #include "lwip/opt.h"
+#include "config.h"
 
 #if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
 
@@ -817,6 +818,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 
   sock = get_socket(s);
   if (!sock) {
+    debugprintf("not got socket \n\r");
     return -1;
   }
 
@@ -824,6 +826,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     /* sockaddr does not match socket type (IPv4/IPv6) */
     sock_set_errno(sock, err_to_errno(ERR_VAL));
     done_socket(sock);
+    debugprintf("sockaddr does not match socket type \n\r");
     return -1;
   }
 
@@ -860,12 +863,14 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d) failed, err=%d\n", s, err));
     sock_set_errno(sock, err_to_errno(err));
     done_socket(sock);
+    debugprintf("lwip_connect failed \n\r");
     return -1;
   }
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d) succeeded\n", s));
   sock_set_errno(sock, 0);
   done_socket(sock);
+  debugprintf("lwip_connect succeeded \n\r");
   return 0;
 }
 
