@@ -42,6 +42,7 @@
  */
 
 #include "lwip/opt.h"
+#include "config.h"
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
@@ -901,6 +902,7 @@ tcp_process(struct tcp_pcb *pcb)
          * connected. */
         TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
         if (err == ERR_ABRT) {
+          debugprintf("tcp_process error abort 1 \n\r");
           return ERR_ABRT;
         }
         tcp_ack_now(pcb);
@@ -946,6 +948,7 @@ tcp_process(struct tcp_pcb *pcb)
             if (err != ERR_ABRT) {
               tcp_abort(pcb);
             }
+            debugprintf("tcp_process error abort 2 \n\r");
             return ERR_ABRT;
           }
           /* If there was any data contained within this ACK,
