@@ -98,6 +98,7 @@
  */
 
 #include "lwip/opt.h"
+#include "config.h"
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
@@ -783,7 +784,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
   LWIP_ASSERT("tcp_accept_null: invalid pcb", pcb != NULL);
 
   tcp_abort(pcb);
-
+  debugprintf("tcp accept null error abort \n\r");
   return ERR_ABRT;
 }
 #endif /* LWIP_CALLBACK_API */
@@ -1576,6 +1577,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
         }
         TCP_EVENT_CLOSED(pcb, err);
         if (err == ERR_ABRT) {
+          debugprintf("tcp_process_refused_data error abort 1 \n\r");
           return ERR_ABRT;
         }
       }
@@ -1584,6 +1586,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
       /* Drop incoming packets because pcb is "full" (only if the incoming
          segment contains data). */
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+      debugprintf("tcp_process_refused_data error abort 2 \n\r");
       return ERR_ABRT;
     } else {
       /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
