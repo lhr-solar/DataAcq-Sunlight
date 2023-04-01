@@ -131,10 +131,8 @@ netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 
   err = tcpip_send_msg_wait_sem(fn, apimsg, LWIP_API_MSG_SEM(apimsg));
   if (err == ERR_OK) {
-    debugprintf("tcip_send_msg_wait_sem OK \n\r");
     return apimsg->err;
   }
-  debugprintf("tcpip_send_msg_wait_sem error \n\r");
   return err;
 }
 
