@@ -396,7 +396,9 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   API_MSG_VAR_REF(msg).msg.bc.port = port;
   err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
-  debugprintf("netconn_apimsg error \n\r");
+  debugprintf("after netconn_apimsg");
+  debugprintf(err);
+  debugprintf("\n\r");
   return err;
 }
 
