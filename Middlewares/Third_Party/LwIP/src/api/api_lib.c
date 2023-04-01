@@ -56,6 +56,7 @@
    the application */
 
 #include "lwip/opt.h"
+#include "config.h"
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
@@ -132,6 +133,7 @@ netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
   if (err == ERR_OK) {
     return apimsg->err;
   }
+  debugprintf("tcpip_send_msg_wait_sem error \n\r");
   return err;
 }
 
@@ -394,7 +396,7 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   API_MSG_VAR_REF(msg).msg.bc.port = port;
   err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
-
+  debugprintf("netconn_apimsg error \n\r");
   return err;
 }
 
