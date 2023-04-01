@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "lwip/opt.h"
+#include "config.h"
 
 #include "lwip/timeouts.h"
 #include "netif/ethernet.h"
