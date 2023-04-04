@@ -1,5 +1,5 @@
 # Sunlight
-This Repo Contains all of Sunlight's code. Sunlight is Gary's telemetry system.
+This Repo Contains all of Sunlight's code. Sunlight is Lone Star's telemetry system.
 
 ## Building
 When calling any of the following commands, make sure you are in the top level of the directory.
@@ -14,11 +14,10 @@ Call `make clean` to remove all object files.
 * Create a Pull Request whenever you are ready to add you working code to the `main` branch. 
 * Make sure that your code passes all status checks before opening a pull request. 
 * If you modify the code enough that the docs become out of date, update the docs in your pull request.
-* You must select 1 reviewer for approval. The reviewers will make sure the code follows best practices.
+* You must select at least 1 reviewer for approval. The reviewers will make sure the code follows best practices.
 
 Reviewers: 
-1. Chase Block
-2. Clark Poon
-3. Rishi Ponnekanti
-4. Manthan Upadhyaya
-5. Sugam Arora
+1. Tianda Huang
+2. Manthan Upadhyaya
+3. Byrn Ledbetter
+4. Clark Poon
