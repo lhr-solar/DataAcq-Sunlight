@@ -664,6 +664,9 @@ void ethernetif_set_link(void* argument)
       netif_set_link_down(link_arg->netif);
       debugprintf("netif set link down\n\r");
     }
+    else{
+      debugprintf("netif link status unchanged\n\r");
+    }
 
     /* Suspend thread for 200 ms */
     osDelay(200);
