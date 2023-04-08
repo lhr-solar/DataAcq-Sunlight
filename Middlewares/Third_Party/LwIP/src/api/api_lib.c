@@ -536,6 +536,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   if (lwip_netconn_is_err_msg(accept_ptr, &err)) {
     /* a connection has been aborted: e.g. out of pcbs or out of netconns during accept */
     API_MSG_VAR_FREE_ACCEPT(msg);
+    if(err == ERR_ABRT){
+      debugprintf("ERR_ABRT \n\r");
+    }
     return err;
   }
   if (accept_ptr == NULL) {
@@ -646,6 +649,9 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
       if (err == ERR_CLSD) {
         /* connection closed translates to ERR_OK with *new_buf == NULL */
         return ERR_OK;
+      }
+      if(err == ERR_ABRT){
+        debugprintf("ERR_ABRT \n\r");
       }
       return err;
     }
