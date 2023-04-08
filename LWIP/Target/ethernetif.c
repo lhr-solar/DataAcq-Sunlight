@@ -646,7 +646,7 @@ void ethernetif_set_link(void* argument)
   {
     /* Read PHY_BSR*/ 
     HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue);
-    debugprintf("heth: %x\n\r", (unsigned int)heth);
+    //debugprintf("heth: %x\n\r", (unsigned int)heth);
     debugprintf("PHY_BSR: %x\n\r", (unsigned int)regvalue);
     debugprintf("regvalue: %x\n\r", (unsigned int)regvalue);
     regvalue &= PHY_LINKED_STATUS;
