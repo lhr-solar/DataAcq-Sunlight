@@ -58,6 +58,7 @@
 #include "lwip/altcp_tcp.h"
 #include "lwip/altcp_tls.h"
 #include <string.h>
+#include "config.h"
 
 #if LWIP_TCP && LWIP_CALLBACK_API
 
@@ -657,6 +658,9 @@ mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
 {
   if (r->cb != NULL) {
     r->cb(r->arg, result < 3 ? ERR_OK : ERR_ABRT);
+    if(r->arg, result >= 3){
+      debugprintf("ERR_ABRT \n\r");
+    }
   }
 }
 

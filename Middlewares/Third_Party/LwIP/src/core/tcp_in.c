@@ -468,6 +468,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif
             TCP_EVENT_SENT(pcb, (u16_t)acked16, err);
             if (err == ERR_ABRT) {
+              debugprintf("ERR_ABRT \n\r");
               goto aborted;
             }
           }
@@ -506,6 +507,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
               pbuf_free(rest);
             }
 #endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+            debugprintf("ERR_ABRT \n\r");
             goto aborted;
           }
 
@@ -541,6 +543,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
             }
             TCP_EVENT_CLOSED(pcb, err);
             if (err == ERR_ABRT) {
+              debugprintf("ERR_ABRT \n\r");
               goto aborted;
             }
           }

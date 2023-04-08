@@ -118,6 +118,7 @@ lwip_netconn_err_to_msg(err_t err)
   switch (err) {
     case ERR_ABRT:
       return LWIP_CONST_CAST(void *, &netconn_aborted);
+      debugprintf("ERR_ABRT \n\r");
     case ERR_RST:
       return LWIP_CONST_CAST(void *, &netconn_reset);
     case ERR_CLSD:
@@ -135,6 +136,7 @@ lwip_netconn_is_err_msg(void *msg, err_t *err)
 
   if (msg == &netconn_aborted) {
     *err = ERR_ABRT;
+    debugprintf("ERR_ABRT \n\r");
     return 1;
   } else if (msg == &netconn_reset) {
     *err = ERR_RST;
