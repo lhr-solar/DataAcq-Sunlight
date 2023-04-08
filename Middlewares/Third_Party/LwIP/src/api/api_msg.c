@@ -1355,6 +1355,7 @@ lwip_netconn_do_connect(void *m)
   if (msg->conn->pcb.tcp == NULL) {
     /* This may happen when calling netconn_connect() a second time */
     err = ERR_CLSD;
+    debugprintf("error: ERR_CLSD \n\r");
   } else {
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
@@ -1372,18 +1373,22 @@ lwip_netconn_do_connect(void *m)
         /* Prevent connect while doing any other action. */
         if (msg->conn->state == NETCONN_CONNECT) {
           err = ERR_ALREADY;
+          debugprintf("error: ERR_ALREADY \n\r");
         } else if (msg->conn->state != NETCONN_NONE) {
           err = ERR_ISCONN;
+          debugprintf("error: ERR_ISCONN \n\r");
         } else {
           setup_tcp(msg->conn);
           err = tcp_connect(msg->conn->pcb.tcp, API_EXPR_REF(msg->msg.bc.ipaddr),
                             msg->msg.bc.port, lwip_netconn_do_connected);
+          debugprintf("error: tcp_connect \n\r");
           if (err == ERR_OK) {
             u8_t non_blocking = netconn_is_nonblocking(msg->conn);
             msg->conn->state = NETCONN_CONNECT;
             SET_NONBLOCKING_CONNECT(msg->conn, non_blocking);
             if (non_blocking) {
               err = ERR_INPROGRESS;
+              debugprintf("error: ERR_INPROGRESS \n\r");
             } else {
               msg->conn->current_msg = msg;
               /* sys_sem_signal() is called from lwip_netconn_do_connected (or err_tcp()),
@@ -1404,6 +1409,7 @@ lwip_netconn_do_connect(void *m)
       default:
         LWIP_ERROR("Invalid netconn type", 0, do {
           err = ERR_VAL;
+          debugprintf("error: ERR_VAL \n\r");
         } while (0));
         break;
     }
