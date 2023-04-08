@@ -1076,6 +1076,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
     tcp_set_flags(pcb, TF_NAGLEMEMERR);
     TCP_STATS_INC(tcp.memerr);
+    debugprintf("error: ERR_MEM \n\r");
     return ERR_MEM;
   }
   LWIP_ASSERT("tcp_enqueue_flags: check that first pbuf can hold optlen",
@@ -1085,6 +1086,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   if ((seg = tcp_create_segment(pcb, p, flags, pcb->snd_lbb, optflags)) == NULL) {
     tcp_set_flags(pcb, TF_NAGLEMEMERR);
     TCP_STATS_INC(tcp.memerr);
+    debugprintf("error: ERR_MEM \n\r");
     return ERR_MEM;
   }
   LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % LWIP_MIN(MEM_ALIGNMENT, 4)) == 0);
