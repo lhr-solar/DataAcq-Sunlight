@@ -658,9 +658,6 @@ mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
 {
   if (r->cb != NULL) {
     r->cb(r->arg, result < 3 ? ERR_OK : ERR_ABRT);
-    if(r->arg, result >= 3){
-      debugprintf("ERR_ABRT \n\r");
-    }
   }
 }
 
