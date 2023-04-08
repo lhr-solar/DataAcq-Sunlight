@@ -101,8 +101,6 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
 
-  HAL_Delay(5000);
-
   /* Init scheduler */
   printf("initializing os");
   osKernelInitialize();
