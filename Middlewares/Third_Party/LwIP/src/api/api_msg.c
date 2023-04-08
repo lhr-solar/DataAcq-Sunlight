@@ -55,6 +55,7 @@
 #include "lwip/priv/tcpip_priv.h"
 
 #include <string.h>
+#include "config.h"
 
 /* netconns are polled once per second (e.g. continue write on memory error) */
 #define NETCONN_TCP_POLL_INTERVAL 2
