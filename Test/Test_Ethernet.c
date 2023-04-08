@@ -5,6 +5,8 @@
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
 #include "radio.h"
+#include "stdio.h"
+#include "string.h"
 
 /******************************************************************************
  * CANBus Drivers Test
