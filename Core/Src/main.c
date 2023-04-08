@@ -132,7 +132,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  HAL_Delay(5000);
+  HAL_Delay(10000);
   /* USER CODE END 2 */
 
   /* Init scheduler */
