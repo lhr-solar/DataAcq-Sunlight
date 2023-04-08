@@ -20,7 +20,6 @@
 
 void BroadcastingTask(void *argument){
     
-    osDelay(1000);
     Ethernet_Init();
     debugprintf("Connected to server\n\r");
 
