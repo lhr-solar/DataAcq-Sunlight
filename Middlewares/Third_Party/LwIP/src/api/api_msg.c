@@ -56,6 +56,7 @@
 
 #include <string.h>
 #include "config.h"
+#include <execinfo.h>
 
 /* netconns are polled once per second (e.g. continue write on memory error) */
 #define NETCONN_TCP_POLL_INTERVAL 2
@@ -137,6 +138,13 @@ lwip_netconn_is_err_msg(void *msg, err_t *err)
   if (msg == &netconn_aborted) {
     *err = ERR_ABRT;
     debugprintf("ERR_ABRT \n\r");
+    void* callstack[128];
+    int i, frames = backtrace(callstack, 128);
+    char** strs = backtrace_symbols(callstack, frames);
+    for (i = 0; i < frames; ++i) {
+      debugprintf("%s\n", strs[i]);
+    }
+    free(strs);
     return 1;
   } else if (msg == &netconn_reset) {
     *err = ERR_RST;
@@ -848,6 +856,7 @@ netconn_drain(struct netconn *conn)
         if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
           err_t err;
           if (!lwip_netconn_is_err_msg(mem, &err)) {
+            debugprintf("netconn_drain: 1");
             pbuf_free((struct pbuf *)mem);
           }
         } else
@@ -871,6 +880,7 @@ netconn_drain(struct netconn *conn)
       {
         err_t err;
         if (!lwip_netconn_is_err_msg(mem, &err)) {
+          debugprintf("netconn_drain 2");
           struct netconn *newconn = (struct netconn *)mem;
           /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
           /* pcb might be set to NULL already by err_tcp() */
@@ -1154,6 +1164,7 @@ lwip_netconn_do_delconn(void *m)
     netconn_mark_mbox_invalid(msg->conn);
 #else /* LWIP_NETCONN_FULLDUPLEX */
     netconn_drain(msg->conn);
+    debugprintf("netconn_drain called from lwip_netconn_do_delconn");
 #endif /* LWIP_NETCONN_FULLDUPLEX */
 
     if (msg->conn->pcb.tcp != NULL) {
@@ -1985,6 +1996,7 @@ lwip_netconn_do_close(void *m)
         netconn_mark_mbox_invalid(msg->conn);
 #else /* LWIP_NETCONN_FULLDUPLEX */
         netconn_drain(msg->conn);
+        debugprintf("netconn_drain called from lwip_netconn_do_close");
 #endif /* LWIP_NETCONN_FULLDUPLEX */
       }
       LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL);
