@@ -25,7 +25,6 @@ author = 'Clark Poon'
 # The full version, including alpha/beta/rc tags
 release = '0.0'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -58,5 +57,12 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# use index.rst
+#Ignore warnings for duplicate labels since we use the same label for multiple sections
+#This means that if you are trying to refer to a label, it might not be possible
+suppress_warnings = ['autosectionlabel.*']
+
+#use index.rst
 master_doc = 'index'
+
+def setup(app):
+    app.add_css_file('my_theme.css')
