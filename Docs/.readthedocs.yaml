@@ -19,7 +19,7 @@ build:
 
 python:
   install:
-    - requirements: requirements.txt
+    - requirements: Docs/requirements.txt
 
 # Build documentation with MkDocs
 #mkdocs:
