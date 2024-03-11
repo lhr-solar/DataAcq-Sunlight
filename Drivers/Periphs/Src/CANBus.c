@@ -21,6 +21,7 @@ static CAN_RxHeaderTypeDef RxHeader;
 static uint8_t RxData[8];
 static uint32_t TxMailbox;
 static QueueHandle_t RxQueue;
+static QueueHandle_t TxQueue;
 static uint32_t CANDroppedMessages = 0;   // for debugging purposes
 
 /**
@@ -30,7 +31,42 @@ static uint32_t CANDroppedMessages = 0;   // for debugging purposes
  */
 static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID];
 
-/** CAN Recieve
+/** CAN FormPacket
+ * @brief Creates a packet given a message, id, and data
+ * 
+ * @param message Formed message will be put here
+ * @param StdId CAN message ID
+ * @param TxData Data to transmit
+ * @return BaseType_t - pdTrue formed, HAL_ERROR if invalid ID
+ */
+
+BaseType_t CAN_FormPacket(CANMSG_t *message, uint32_t StdId, uint8_t *TxData){
+    struct CanLUTEntry metadata;
+    memset(message, 0, sizeof(*message));
+    
+    message->id = StdId;
+    if (!CAN_FetchMetadata(message->id, &metadata)) {
+        return HAL_ERROR;   // invalid ID
+    }
+    
+    if (metadata.idx_used) {
+        message->payload.idx = TxData[0];
+        memcpy(message->payload.data.bytes, &TxData[1], metadata.len);
+    }
+    else {
+        memcpy(message->payload.data.bytes, TxData, metadata.len);
+    }
+
+    debugprintf("ID:%03x: idx:%01" PRIx16 " %08" PRIx32 "%08" PRIx32 "\n\r", 
+        message->id,
+        message->payload.idx,
+        *((uint32_t *)&message->payload.data.bytes[4]), 
+        *((uint32_t *)message->payload.data.bytes));
+
+    return pdTRUE;
+}
+
+/** CAN Receive
  * @brief Convert a raw CAN message to CANMSG_t and add to the RxFifo
  * 
  * @param header RxHeader from CAN message
@@ -38,30 +74,9 @@ static const struct CanLUTEntry CanMetadataLUT[LARGEST_CAN_ID];
  * @return HAL_StatusTypeDef - HAL_OK if message was parsed correctly
  * @return HAL_StatusTypeDef - HAL_ERROR if message ID does not match known IDs
  */
-static HAL_StatusTypeDef CAN_Recieve(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx_data) {
+static HAL_StatusTypeDef CAN_Receive(CAN_RxHeaderTypeDef *rx_header, uint8_t *rx_data) {
     CANMSG_t canmessage;
-    struct CanLUTEntry metadata;
-    memset(&canmessage, 0, sizeof(canmessage));
-
-    canmessage.id = rx_header->StdId;
-
-    if (!CAN_FetchMetadata(canmessage.id, &metadata)) {
-        return HAL_ERROR;   // invalid ID
-    }
-
-    if (metadata.idx_used) {
-        canmessage.payload.idx = rx_data[0];
-        memcpy(canmessage.payload.data.bytes, &rx_data[1], metadata.len);
-    }
-    else {
-        memcpy(canmessage.payload.data.bytes, rx_data, metadata.len);
-    }
-
-    debugprintf("ID:%03x: idx:%01" PRIx16 " %08" PRIx32 "%08" PRIx32 "\n\r", 
-        canmessage.id,
-        canmessage.payload.idx,
-        *((uint32_t *)&canmessage.payload.data.bytes[4]), 
-        *((uint32_t *)canmessage.payload.data.bytes));
+    if(CAN_FormPacket(&canmessage, rx_header->StdId, rx_data) == HAL_ERROR) return HAL_ERROR;
 
     // Add message to FIFO
     if (xQueueSendToBackFromISR(RxQueue, &canmessage, NULL) == errQUEUE_FULL) {
@@ -104,6 +119,7 @@ static HAL_StatusTypeDef MX_CAN1_Init(uint32_t mode) {
  */
 HAL_StatusTypeDef CAN_Init(uint32_t mode) {
     RxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
+    TxQueue = xQueueCreate(CAN_QUEUESIZE, sizeof(CANMSG_t)); // creates the xQUEUE with the size of the fifo
     HAL_StatusTypeDef configstatus = MX_CAN1_Init(mode);
     if (configstatus != HAL_OK) return configstatus;
 
@@ -152,31 +168,56 @@ BaseType_t CAN_FetchMessage(CANMSG_t *message) {
     return xQueueReceive(RxQueue, message, (TickType_t)0);
 }
 
+/** CAN PutInTransmitQueue
+ * @brief Put data in Tx Queue
+ * @param canmessage Fully formed CAN message 
+ * @return BaseType_t - pdTrue if placed, errQUEUE_FULL if full
+ */
+BaseType_t CAN_PutInTransmitQueue(CANMSG_t canmessage) {
+    // Add message to FIFO
+    if (xQueueSendToBack(TxQueue, &canmessage, (TickType_t)0) == errQUEUE_FULL) {
+        CANDroppedMessages++;
+        return errQUEUE_FULL;
+    }
+    return pdTRUE;
+}
+
+/** CAN Transmit
+ * @brief Creates can message and adds it to transmit queue
+ * @note Wrapper for CAN_FormPacket and CAN_PutInTransmitQueue
+ * @param StdId CAN message ID
+ * @param TxData Data to transmit
+ * @return BaseType_t - pdTrue formed, errQUEUE_FULL if full, HAL_ERROR if invalid ID
+ */
+BaseType_t CAN_Transmit(uint32_t StdId, uint8_t *TxData){
+    CANMSG_t message;
+    if(CAN_FormPacket(&message, StdId, TxData) == HAL_ERROR) return HAL_ERROR;
+    return CAN_PutInTransmitQueue(message);
+}
 
 /** CAN Transmit Message
  * @brief Transmit message over CAN
- * @note This is really basic and does not check for a full transmit Mailbox
- * 
- * @param StdId Message ID (Standard)
- * @param TxData Data to transmit
- * @param len Length of data (Bytes) to transmit (MAX 8B)
+ * @note Does not remove message from queue if transmit Mailbox is full (HAL_CAN_AddTxMessage fails)
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_TransmitMessage(
-        uint32_t StdId,
-        uint8_t *TxData,
-        uint8_t len) {
-
-    CAN_TxHeaderTypeDef txheader;
-
+HAL_StatusTypeDef CAN_TransmitMessage() {
+    CAN_TxHeaderTypeDef TxHeader;
     // ExtID and extended mode are unused/not configured
-    txheader.StdId = StdId;
-    txheader.RTR = CAN_RTR_DATA;
-    txheader.IDE = CAN_ID_STD;
-    txheader.DLC = len;
-    txheader.TransmitGlobalTime = DISABLE;
+    CANMSG_t CAN_tx;
 
-    return HAL_CAN_AddTxMessage(&hcan1, &txheader, TxData, &TxMailbox);
+    if (xQueuePeek(TxQueue, &CAN_tx, (TickType_t)0) != pdTRUE) return HAL_ERROR;
+
+    TxHeader.StdId = CAN_tx.id;
+    TxHeader.RTR = CAN_RTR_DATA;
+    TxHeader.IDE = CAN_ID_STD;
+    TxHeader.DLC = CanMetadataLUT[CAN_tx.id].len;
+    TxHeader.TransmitGlobalTime = DISABLE;
+    
+    HAL_StatusTypeDef status = HAL_CAN_AddTxMessage(&hcan1, &TxHeader, CAN_tx.payload.data.bytes, &TxMailbox);
+    if (status == HAL_OK){
+        xQueueReceive(TxQueue, &CAN_tx, (TickType_t)0);
+    }
+    return status;
 }
 
 /**
@@ -210,7 +251,7 @@ uint32_t CAN_FetchDroppedMsgCnt() {
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData);
-    CAN_Recieve(&RxHeader, RxData);
+    CAN_Receive(&RxHeader, RxData);
 }
 
 #else   // CAN_RX_FIFO1
@@ -220,7 +261,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan) {
  */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan) {
     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &RxHeader, RxData);
-    CAN_Recieve(&RxHeader, RxData);
+    CAN_Receive(&RxHeader, RxData);
 }
 #endif
 

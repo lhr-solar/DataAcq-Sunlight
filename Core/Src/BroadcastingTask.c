@@ -19,7 +19,7 @@
 void BroadcastingTask(void *argument){
     
     Ethernet_Init();
-    debugprintf("Connected to server\n\r");
+    debugprintf("Connected to client\n\r");
 
     while (1){
         if (Ethernet_SendMessage() == pdFALSE) {

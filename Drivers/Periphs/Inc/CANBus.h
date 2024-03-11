@@ -142,16 +142,21 @@ HAL_StatusTypeDef CAN_Init(uint32_t mode);
  */
 BaseType_t CAN_FetchMessage(CANMSG_t *message);
 
+/** CAN Transmit
+ * @brief Creates can message and adds it to transmit queue
+ * @note Wrapper for CAN_FormPacket and CAN_PutInTransmitQueue
+ * @param StdId CAN message ID
+ * @param TxData Data to transmit
+ * @return BaseType_t - pdTrue formed, errQUEUE_FULL if full, HAL_ERROR if invalid ID
+ */
+BaseType_t CAN_Transmit(uint32_t StdId, uint8_t *TxData);
+
 /** CAN Transmit Message
  * @brief Transmit message over CAN
- * @note This is really basic and does not check for a full transmit Mailbox
- * 
- * @param StdId Message ID (Standard)
- * @param TxData Data to transmit
- * @param len Length of data (Bytes) to transmit (MAX 8B)
+ * @note Does not remove message from queue if transmit Mailbox is full (HAL_CAN_AddTxMessage fails)
  * @return HAL_StatusTypeDef - Status of CAN configuration
  */
-HAL_StatusTypeDef CAN_TransmitMessage(uint32_t StdId, uint8_t *TxData, uint8_t len);
+HAL_StatusTypeDef CAN_TransmitMessage();
 
 /**
  * @brief Fetch metadata associated with an id
