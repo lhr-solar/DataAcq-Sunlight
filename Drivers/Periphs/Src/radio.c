@@ -16,21 +16,25 @@
 
 static QueueHandle_t EthernetQ; // information will be put on this and all you do is trasmit the date that you receive.
 static struct sockaddr_in sLocalAddr;
+static int servsocket; //used as socket index for global socket array
+static int lsocket;
 static struct linger soLinger = {.l_onoff = true, .l_linger = 0};
-static int servsocket;
 static uint32_t EthDroppedMessages = 0;    // for debugging purposes
 extern int errno;
 
-/** Ethernet ConnectToServer
- * @brief Waits until server connection is established - blocking
+/** Ethernet waitForClient
+ * @brief Waits until a client is established - blocking funciton that waits until a client is established
  */
-static void Ethernet_ConnectToServer() {
-    while (servsocket < 0) {
-        do {
-            servsocket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        } while (servsocket < 0);
+static void Ethernet_WaitForClient(){
+    if (servsocket >= 0) return;
 
-        debugprintf("servsocket %d\n\r", servsocket);
+    struct sockaddr_in client_addr;
+    int addrlen = sizeof(client_addr);
+    while (servsocket < 0) {
+        do{
+            servsocket = lwip_accept(servsocket, (struct sockaddr *)&client_addr, (socklen_t *)&addrlen); //if successful, returns sock
+        }
+        while (servsocket < 0);
 
         // set linger to 0 - this makes sure closed sockets are freed immediately
         lwip_setsockopt(servsocket, SOL_SOCKET, SO_LINGER, &soLinger, sizeof(soLinger));
@@ -55,13 +59,25 @@ ErrorStatus Ethernet_Init() {
     MX_LWIP_Init(); // initialize all the things up here - first one is LWIP
     servsocket = -1;
 
+    lsocket = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    if(lsocket < 0) return 0;
+
     memset((char *)&sLocalAddr, 0, sizeof(sLocalAddr));
     sLocalAddr.sin_family = AF_INET;
     sLocalAddr.sin_len = sizeof(sLocalAddr);
     sLocalAddr.sin_addr.s_addr = htonl(lwip_makeu32_func(IP4_SERVER_ADDRESS));
     sLocalAddr.sin_port = htons(SERVER_PORT);
 
-    Ethernet_ConnectToServer();
+    if(lwip_bind(lsocket, (struct sockaddr *)&sLocalAddr, sizeof(sLocalAddr)) < 0){
+        lwip_close(lsocket);
+        return ERROR;
+    }
+    if (lwip_listen(lsocket, 20) != 0){
+        lwip_close(lsocket);
+        return ERROR;
+    }
+
+    Ethernet_WaitForClient();
 
     return SUCCESS;
 }
@@ -120,7 +136,7 @@ BaseType_t Ethernet_SendMessage() {
         }
     }
     else {
-        Ethernet_ConnectToServer(); // reconnect to server if send previously failed
+        Ethernet_WaitForClient(); // reconnect to client if send previously failed
     }
     return pdTRUE;
 }
